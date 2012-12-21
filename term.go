@@ -5,6 +5,8 @@ import . "regexp"
 import . "strings"
 import "bytes"
 
+// Term represents a single Prolog term which might be an atom, a structure,
+// a number, etc.
 type Term interface {
     // Functor returns the term's name
     Functor() string
