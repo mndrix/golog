@@ -32,23 +32,19 @@ type mapDb struct {
     predicates  *ps.Map  // term indicator => ps.List of terms
 }
 func (self *mapDb) Asserta(term Term) Database {
-    Printf("old predicates: %#v\n", self.predicates)
     var newMapDb    mapDb
     var newClauses  *ps.List
 
     indicator := term.Indicator()
-    Printf("indicator: %s\n", indicator)
     oldClauses, ok := self.predicates.Lookup(indicator)
     if ok {  // clauses exist for this predicate
         newClauses = oldClauses.(*ps.List).Cons(term)
     } else {  // brand new predicate
         newClauses = ps.NewList().Cons(term)
-        Printf("newClauses: %#v\n", newClauses)
     }
 
     newMapDb.clauseCount = self.clauseCount + 1
     newMapDb.predicates = self.predicates.Set(indicator, newClauses)
-    Printf("new predicates: %#v\n", newMapDb.predicates)
     return &newMapDb
 }
 func (self *mapDb) Prove(term Term) bool {
@@ -62,7 +58,6 @@ func (self *mapDb) String() string {
     for _, key := range keys {
         clauses, _ := self.predicates.Lookup(key)
         clauses.(*ps.List).ForEach( func (v ps.Any) { Fprintf(&buf, "%s.\n", v) } )
-        Fprintf(&buf, "\n")
     }
     return buf.String()
 }
