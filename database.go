@@ -12,6 +12,9 @@ type Database interface {
     // terms with the same name and arity.
     Asserta(Term) Database
 
+    // ClauseCount returns the number of clauses in the database
+    ClauseCount() int
+
     // Prove determines whether a given term is true for this database
     Prove(Term) bool
 
@@ -46,6 +49,9 @@ func (self *mapDb) Asserta(term Term) Database {
     newMapDb.clauseCount = self.clauseCount + 1
     newMapDb.predicates = self.predicates.Set(indicator, newClauses)
     return &newMapDb
+}
+func (self *mapDb) ClauseCount() int {
+    return self.clauseCount
 }
 func (self *mapDb) Prove(term Term) bool {
     // TODO
