@@ -12,6 +12,9 @@ type Database interface {
     // terms with the same name and arity.
     Asserta(Term) Database
 
+    // Candidates() returns a list of clauses that might match a term
+    Candidates(Term) []Term
+
     // ClauseCount returns the number of clauses in the database
     ClauseCount() int
 
@@ -35,7 +38,13 @@ func (self *mapDb) Asserta(term Term) Database {
     var newMapDb    mapDb
     var newClauses  *ps.List
 
+    // find the indicator under which this term is classified
     indicator := term.Indicator()
+    if term.Arity() == 2 && term.Functor() == ":-" {
+        // ':-' uses the indicator of its head term
+        indicator = term.Arguments()[0].Indicator()
+    }
+
     oldClauses, ok := self.predicates.Lookup(indicator)
     if ok {  // clauses exist for this predicate
         newClauses = oldClauses.(*ps.List).Cons(term)
@@ -46,6 +55,23 @@ func (self *mapDb) Asserta(term Term) Database {
     newMapDb.clauseCount = self.clauseCount + 1
     newMapDb.predicates = self.predicates.Set(indicator, newClauses)
     return &newMapDb
+}
+func (self *mapDb) Candidates(t Term) []Term {
+    indicator := t.Indicator()
+    clauses, ok := self.predicates.Lookup(indicator)
+    if !ok {  // no clauses for this predicate
+        terms := make([]Term, 0)
+        return terms
+    }
+
+    list := clauses.(*ps.List)
+    terms := make([]Term, list.Size())
+    i := 0
+    list.ForEach( func (t ps.Any) {
+        terms[i] = t.(Term)
+        i++
+    })
+    return terms
 }
 func (self *mapDb) ClauseCount() int {
     return self.clauseCount
