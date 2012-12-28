@@ -20,6 +20,9 @@ func TestFacts (t *testing.T) {
     if IsTrue(db, NewTerm("father", NewTerm("sue"))) {
         t.Errorf("Proved father(sue)")
     }
+    if IsTrue(db, NewTerm("father", NewTerm("michael"), NewTerm("marc"))) {
+        t.Errorf("Proved father(michael, marc)")
+    }
     if IsTrue(db, NewTerm("mother", NewTerm("michael"))) {
         t.Errorf("Proved mother(michael)")
     }
