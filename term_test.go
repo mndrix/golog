@@ -40,3 +40,29 @@ func TestShallowTerm(t *testing.T) {
         t.Errorf("wrong string representation: %s", shallow.String())
     }
 }
+
+func TestQuoting(t *testing.T) {
+    // punctuation in functors must be quoted
+    x := NewTerm(":-", NewTerm("foo"), NewTerm("bar"))
+    if x.String() != "':-'(foo, bar)" {
+        t.Errorf("Clause has wrong quoting: %s", x.String())
+    }
+
+    // initial capital letters must be quoted
+    x = NewTerm("Caps")
+    if x.String() != "'Caps'" {
+        t.Errorf("Capitalized atom has wrong quoting: %s", x.String())
+    }
+
+    // all lowercase atoms don't need quotes
+    x = NewTerm("lower")
+    if x.String() != "lower" {
+        t.Errorf("Atom shouldn't be quoted: %s", x.String())
+    }
+
+    // initial lowercase atoms don't need quotes
+    x = NewTerm("lower_Then_Caps")
+    if x.String() != "lower_Then_Caps" {
+        t.Errorf("Mixed case atom shouldn't be quoted: %s", x.String())
+    }
+}

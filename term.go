@@ -79,9 +79,10 @@ func NewTerm(functor string, arguments ...Term) Term {
 // QuoteFunctor returns a canonical representation of a term's name
 // by quoting characters that require quoting
 func QuoteFunctor(name string) string {
-    needsQuote, err := MatchString(`\W`, name)
+    nonAlpha, err := MatchString(`\W`, name)
     maybePanic(err)
-    if needsQuote {
+    nonLower, err := MatchString(`^[^a-z]`, name)
+    if nonAlpha || nonLower {
         escapedName := Replace(name, `'`, `\'`, -1)
         return Sprintf("'%s'", escapedName)
     }
