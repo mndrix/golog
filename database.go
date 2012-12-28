@@ -15,9 +15,6 @@ type Database interface {
     // ClauseCount returns the number of clauses in the database
     ClauseCount() int
 
-    // Prove determines whether a given term is true for this database
-    Prove(Term) bool
-
     // String returns a string representation of the entire database
     String() string
 }
@@ -52,10 +49,6 @@ func (self *mapDb) Asserta(term Term) Database {
 }
 func (self *mapDb) ClauseCount() int {
     return self.clauseCount
-}
-func (self *mapDb) Prove(term Term) bool {
-    // TODO
-    return true
 }
 func (self *mapDb) String() string {
     var buf bytes.Buffer
