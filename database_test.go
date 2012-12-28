@@ -6,7 +6,11 @@ func TestAsserta(t *testing.T) {
     db0 := NewDatabase()
     db1 := db0.Asserta(NewTerm("alpha"))
     db2 := db1.Asserta(NewTerm("beta"))
-    db3 := db2.Asserta(NewTerm("gamma", NewTerm("greek to me")))
+
+    foo := NewTerm("foo", NewTerm("one"), NewTerm("two"))
+    body := NewTerm("alpha")
+    db3 := db2.Asserta(NewTerm(":-", foo, body))
+    t.Logf(db3.String()) // helpful for debugging
 
     // do we have the right number of clauses?
     if db0.ClauseCount() != 0 {
