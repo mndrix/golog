@@ -42,7 +42,7 @@ func (self *mapDb) Asserta(term Term) Database {
     indicator := term.Indicator()
     if term.IsClause() {
         // ':-' uses the indicator of its head term
-        indicator = term.Arguments()[0].Indicator()
+        indicator = term.Head().Indicator()
     }
 
     oldClauses, ok := self.predicates.Lookup(indicator)

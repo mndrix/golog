@@ -17,6 +17,12 @@ type Term interface {
     // Arguments returns a slice of this term's arguments, if any
     Arguments() []Term
 
+    // Body returns a term's second argument; otherwise, panics
+    Body() Term
+
+    // Head returns a term's first argument; otherwise, panics
+    Head() Term
+
     // IsClause returns true if the term is like 'Head :- Body'
     IsClause() bool
 
@@ -39,6 +45,12 @@ func (self *Structure) Arity() int {
 }
 func (self *Structure) Arguments() []Term {
     return self.Args
+}
+func (self *Structure) Body() Term {
+    return self.Args[1]
+}
+func (self *Structure) Head() Term {
+    return self.Args[0]
 }
 func (self *Structure) IsClause() bool {
     return self.Arity() == 2 && self.Functor() == ":-"
