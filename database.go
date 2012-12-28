@@ -40,7 +40,7 @@ func (self *mapDb) Asserta(term Term) Database {
 
     // find the indicator under which this term is classified
     indicator := term.Indicator()
-    if term.Arity() == 2 && term.Functor() == ":-" {
+    if term.IsClause() {
         // ':-' uses the indicator of its head term
         indicator = term.Arguments()[0].Indicator()
     }

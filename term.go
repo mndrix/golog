@@ -17,6 +17,9 @@ type Term interface {
     // Arguments returns a slice of this term's arguments, if any
     Arguments() []Term
 
+    // IsClause returns true if the term is like 'Head :- Body'
+    IsClause() bool
+
     // String provides a string representation of a term
     String() string
 
@@ -36,6 +39,9 @@ func (self *Structure) Arity() int {
 }
 func (self *Structure) Arguments() []Term {
     return self.Args
+}
+func (self *Structure) IsClause() bool {
+    return self.Arity() == 2 && self.Functor() == ":-"
 }
 func (self *Structure) String() string {
     // an atom
