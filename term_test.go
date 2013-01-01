@@ -1,5 +1,6 @@
 package golog
 
+import . "regexp"
 import "testing"
 
 func TestAtom(t *testing.T) {
@@ -18,6 +19,33 @@ func TestAtom(t *testing.T) {
 
     if atom.String() != "prolog" {
         t.Errorf("wrong string representationt: %s", atom.String())
+    }
+}
+
+func TestVariable(t *testing.T) {
+    v := NewVar("X")
+    if v.Indicator() != "X" {
+        t.Errorf("variable X has the wrong indicator")
+    }
+
+    a0 := NewVar("_")
+    ok, err := MatchString(`^_`, a0.Indicator())
+    maybePanic(err)
+    if !ok {
+        t.Errorf("a0 has the wrong indicator")
+    }
+    t.Logf("a0: %s", a0)
+
+    a1 := NewVar("_")
+    ok, err = MatchString(`^_`, a1.Indicator())
+    maybePanic(err)
+    if !ok {
+        t.Errorf("a1 has the wrong indicator")
+    }
+    t.Logf("a1: %s", a1)
+
+    if a0.Indicator() == a1.Indicator() {
+        t.Errorf("anonymous variables are accidentally sharing names")
     }
 }
 
