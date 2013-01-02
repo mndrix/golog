@@ -1,4 +1,5 @@
 // Copyright 2009 The Go Authors. All rights reserved.
+// Copyright 2013 Michael Hendricks. All rights reserved.
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
@@ -84,7 +85,7 @@ var tokenList = []token{
 	{Comment, "/***/"},
 	{Comment, "/* comment */"},
 	{Comment, "/* // comment */"},
-	{Comment, "/* /* comment */"},
+	{Comment, "/* /* embedded */ comment */"},
 	{Comment, "/*\n comment\n*/"},
 	{Comment, "/*" + f100 + "*/"},
 

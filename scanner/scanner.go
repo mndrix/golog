@@ -1,4 +1,5 @@
 // Copyright 2009 The Go Authors. All rights reserved.
+// Copyright 2013 Michael Hendricks. All rights reserved.
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
@@ -507,8 +508,9 @@ func (s *Scanner) scanComment(ch rune) rune {
 	}
 
 	// general comment
+	depth := 1
 	ch = s.next() // read character after "/*"
-	for {
+	for depth > 0 {
 		if ch < 0 {
 			s.error("comment not terminated")
 			break
@@ -517,7 +519,10 @@ func (s *Scanner) scanComment(ch rune) rune {
 		ch = s.next()
 		if ch0 == '*' && ch == '/' {
 			ch = s.next()
-			break
+			depth--
+		} else if ch0 == '/' && ch == '*' {
+			ch = s.next()
+			depth++
 		}
 	}
 	return ch
