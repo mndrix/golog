@@ -588,6 +588,12 @@ redo:
 				tok = String
 			}
 			ch = s.next()
+		case '\'':
+			if s.Mode&ScanIdents != 0 {
+				s.scanString('\'')
+				tok = Ident
+			}
+			ch = s.next()
 		case '.':
 			ch = s.next()
 			if isDecimal(ch) && s.Mode&ScanFloats != 0 {

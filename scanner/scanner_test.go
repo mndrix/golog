@@ -95,6 +95,7 @@ var tokenList = []token{
 	{Ident, "foobar"},
 	{Ident, "abc123"},
 	{Ident, "LGTM"},
+	{Ident, "'hello world'"},
 	{Ident, "_"},
 	{Ident, "_abc123"},
 	{Ident, "abc123_"},
@@ -350,7 +351,8 @@ func testScanSelectedMode(t *testing.T, mode uint, class rune) {
 
 func TestScanSelectedMask(t *testing.T) {
 	testScanSelectedMode(t, 0, 0)
-	testScanSelectedMode(t, ScanIdents, Ident)
+	// Don't test ScanIdents since part of 0'a numbers looks like an ident
+
 	// Don't test ScanInts and ScanNumbers since some parts of
 	// the floats in the source look like (illegal) octal ints
 	// and ScanNumbers may return either Int or Float.
@@ -449,6 +451,7 @@ func TestError(t *testing.T) {
 	testError(t, "`ab"+"\x80", "1:4", "illegal UTF-8 encoding", String)
 	testError(t, "`abc"+"\xff", "1:5", "illegal UTF-8 encoding", String)
 
+	testError(t, `'\"'`, "1:3", "illegal char escape", Ident)
 	testError(t, `"\'"`, "1:3", "illegal char escape", String)
 
 	testError(t, `01238`, "1:6", "illegal octal number", Int)
@@ -456,6 +459,8 @@ func TestError(t *testing.T) {
 	testError(t, `0x`, "1:3", "illegal hexadecimal number", Int)
 	testError(t, `0xg`, "1:3", "illegal hexadecimal number", Int)
 
+	testError(t, `'`, "1:2", "literal not terminated", Ident)
+	testError(t, `'`+"\n", "1:2", "literal not terminated", Ident)
 	testError(t, `"abc`, "1:5", "literal not terminated", String)
 	testError(t, `"abc`+"\n", "1:5", "literal not terminated", String)
 	testError(t, "`abc\n", "2:1", "literal not terminated", String)
