@@ -497,10 +497,10 @@ func (s *Scanner) scanChar() {
 }
 
 func (s *Scanner) scanComment(ch rune) rune {
-	// ch == '/' || ch == '*'
-	if ch == '/' {
+	// ch == '%' || ch == '*'
+	if ch == '%' {
 		// line comment
-		ch = s.next() // read character after "//"
+		ch = s.next() // read character after "%"
 		for ch != '\n' && ch >= 0 {
 			ch = s.next()
 		}
@@ -602,9 +602,21 @@ redo:
 				ch = s.scanMantissa(ch)
 				ch = s.scanExponent(ch)
 			}
+		case '%':
+			if s.Mode&ScanComments != 0 {
+				if s.Mode&SkipComments != 0 {
+					s.tokPos = -1 // don't collect token text
+					ch = s.scanComment(ch)
+					goto redo
+				}
+				ch = s.scanComment(ch)
+				tok = Comment
+			} else {
+				ch = s.next()
+			}
 		case '/':
 			ch = s.next()
-			if (ch == '/' || ch == '*') && s.Mode&ScanComments != 0 {
+			if ch == '*' && s.Mode&ScanComments != 0 {
 				if s.Mode&SkipComments != 0 {
 					s.tokPos = -1 // don't collect token text
 					ch = s.scanComment(ch)
