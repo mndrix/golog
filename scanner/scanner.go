@@ -78,7 +78,7 @@ const (
 	ScanRawStrings = 1 << -RawString
 	ScanComments   = 1 << -Comment
 	SkipComments   = 1 << -skipComment // if set with ScanComments, comments become white space
-	GoTokens       = ScanIdents | ScanFloats | ScanChars | ScanStrings | ScanRawStrings | ScanComments | SkipComments
+	GologTokens    = ScanIdents | ScanFloats | ScanChars | ScanStrings | ScanRawStrings | ScanComments
 )
 
 // The result of Scan is one of the following tokens or a Unicode character.
@@ -175,7 +175,7 @@ type Scanner struct {
 }
 
 // Init initializes a Scanner with a new source and returns s.
-// Error is set to nil, ErrorCount is set to 0, Mode is set to GoTokens,
+// Error is set to nil, ErrorCount is set to 0, Mode is set to GologTokens,
 // and Whitespace is set to GoWhitespace.
 func (s *Scanner) Init(src io.Reader) *Scanner {
 	s.src = src
@@ -203,7 +203,7 @@ func (s *Scanner) Init(src io.Reader) *Scanner {
 	// initialize public fields
 	s.Error = nil
 	s.ErrorCount = 0
-	s.Mode = GoTokens
+	s.Mode = GologTokens
 	s.Whitespace = GoWhitespace
 	s.Line = 0 // invalidate token position
 

@@ -279,14 +279,14 @@ func testScan(t *testing.T, mode uint) {
 }
 
 func TestScan(t *testing.T) {
-	testScan(t, GoTokens)
-	testScan(t, GoTokens&^SkipComments)
+	testScan(t, GologTokens)
+	testScan(t, GologTokens&^SkipComments)
 }
 
 func TestPosition(t *testing.T) {
 	src := makeSource("\t\t\t\t%s\n")
 	s := new(Scanner).Init(src)
-	s.Mode = GoTokens &^ SkipComments
+	s.Mode = GologTokens &^ SkipComments
 	s.Scan()
 	pos := Position{"", 4, 1, 5}
 	for _, k := range tokenList {
@@ -362,6 +362,7 @@ func TestScanNext(t *testing.T) {
 	const BOM = '\uFEFF'
 	BOMs := string(BOM)
 	s := new(Scanner).Init(bytes.NewBufferString(BOMs + "if a == bcd /* com" + BOMs + "ment */ {\n\ta += c\n}" + BOMs + "% line comment ending in eof"))
+	s.Mode = GologTokens | SkipComments
 	checkTok(t, s, 1, s.Scan(), Ident, "if") // the first BOM is ignored
 	checkTok(t, s, 1, s.Scan(), Ident, "a")
 	checkTok(t, s, 1, s.Scan(), '=', "=")
@@ -404,6 +405,7 @@ func TestScanWhitespace(t *testing.T) {
 
 func testError(t *testing.T, src, pos, msg string, tok rune) {
 	s := new(Scanner).Init(bytes.NewBufferString(src))
+	s.Mode = GologTokens | SkipComments
 	errorCalled := false
 	s.Error = func(s *Scanner, m string) {
 		if !errorCalled {
