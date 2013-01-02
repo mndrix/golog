@@ -166,27 +166,6 @@ var tokenList = []token{
 	{Float, "42E+10"},
 	{Float, "01234567890E-10"},
 
-	{Comment, "% chars"},
-	{Char, `' '`},
-	{Char, `'a'`},
-	{Char, `'本'`},
-	{Char, `'\a'`},
-	{Char, `'\b'`},
-	{Char, `'\f'`},
-	{Char, `'\n'`},
-	{Char, `'\r'`},
-	{Char, `'\t'`},
-	{Char, `'\v'`},
-	{Char, `'\''`},
-	{Char, `'\000'`},
-	{Char, `'\777'`},
-	{Char, `'\x00'`},
-	{Char, `'\xff'`},
-	{Char, `'\u0000'`},
-	{Char, `'\ufA16'`},
-	{Char, `'\U00000000'`},
-	{Char, `'\U0000ffAB'`},
-
 	{Comment, "% strings"},
 	{String, `" "`},
 	{String, `"a"`},
@@ -352,7 +331,6 @@ func TestScanSelectedMask(t *testing.T) {
 	// Don't test ScanInts and ScanNumbers since some parts of
 	// the floats in the source look like (illegal) octal ints
 	// and ScanNumbers may return either Int or Float.
-	testScanSelectedMode(t, ScanChars, Char)
 	testScanSelectedMode(t, ScanStrings, String)
 	testScanSelectedMode(t, SkipComments, 0)
 	testScanSelectedMode(t, ScanComments, Comment)
@@ -448,17 +426,13 @@ func TestError(t *testing.T) {
 	testError(t, "`ab"+"\x80", "1:4", "illegal UTF-8 encoding", String)
 	testError(t, "`abc"+"\xff", "1:5", "illegal UTF-8 encoding", String)
 
-	testError(t, `'\"'`, "1:3", "illegal char escape", Char)
 	testError(t, `"\'"`, "1:3", "illegal char escape", String)
 
 	testError(t, `01238`, "1:6", "illegal octal number", Int)
 	testError(t, `01238123`, "1:9", "illegal octal number", Int)
 	testError(t, `0x`, "1:3", "illegal hexadecimal number", Int)
 	testError(t, `0xg`, "1:3", "illegal hexadecimal number", Int)
-	testError(t, `'aa'`, "1:4", "illegal char literal", Char)
 
-	testError(t, `'`, "1:2", "literal not terminated", Char)
-	testError(t, `'`+"\n", "1:2", "literal not terminated", Char)
 	testError(t, `"abc`, "1:5", "literal not terminated", String)
 	testError(t, `"abc`+"\n", "1:5", "literal not terminated", String)
 	testError(t, "`abc\n", "2:1", "literal not terminated", String)

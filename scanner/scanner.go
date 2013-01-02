@@ -73,12 +73,11 @@ const (
 	ScanIdents     = 1 << -Ident
 	ScanInts       = 1 << -Int
 	ScanFloats     = 1 << -Float // includes Ints
-	ScanChars      = 1 << -Char
 	ScanStrings    = 1 << -String
 	ScanRawStrings = 1 << -RawString
 	ScanComments   = 1 << -Comment
 	SkipComments   = 1 << -skipComment // if set with ScanComments, comments become white space
-	GologTokens    = ScanIdents | ScanFloats | ScanChars | ScanStrings | ScanRawStrings | ScanComments
+	GologTokens    = ScanIdents | ScanFloats | ScanStrings | ScanRawStrings | ScanComments
 )
 
 // The result of Scan is one of the following tokens or a Unicode character.
@@ -87,7 +86,6 @@ const (
 	Ident
 	Int
 	Float
-	Char
 	String
 	RawString
 	Comment
@@ -99,7 +97,6 @@ var tokenString = map[rune]string{
 	Ident:     "Ident",
 	Int:       "Int",
 	Float:     "Float",
-	Char:      "Char",
 	String:    "String",
 	RawString: "RawString",
 	Comment:   "Comment",
@@ -491,12 +488,6 @@ func (s *Scanner) scanRawString() {
 	}
 }
 
-func (s *Scanner) scanChar() {
-	if s.scanString('\'') != 1 {
-		s.error("illegal char literal")
-	}
-}
-
 func (s *Scanner) scanComment(ch rune) rune {
 	// ch == '%' || ch == '*'
 	if ch == '%' {
@@ -588,12 +579,6 @@ redo:
 			if s.Mode&ScanStrings != 0 {
 				s.scanString('"')
 				tok = String
-			}
-			ch = s.next()
-		case '\'':
-			if s.Mode&ScanChars != 0 {
-				s.scanChar()
-				tok = Char
 			}
 			ch = s.next()
 		case '.':
