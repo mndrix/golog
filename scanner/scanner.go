@@ -396,6 +396,13 @@ func (s *Scanner) scanNumber(ch rune) (rune, rune) {
 			if !hasMantissa {
 				s.error("illegal hexadecimal number")
 			}
+		case '\'':
+			ch = s.next()
+			if ch == '\\' {
+				ch = s.scanEscape('\'')
+			} else {
+				ch = s.next()
+			}
 		default:
 			// octal int or float
 			has8or9 := false
