@@ -175,6 +175,7 @@ var tokenList = []token{
 	{String, `"\f"`},
 	{String, `"\n"`},
 	{String, `"\r"`},
+	{String, `"\s"`},
 	{String, `"\t"`},
 	{String, `"\v"`},
 	{String, `"\""`},

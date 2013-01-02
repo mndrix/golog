@@ -443,7 +443,7 @@ func (s *Scanner) scanDigits(ch rune, base, n int) rune {
 func (s *Scanner) scanEscape(quote rune) rune {
 	ch := s.next() // read character after '/'
 	switch ch {
-	case 'a', 'b', 'f', 'n', 'r', 't', 'v', '\\', quote:
+	case 'a', 'b', 'f', 'n', 'r', 's', 't', 'v', '\\', quote:
 		// nothing to do
 		ch = s.next()
 	case '0', '1', '2', '3', '4', '5', '6', '7':
