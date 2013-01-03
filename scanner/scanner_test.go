@@ -266,10 +266,8 @@ func testScan(t *testing.T, mode uint) {
 	tok := s.Scan()
 	line := 1
 	for _, k := range tokenList {
-		if mode&SkipComments == 0 || k.tok != Comment {
-			checkTok(t, s, line, tok, k.tok, k.text)
-			tok = s.Scan()
-		}
+		checkTok(t, s, line, tok, k.tok, k.text)
+		tok = s.Scan()
 		line += countNewlines(k.text) + 1 // each token is on a new line
 	}
 	checkTok(t, s, line, tok, EOF, "")
@@ -277,13 +275,11 @@ func testScan(t *testing.T, mode uint) {
 
 func TestScan(t *testing.T) {
 	testScan(t, GologTokens)
-	testScan(t, GologTokens&^SkipComments)
 }
 
 func TestPosition(t *testing.T) {
 	src := makeSource("\t\t\t\t%s\n")
 	s := new(Scanner).Init(src)
-	s.Mode = GologTokens &^ SkipComments
 	s.Scan()
 	pos := Position{"", 4, 1, 5}
 	for _, k := range tokenList {
@@ -351,7 +347,6 @@ func TestScanSelectedMask(t *testing.T) {
 	// the floats in the source look like (illegal) octal ints
 	// and ScanNumbers may return either Int or Float.
 	testScanSelectedMode(t, ScanStrings, String)
-	testScanSelectedMode(t, SkipComments, 0)
 	testScanSelectedMode(t, ScanComments, Comment)
 }
 
@@ -359,7 +354,6 @@ func TestScanNext(t *testing.T) {
 	const BOM = '\uFEFF'
 	BOMs := string(BOM)
 	s := new(Scanner).Init(bytes.NewBufferString(BOMs + "if a == bcd /* com" + BOMs + "ment */ {\n\ta += c\n}" + BOMs + "% line comment ending in eof"))
-	s.Mode = GologTokens | SkipComments
 	checkTok(t, s, 1, s.Scan(), Ident, "if") // the first BOM is ignored
 	checkTok(t, s, 1, s.Scan(), Ident, "a")
 	checkTok(t, s, 1, s.Scan(), '=', "=")
@@ -367,6 +361,7 @@ func TestScanNext(t *testing.T) {
 	checkTok(t, s, 0, s.Next(), ' ', "")
 	checkTok(t, s, 0, s.Next(), 'b', "")
 	checkTok(t, s, 1, s.Scan(), Ident, "cd")
+	checkTok(t, s, 1, s.Scan(), Comment, "/* com" + BOMs + "ment */")
 	checkTok(t, s, 1, s.Scan(), '{', "{")
 	checkTok(t, s, 2, s.Scan(), Ident, "a")
 	checkTok(t, s, 2, s.Scan(), '+', "+")
@@ -374,6 +369,7 @@ func TestScanNext(t *testing.T) {
 	checkTok(t, s, 2, s.Scan(), Ident, "c")
 	checkTok(t, s, 3, s.Scan(), '}', "}")
 	checkTok(t, s, 3, s.Scan(), BOM, BOMs)
+	checkTok(t, s, 3, s.Scan(), Comment, "% line comment ending in eof")
 	checkTok(t, s, 3, s.Scan(), -1, "")
 	if s.ErrorCount != 0 {
 		t.Errorf("%d errors", s.ErrorCount)
@@ -402,7 +398,6 @@ func TestScanWhitespace(t *testing.T) {
 
 func testError(t *testing.T, src, pos, msg string, tok rune) {
 	s := new(Scanner).Init(bytes.NewBufferString(src))
-	s.Mode = GologTokens | SkipComments
 	errorCalled := false
 	s.Error = func(s *Scanner, m string) {
 		if !errorCalled {
@@ -453,7 +448,7 @@ func TestError(t *testing.T) {
 	testError(t, `'`+"\n", "1:2", "literal not terminated", Ident)
 	testError(t, `"abc`, "1:5", "literal not terminated", String)
 	testError(t, `"abc`+"\n", "1:5", "literal not terminated", String)
-	testError(t, `/*/`, "1:4", "comment not terminated", EOF)
+	testError(t, `/*/`, "1:4", "comment not terminated", Comment)
 }
 
 func checkPos(t *testing.T, got, want Position) {

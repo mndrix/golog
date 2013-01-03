@@ -65,9 +65,9 @@ func (pos Position) String() string {
 
 // Predefined mode bits to control recognition of tokens. For instance,
 // to configure a Scanner such that it only recognizes (Go) identifiers,
-// integers, and skips comments, set the Scanner's Mode field to:
+// integers, set the Scanner's Mode field to:
 //
-//	ScanIdents | ScanInts | SkipComments
+//	ScanIdents | ScanInts
 //
 const (
 	ScanIdents     = 1 << -Ident
@@ -75,7 +75,6 @@ const (
 	ScanFloats     = 1 << -Float // includes Ints
 	ScanStrings    = 1 << -String
 	ScanComments   = 1 << -Comment
-	SkipComments   = 1 << -skipComment // if set with ScanComments, comments become white space
 	GologTokens    = ScanIdents | ScanFloats | ScanStrings | ScanComments
 )
 
@@ -87,7 +86,6 @@ const (
 	Float
 	String
 	Comment
-	skipComment
 )
 
 var tokenString = map[rune]string{
@@ -525,7 +523,6 @@ func (s *Scanner) Scan() rune {
 	s.tokPos = -1
 	s.Line = 0
 
-redo:
 	// skip white space
 	for s.Whitespace&(1<<uint(ch)) != 0 {
 		ch = s.next()
@@ -589,11 +586,6 @@ redo:
 			}
 		case '%':
 			if s.Mode&ScanComments != 0 {
-				if s.Mode&SkipComments != 0 {
-					s.tokPos = -1 // don't collect token text
-					ch = s.scanComment(ch)
-					goto redo
-				}
 				ch = s.scanComment(ch)
 				tok = Comment
 			} else {
@@ -602,11 +594,6 @@ redo:
 		case '/':
 			ch = s.next()
 			if ch == '*' && s.Mode&ScanComments != 0 {
-				if s.Mode&SkipComments != 0 {
-					s.tokPos = -1 // don't collect token text
-					ch = s.scanComment(ch)
-					goto redo
-				}
 				ch = s.scanComment(ch)
 				tok = Comment
 			}
