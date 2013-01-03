@@ -212,12 +212,6 @@ var tokenList = []token{
 	{String, `"\U0000ffAB"`},
 	{String, `"` + f100 + `"`},
 
-	{Comment, "% raw strings"},
-	{String, "``"},
-	{String, "`\\`"},
-	{String, "`" + "\n\n/* foobar */\n\n" + "`"},
-	{String, "`" + f100 + "`"},
-
 	{Comment, "% individual characters"},
 	// NUL character is not allowed
 	{'\x01', "\x01"},
@@ -447,10 +441,6 @@ func TestError(t *testing.T) {
 	testError(t, `"ab`+"\x80", "1:4", "illegal UTF-8 encoding", String)
 	testError(t, `"abc`+"\xff", "1:5", "illegal UTF-8 encoding", String)
 
-	testError(t, "`a"+"\x00", "1:3", "illegal character NUL", String)
-	testError(t, "`ab"+"\x80", "1:4", "illegal UTF-8 encoding", String)
-	testError(t, "`abc"+"\xff", "1:5", "illegal UTF-8 encoding", String)
-
 	testError(t, `'\"'`, "1:3", "illegal char escape", Ident)
 	testError(t, `"\'"`, "1:3", "illegal char escape", String)
 
@@ -463,7 +453,6 @@ func TestError(t *testing.T) {
 	testError(t, `'`+"\n", "1:2", "literal not terminated", Ident)
 	testError(t, `"abc`, "1:5", "literal not terminated", String)
 	testError(t, `"abc`+"\n", "1:5", "literal not terminated", String)
-	testError(t, "`abc\n", "2:1", "literal not terminated", String)
 	testError(t, `/*/`, "1:4", "comment not terminated", EOF)
 }
 

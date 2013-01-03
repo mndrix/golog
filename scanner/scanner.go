@@ -74,10 +74,9 @@ const (
 	ScanInts       = 1 << -Int
 	ScanFloats     = 1 << -Float // includes Ints
 	ScanStrings    = 1 << -String
-	ScanRawStrings = 1 << -RawString
 	ScanComments   = 1 << -Comment
 	SkipComments   = 1 << -skipComment // if set with ScanComments, comments become white space
-	GologTokens    = ScanIdents | ScanFloats | ScanStrings | ScanRawStrings | ScanComments
+	GologTokens    = ScanIdents | ScanFloats | ScanStrings | ScanComments
 )
 
 // The result of Scan is one of the following tokens or a Unicode character.
@@ -87,7 +86,6 @@ const (
 	Int
 	Float
 	String
-	RawString
 	Comment
 	skipComment
 )
@@ -98,7 +96,6 @@ var tokenString = map[rune]string{
 	Int:       "Int",
 	Float:     "Float",
 	String:    "String",
-	RawString: "RawString",
 	Comment:   "Comment",
 }
 
@@ -484,17 +481,6 @@ func (s *Scanner) scanString(quote rune) (n int) {
 	return
 }
 
-func (s *Scanner) scanRawString() {
-	ch := s.next() // read character after '`'
-	for ch != '`' {
-		if ch < 0 {
-			s.error("literal not terminated")
-			return
-		}
-		ch = s.next()
-	}
-}
-
 func (s *Scanner) scanComment(ch rune) rune {
 	// ch == '%' || ch == '*'
 	if ch == '%' {
@@ -624,12 +610,6 @@ redo:
 				ch = s.scanComment(ch)
 				tok = Comment
 			}
-		case '`':
-			if s.Mode&ScanRawStrings != 0 {
-				s.scanRawString()
-				tok = String
-			}
-			ch = s.next()
 		default:
 			ch = s.next()
 		}
