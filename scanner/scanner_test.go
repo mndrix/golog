@@ -94,20 +94,28 @@ var tokenList = []token{
 	{Atom, "a0"},
 	{Atom, "foobar"},
 	{Atom, "abc123"},
-	{Atom, "LGTM"},
 	{Atom, "'hello world'"},
-	{Atom, "_"},
-	{Atom, "_abc123"},
 	{Atom, "abc123_"},
-	{Atom, "_abc_123_"},
-	{Atom, "_äöü"},
-	{Atom, "_本"},
 	{Atom, "äöü"},
-	{Atom, "本"},
+//	{Atom, "本"},  // "unicode" package doesn't have IsIdStart()
 	{Atom, "a۰۱۸"},
 	{Atom, "foo६४"},
 	{Atom, "bar９８７６"},
 	{Atom, f100},
+	{Atom, "+"},
+	{Atom, "/"},
+	{Atom, "."},
+	{Atom, "~"},
+
+	{Comment, "% variables"},
+	{Variable, "LGTM"},
+	{Variable, "ΛΔΡ"},  // starts with uppercase lambda
+	{Variable, "List0"},
+	{Variable, "_"},
+	{Variable, "_abc123"},
+	{Variable, "_abc_123_"},
+	{Variable, "_äöü"},
+	{Variable, "_本"},
 
 	{Comment, "% decimal ints"},
 	{Int, "0"},
@@ -216,10 +224,6 @@ var tokenList = []token{
 	// NUL character is not allowed
 	{'\x01', "\x01"},
 	{' ' - 1, string(' ' - 1)},
-	{'+', "+"},
-	{'/', "/"},
-	{'.', "."},
-	{'~', "~"},
 	{'(', "("},
 }
 
@@ -307,16 +311,14 @@ func TestScanNext(t *testing.T) {
 	s := new(Scanner).Init(bytes.NewBufferString(BOMs + "if a == bcd /* com" + BOMs + "ment */ {\n\ta += c\n}" + BOMs + "% line comment ending in eof"))
 	checkTok(t, s, 1, s.Scan(), Atom, "if") // the first BOM is ignored
 	checkTok(t, s, 1, s.Scan(), Atom, "a")
-	checkTok(t, s, 1, s.Scan(), '=', "=")
-	checkTok(t, s, 0, s.Next(), '=', "")
+	checkTok(t, s, 1, s.Scan(), Atom, "==")
 	checkTok(t, s, 0, s.Next(), ' ', "")
 	checkTok(t, s, 0, s.Next(), 'b', "")
 	checkTok(t, s, 1, s.Scan(), Atom, "cd")
 	checkTok(t, s, 1, s.Scan(), Comment, "/* com" + BOMs + "ment */")
 	checkTok(t, s, 1, s.Scan(), '{', "{")
 	checkTok(t, s, 2, s.Scan(), Atom, "a")
-	checkTok(t, s, 2, s.Scan(), '+', "+")
-	checkTok(t, s, 0, s.Next(), '=', "")
+	checkTok(t, s, 2, s.Scan(), Atom, "+=")
 	checkTok(t, s, 2, s.Scan(), Atom, "c")
 	checkTok(t, s, 3, s.Scan(), '}', "}")
 	checkTok(t, s, 3, s.Scan(), BOM, BOMs)
@@ -428,12 +430,12 @@ func TestPos(t *testing.T) {
 	}
 
 	// corner case: source with only a single character
-	s = new(Scanner).Init(bytes.NewBufferString("本"))
+	s = new(Scanner).Init(bytes.NewBufferString("j"))
 	checkPos(t, s.Pos(), Position{Offset: 0, Line: 1, Column: 1})
-	checkNextPos(t, s, 3, 1, 2, '本')
+	checkNextPos(t, s, 1, 1, 2, 'j')
 	// after EOF position doesn't change
 	for i := 10; i > 0; i-- {
-		checkScanPos(t, s, 3, 1, 2, EOF, "")
+		checkScanPos(t, s, 1, 1, 2, EOF, "")
 	}
 	if s.ErrorCount != 0 {
 		t.Errorf("%d errors", s.ErrorCount)
@@ -461,16 +463,16 @@ func TestPos(t *testing.T) {
 	}
 
 	// positions after calling Scan
-	s = new(Scanner).Init(bytes.NewBufferString("abc\n本語\n\nx"))
+	s = new(Scanner).Init(bytes.NewBufferString("abc\nλα\n\nx"))
 	checkScanPos(t, s, 0, 1, 1, Atom, "abc")
 	s.Peek() // peek doesn't affect the position
 	s.Next()
-	checkScanPos(t, s, 4, 2, 1, Atom, "本語")
+	checkScanPos(t, s, 4, 2, 1, Atom, "λα")
 	s.Next(); s.Next()
-	checkScanPos(t, s, 12, 4, 1, Atom, "x")
+	checkScanPos(t, s, 10, 4, 1, Atom, "x")
 	// after EOF position doesn't change
 	for i := 10; i > 0; i-- {
-		checkScanPos(t, s, 13, 4, 2, EOF, "")
+		checkScanPos(t, s, 11, 4, 2, EOF, "")
 	}
 	if s.ErrorCount != 0 {
 		t.Errorf("%d errors", s.ErrorCount)
@@ -493,8 +495,21 @@ greek(λαμβδα, 0'\n, 0'a).
 func TestAcid(t *testing.T) {
 	s := new(Scanner).Init(bytes.NewBufferString(acidTest))
 	checkScanPos(t, s, 0, 1, 1, Comment, "/* multiline\nand /* embedded */\ncomment */")
+
 	checkScanPos(t, s, 43, 4, 1, Atom, "thing")
 	checkScanPos(t, s, 48, 4, 6, '(', "(")
-	checkScanPos(t, s, 49, 4, 7, Atom, "A")
+	checkScanPos(t, s, 49, 4, 7, Variable, "A")
 	checkScanPos(t, s, 50, 4, 8, ')', ")")
+	checkScanPos(t, s, 52, 4, 10, Atom, ":-")
+	checkScanPos(t, s, 55, 4, 13, Atom, "foo")
+	checkScanPos(t, s, 58, 4, 16, '(', "(")
+	checkScanPos(t, s, 59, 4, 17, Variable, "A")
+	checkScanPos(t, s, 60, 4, 18, ',', ",")
+	checkScanPos(t, s, 62, 4, 20, Atom, "bar")
+	checkScanPos(t, s, 65, 4, 23, ',', ",")
+	checkScanPos(t, s, 67, 4, 25, String, `"baz"`)
+	checkScanPos(t, s, 72, 4, 30, ')', ")")
+	checkScanPos(t, s, 73, 4, 31, ',', ",")
+	checkScanPos(t, s, 75, 4, 33, Atom, "!")
+	checkScanPos(t, s, 76, 4, 34, Atom, ".")
 }

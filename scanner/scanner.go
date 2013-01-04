@@ -67,6 +67,7 @@ func (pos Position) String() string {
 const (
 	EOF = -(iota + 1)
 	Atom
+	Variable
 	Int
 	Float
 	String
@@ -75,7 +76,8 @@ const (
 
 var tokenString = map[rune]string{
 	EOF:       "EOF",
-	Atom:     "Atom",
+	Atom:      "Atom",
+	Variable:  "Variable",
 	Int:       "Int",
 	Float:     "Float",
 	String:    "String",
@@ -294,9 +296,8 @@ func (s *Scanner) error(msg string) {
 	fmt.Fprintf(os.Stderr, "%s: %s\n", pos, msg)
 }
 
-func (s *Scanner) scanAtom() rune {
-	ch := s.next() // read character after first '_' or letter
-	for ch == '_' || unicode.IsLetter(ch) || unicode.IsDigit(ch) {
+func (s *Scanner) scanAtom(ch rune) rune {
+	for isUnquotedAtomContinue(ch) {
 		ch = s.next()
 	}
 	return ch
@@ -315,6 +316,37 @@ func digitVal(ch rune) int {
 }
 
 func isDecimal(ch rune) bool { return '0' <= ch && ch <= '9' }
+
+// true if the rune is a valid start for an unquoted atom
+func isUnquotedAtomStart(ch rune) bool {
+	if unicode.IsLower(ch) || isSymbol(ch) {
+		return true
+	}
+	return false
+}
+
+func isUnquotedAtomContinue(ch rune) bool {
+	if ch == '_' || unicode.IsLetter(ch) || unicode.IsDigit(ch) || isSymbol(ch) {
+		return true
+	}
+	return false
+}
+
+// true if the rune is a valid start for a variable
+func isVariableStart(ch rune) bool {
+	return ch == '_' || unicode.IsUpper(ch)
+}
+
+func isSolo(ch rune) bool { return ch == '!' || ch == ';' }
+
+func isSymbol(ch rune) bool {
+	for _, allowed := range `#&*+-./:<=>?@\^~` {
+		if ch == allowed {
+			return true
+		}
+	}
+	return false
+}
 
 func (s *Scanner) scanMantissa(ch rune) rune {
 	for isDecimal(ch) {
@@ -516,9 +548,36 @@ func (s *Scanner) Scan() rune {
 	// determine token value
 	tok := ch
 	switch {
-	case unicode.IsLetter(ch) || ch == '_':
+	case ch == '/':		// '/' can start a comment or an atom
+		ch = s.next()
+		if ch == '*' {
+			ch = s.scanComment(ch)
+			tok = Comment
+		} else {
+			tok = Atom
+			ch = s.scanAtom(ch)
+		}
+	case ch == '.':		// '.' can start an atom or a float
+		ch = s.next()
+		if isDecimal(ch) {
+			tok = Float
+			ch = s.scanMantissa(ch)
+			ch = s.scanExponent(ch)
+		} else {
+			tok = Atom
+			ch = s.scanAtom(ch)
+		}
+	case isSolo(ch):
 		tok = Atom
-		ch = s.scanAtom()
+		ch = s.next()
+	case isUnquotedAtomStart(ch):
+		tok = Atom
+		ch = s.next()
+		ch = s.scanAtom(ch)
+	case isVariableStart(ch):
+		tok = Variable
+		ch = s.next()
+		ch = s.scanAtom(ch)  // variables look like atoms after the start
 	case isDecimal(ch):
 		tok, ch = s.scanNumber(ch)
 	default:
@@ -531,22 +590,9 @@ func (s *Scanner) Scan() rune {
 			s.scanString('\'')
 			tok = Atom
 			ch = s.next()
-		case '.':
-			ch = s.next()
-			if isDecimal(ch) {
-				tok = Float
-				ch = s.scanMantissa(ch)
-				ch = s.scanExponent(ch)
-			}
 		case '%':
 			ch = s.scanComment(ch)
 			tok = Comment
-		case '/':
-			ch = s.next()
-			if ch == '*' {
-				ch = s.scanComment(ch)
-				tok = Comment
-			}
 		default:
 			ch = s.next()
 		}
