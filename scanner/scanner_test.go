@@ -302,27 +302,6 @@ func TestPosition(t *testing.T) {
 	}
 }
 
-func TestScanZeroMode(t *testing.T) {
-	src := makeSource("%s\n")
-	str := src.String()
-	s := new(Scanner).Init(src)
-	s.Mode = 0       // don't recognize any token classes
-	s.Whitespace = 0 // don't skip any whitespace
-	tok := s.Scan()
-	for i, ch := range str {
-		if tok != ch {
-			t.Fatalf("%d. tok = %s, want %s", i, TokenString(tok), TokenString(ch))
-		}
-		tok = s.Scan()
-	}
-	if tok != EOF {
-		t.Fatalf("tok = %s, want EOF", TokenString(tok))
-	}
-	if s.ErrorCount != 0 {
-		t.Errorf("%d errors", s.ErrorCount)
-	}
-}
-
 func testScanSelectedMode(t *testing.T, mode uint, class rune) {
 	src := makeSource("%s\n")
 	s := new(Scanner).Init(src)
@@ -373,26 +352,6 @@ func TestScanNext(t *testing.T) {
 	checkTok(t, s, 3, s.Scan(), -1, "")
 	if s.ErrorCount != 0 {
 		t.Errorf("%d errors", s.ErrorCount)
-	}
-}
-
-func TestScanWhitespace(t *testing.T) {
-	var buf bytes.Buffer
-	var ws uint64
-	// start at 1, NUL character is not allowed
-	for ch := byte(1); ch < ' '; ch++ {
-		buf.WriteByte(ch)
-		ws |= 1 << ch
-	}
-	const orig = 'x'
-	buf.WriteByte(orig)
-
-	s := new(Scanner).Init(&buf)
-	s.Mode = 0
-	s.Whitespace = ws
-	tok := s.Scan()
-	if tok != orig {
-		t.Errorf("tok = %s, want %s", TokenString(tok), TokenString(orig))
 	}
 }
 
@@ -511,22 +470,18 @@ func TestPos(t *testing.T) {
 
 	// positions after calling Next
 	s = new(Scanner).Init(bytes.NewBufferString("  foo६४  \n\n本語\n"))
-	checkNextPos(t, s, 1, 1, 2, ' ')
 	s.Peek() // peek doesn't affect the position
-	checkNextPos(t, s, 2, 1, 3, ' ')
+	s.Next(); s.Next()
 	checkNextPos(t, s, 3, 1, 4, 'f')
 	checkNextPos(t, s, 4, 1, 5, 'o')
 	checkNextPos(t, s, 5, 1, 6, 'o')
 	checkNextPos(t, s, 8, 1, 7, '६')
 	checkNextPos(t, s, 11, 1, 8, '४')
-	checkNextPos(t, s, 12, 1, 9, ' ')
-	checkNextPos(t, s, 13, 1, 10, ' ')
-	checkNextPos(t, s, 14, 2, 1, '\n')
-	checkNextPos(t, s, 15, 3, 1, '\n')
+	s.Next(); s.Next(); s.Next(); s.Next()
 	checkNextPos(t, s, 18, 3, 2, '本')
 	checkNextPos(t, s, 21, 3, 3, '語')
-	checkNextPos(t, s, 22, 4, 1, '\n')
 	// after EOF position doesn't change
+	s.Next()
 	for i := 10; i > 0; i-- {
 		checkScanPos(t, s, 22, 4, 1, EOF)
 	}
@@ -537,16 +492,14 @@ func TestPos(t *testing.T) {
 	// positions after calling Scan
 	s = new(Scanner).Init(bytes.NewBufferString("abc\n本語\n\nx"))
 	s.Mode = 0
-	s.Whitespace = 0
 	checkScanPos(t, s, 0, 1, 1, 'a')
 	s.Peek() // peek doesn't affect the position
 	checkScanPos(t, s, 1, 1, 2, 'b')
 	checkScanPos(t, s, 2, 1, 3, 'c')
-	checkScanPos(t, s, 3, 1, 4, '\n')
+	s.Next()
 	checkScanPos(t, s, 4, 2, 1, '本')
 	checkScanPos(t, s, 7, 2, 2, '語')
-	checkScanPos(t, s, 10, 2, 3, '\n')
-	checkScanPos(t, s, 11, 3, 1, '\n')
+	s.Next(); s.Next()
 	checkScanPos(t, s, 12, 4, 1, 'x')
 	// after EOF position doesn't change
 	for i := 10; i > 0; i-- {

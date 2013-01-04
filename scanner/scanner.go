@@ -105,10 +105,6 @@ func TokenString(tok rune) string {
 	return fmt.Sprintf("%q", string(tok))
 }
 
-// GoWhitespace is the default value for the Scanner's Whitespace field.
-// Its value selects Go's white space characters.
-const GoWhitespace = 1<<'\t' | 1<<'\n' | 1<<'\r' | 1<<' '
-
 const bufLen = 1024 // at least utf8.UTFMax
 
 // A Scanner implements reading of Unicode characters and tokens from an io.Reader.
@@ -151,12 +147,6 @@ type Scanner struct {
 	// changed at any time.
 	Mode uint
 
-	// The Whitespace field controls which characters are recognized
-	// as white space. To recognize a character ch <= ' ' as white space,
-	// set the ch'th bit in Whitespace (the Scanner's behavior is undefined
-	// for values ch > ' '). The field may be changed at any time.
-	Whitespace uint64
-
 	// Start position of most recently scanned token; set by Scan.
 	// Calling Init or Next invalidates the position (Line == 0).
 	// The Filename field is always left untouched by the Scanner.
@@ -167,8 +157,7 @@ type Scanner struct {
 }
 
 // Init initializes a Scanner with a new source and returns s.
-// Error is set to nil, ErrorCount is set to 0, Mode is set to GologTokens,
-// and Whitespace is set to GoWhitespace.
+// Error is set to nil, ErrorCount is set to 0, Mode is set to GologTokens
 func (s *Scanner) Init(src io.Reader) *Scanner {
 	s.src = src
 
@@ -196,7 +185,6 @@ func (s *Scanner) Init(src io.Reader) *Scanner {
 	s.Error = nil
 	s.ErrorCount = 0
 	s.Mode = GologTokens
-	s.Whitespace = GoWhitespace
 	s.Line = 0 // invalidate token position
 
 	return s
@@ -524,7 +512,7 @@ func (s *Scanner) Scan() rune {
 	s.Line = 0
 
 	// skip white space
-	for s.Whitespace&(1<<uint(ch)) != 0 {
+	for unicode.IsSpace(ch) {
 		ch = s.next()
 	}
 
