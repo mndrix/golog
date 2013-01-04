@@ -111,11 +111,11 @@ var tokenList = []token{
 	{Variable, "LGTM"},
 	{Variable, "ΛΔΡ"},  // starts with uppercase lambda
 	{Variable, "List0"},
-	{Variable, "_"},
 	{Variable, "_abc123"},
 	{Variable, "_abc_123_"},
 	{Variable, "_äöü"},
 	{Variable, "_本"},
+	{Void, "_"},
 
 	{Comment, "% decimal ints"},
 	{Int, "0"},
@@ -516,7 +516,7 @@ func TestAcid(t *testing.T) {
 
 	checkScanPos(t, s, 78, 5, 1, Functor, "thing")
 	checkScanPos(t, s, 83, 5, 6, '(', "(")
-	checkScanPos(t, s, 84, 5, 7, Variable, "_")
+	checkScanPos(t, s, 84, 5, 7, Void, "_")
 	checkScanPos(t, s, 85, 5, 8, ')', ")")
 	checkScanPos(t, s, 87, 5, 10, Atom, ":-")
 	checkScanPos(t, s, 94, 6, 5, Functor, "format")

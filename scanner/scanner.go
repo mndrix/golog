@@ -74,6 +74,7 @@ const (
 	Int
 	String
 	Variable
+	Void
 )
 
 var tokenString = map[rune]string{
@@ -86,6 +87,7 @@ var tokenString = map[rune]string{
 	Int:       "Int",
 	String:    "String",
 	Variable:  "Variable",
+	Void:      "Void",
 }
 
 // TokenString returns a printable string for a token or Unicode character.
@@ -611,10 +613,15 @@ func (s *Scanner) Scan() rune {
 	s.ch = ch
 
 	// last minute specializations
-	if tok == Atom {
-		switch s.TokenText() {
-			case ".": return FullStop
-		}
+	switch tok {
+		case Atom:
+			switch s.TokenText() {
+				case ".": return FullStop
+			}
+		case Variable:
+			switch s.TokenText() {
+				case "_": return Void
+			}
 	}
 	return tok
 }
