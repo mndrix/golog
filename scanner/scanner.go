@@ -66,7 +66,7 @@ func (pos Position) String() string {
 // The result of Scan is one of the following tokens or a Unicode character.
 const (
 	EOF = -(iota + 1)
-	Ident
+	Atom
 	Int
 	Float
 	String
@@ -75,7 +75,7 @@ const (
 
 var tokenString = map[rune]string{
 	EOF:       "EOF",
-	Ident:     "Ident",
+	Atom:     "Atom",
 	Int:       "Int",
 	Float:     "Float",
 	String:    "String",
@@ -294,7 +294,7 @@ func (s *Scanner) error(msg string) {
 	fmt.Fprintf(os.Stderr, "%s: %s\n", pos, msg)
 }
 
-func (s *Scanner) scanIdentifier() rune {
+func (s *Scanner) scanAtom() rune {
 	ch := s.next() // read character after first '_' or letter
 	for ch == '_' || unicode.IsLetter(ch) || unicode.IsDigit(ch) {
 		ch = s.next()
@@ -517,8 +517,8 @@ func (s *Scanner) Scan() rune {
 	tok := ch
 	switch {
 	case unicode.IsLetter(ch) || ch == '_':
-		tok = Ident
-		ch = s.scanIdentifier()
+		tok = Atom
+		ch = s.scanAtom()
 	case isDecimal(ch):
 		tok, ch = s.scanNumber(ch)
 	default:
@@ -529,7 +529,7 @@ func (s *Scanner) Scan() rune {
 			ch = s.next()
 		case '\'':
 			s.scanString('\'')
-			tok = Ident
+			tok = Atom
 			ch = s.next()
 		case '.':
 			ch = s.next()

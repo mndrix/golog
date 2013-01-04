@@ -90,24 +90,24 @@ var tokenList = []token{
 	{Comment, "/*" + f100 + "*/"},
 
 	{Comment, "% identifiers"},
-	{Ident, "a"},
-	{Ident, "a0"},
-	{Ident, "foobar"},
-	{Ident, "abc123"},
-	{Ident, "LGTM"},
-	{Ident, "'hello world'"},
-	{Ident, "_"},
-	{Ident, "_abc123"},
-	{Ident, "abc123_"},
-	{Ident, "_abc_123_"},
-	{Ident, "_äöü"},
-	{Ident, "_本"},
-	{Ident, "äöü"},
-	{Ident, "本"},
-	{Ident, "a۰۱۸"},
-	{Ident, "foo६४"},
-	{Ident, "bar９８７６"},
-	{Ident, f100},
+	{Atom, "a"},
+	{Atom, "a0"},
+	{Atom, "foobar"},
+	{Atom, "abc123"},
+	{Atom, "LGTM"},
+	{Atom, "'hello world'"},
+	{Atom, "_"},
+	{Atom, "_abc123"},
+	{Atom, "abc123_"},
+	{Atom, "_abc_123_"},
+	{Atom, "_äöü"},
+	{Atom, "_本"},
+	{Atom, "äöü"},
+	{Atom, "本"},
+	{Atom, "a۰۱۸"},
+	{Atom, "foo६४"},
+	{Atom, "bar９８７６"},
+	{Atom, f100},
 
 	{Comment, "% decimal ints"},
 	{Int, "0"},
@@ -305,19 +305,19 @@ func TestScanNext(t *testing.T) {
 	const BOM = '\uFEFF'
 	BOMs := string(BOM)
 	s := new(Scanner).Init(bytes.NewBufferString(BOMs + "if a == bcd /* com" + BOMs + "ment */ {\n\ta += c\n}" + BOMs + "% line comment ending in eof"))
-	checkTok(t, s, 1, s.Scan(), Ident, "if") // the first BOM is ignored
-	checkTok(t, s, 1, s.Scan(), Ident, "a")
+	checkTok(t, s, 1, s.Scan(), Atom, "if") // the first BOM is ignored
+	checkTok(t, s, 1, s.Scan(), Atom, "a")
 	checkTok(t, s, 1, s.Scan(), '=', "=")
 	checkTok(t, s, 0, s.Next(), '=', "")
 	checkTok(t, s, 0, s.Next(), ' ', "")
 	checkTok(t, s, 0, s.Next(), 'b', "")
-	checkTok(t, s, 1, s.Scan(), Ident, "cd")
+	checkTok(t, s, 1, s.Scan(), Atom, "cd")
 	checkTok(t, s, 1, s.Scan(), Comment, "/* com" + BOMs + "ment */")
 	checkTok(t, s, 1, s.Scan(), '{', "{")
-	checkTok(t, s, 2, s.Scan(), Ident, "a")
+	checkTok(t, s, 2, s.Scan(), Atom, "a")
 	checkTok(t, s, 2, s.Scan(), '+', "+")
 	checkTok(t, s, 0, s.Next(), '=', "")
-	checkTok(t, s, 2, s.Scan(), Ident, "c")
+	checkTok(t, s, 2, s.Scan(), Atom, "c")
 	checkTok(t, s, 3, s.Scan(), '}', "}")
 	checkTok(t, s, 3, s.Scan(), BOM, BOMs)
 	checkTok(t, s, 3, s.Scan(), Comment, "% line comment ending in eof")
@@ -359,15 +359,15 @@ func TestError(t *testing.T) {
 	testError(t, "\x80", "1:1", "illegal UTF-8 encoding", utf8.RuneError)
 	testError(t, "\xff", "1:1", "illegal UTF-8 encoding", utf8.RuneError)
 
-	testError(t, "a\x00", "1:2", "illegal character NUL", Ident)
-	testError(t, "ab\x80", "1:3", "illegal UTF-8 encoding", Ident)
-	testError(t, "abc\xff", "1:4", "illegal UTF-8 encoding", Ident)
+	testError(t, "a\x00", "1:2", "illegal character NUL", Atom)
+	testError(t, "ab\x80", "1:3", "illegal UTF-8 encoding", Atom)
+	testError(t, "abc\xff", "1:4", "illegal UTF-8 encoding", Atom)
 
 	testError(t, `"a`+"\x00", "1:3", "illegal character NUL", String)
 	testError(t, `"ab`+"\x80", "1:4", "illegal UTF-8 encoding", String)
 	testError(t, `"abc`+"\xff", "1:5", "illegal UTF-8 encoding", String)
 
-	testError(t, `'\"'`, "1:3", "illegal char escape", Ident)
+	testError(t, `'\"'`, "1:3", "illegal char escape", Atom)
 	testError(t, `"\'"`, "1:3", "illegal char escape", String)
 
 	testError(t, `01238`, "1:6", "illegal octal number", Int)
@@ -375,8 +375,8 @@ func TestError(t *testing.T) {
 	testError(t, `0x`, "1:3", "illegal hexadecimal number", Int)
 	testError(t, `0xg`, "1:3", "illegal hexadecimal number", Int)
 
-	testError(t, `'`, "1:2", "literal not terminated", Ident)
-	testError(t, `'`+"\n", "1:2", "literal not terminated", Ident)
+	testError(t, `'`, "1:2", "literal not terminated", Atom)
+	testError(t, `'`+"\n", "1:2", "literal not terminated", Atom)
 	testError(t, `"abc`, "1:5", "literal not terminated", String)
 	testError(t, `"abc`+"\n", "1:5", "literal not terminated", String)
 	testError(t, `/*/`, "1:4", "comment not terminated", Comment)
@@ -462,12 +462,12 @@ func TestPos(t *testing.T) {
 
 	// positions after calling Scan
 	s = new(Scanner).Init(bytes.NewBufferString("abc\n本語\n\nx"))
-	checkScanPos(t, s, 0, 1, 1, Ident, "abc")
+	checkScanPos(t, s, 0, 1, 1, Atom, "abc")
 	s.Peek() // peek doesn't affect the position
 	s.Next()
-	checkScanPos(t, s, 4, 2, 1, Ident, "本語")
+	checkScanPos(t, s, 4, 2, 1, Atom, "本語")
 	s.Next(); s.Next()
-	checkScanPos(t, s, 12, 4, 1, Ident, "x")
+	checkScanPos(t, s, 12, 4, 1, Atom, "x")
 	// after EOF position doesn't change
 	for i := 10; i > 0; i-- {
 		checkScanPos(t, s, 13, 4, 2, EOF, "")
@@ -493,8 +493,8 @@ greek(λαμβδα, 0'\n, 0'a).
 func TestAcid(t *testing.T) {
 	s := new(Scanner).Init(bytes.NewBufferString(acidTest))
 	checkScanPos(t, s, 0, 1, 1, Comment, "/* multiline\nand /* embedded */\ncomment */")
-	checkScanPos(t, s, 43, 4, 1, Ident, "thing")
+	checkScanPos(t, s, 43, 4, 1, Atom, "thing")
 	checkScanPos(t, s, 48, 4, 6, '(', "(")
-	checkScanPos(t, s, 49, 4, 7, Ident, "A")
+	checkScanPos(t, s, 49, 4, 7, Atom, "A")
 	checkScanPos(t, s, 50, 4, 8, ')', ")")
 }
