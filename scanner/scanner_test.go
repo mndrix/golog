@@ -487,7 +487,7 @@ and /* embedded */
 comment */
 thing(A) :- foo(A, bar, "baz"), !.
 thing(_) :-
-    format("~p~p~n", [hello, world])
+    format("~p~p~n", [hello, world]).
 % entire line comment
 bye('tschüß', 9, 3.14).  % postfix comment
 greek(λαμβδα, 0'\n, 0'a).
@@ -512,4 +512,44 @@ func TestAcid(t *testing.T) {
 	checkScanPos(t, s, 73, 4, 31, ',', ",")
 	checkScanPos(t, s, 75, 4, 33, Atom, "!")
 	checkScanPos(t, s, 76, 4, 34, Atom, ".")
+
+	checkScanPos(t, s, 78, 5, 1, Atom, "thing")
+	checkScanPos(t, s, 83, 5, 6, '(', "(")
+	checkScanPos(t, s, 84, 5, 7, Variable, "_")
+	checkScanPos(t, s, 85, 5, 8, ')', ")")
+	checkScanPos(t, s, 87, 5, 10, Atom, ":-")
+	checkScanPos(t, s, 94, 6, 5, Atom, "format")
+	checkScanPos(t, s, 100, 6, 11, '(', "(")
+	checkScanPos(t, s, 101, 6, 12, String, `"~p~p~n"`)
+	checkScanPos(t, s, 109, 6, 20, ',', ",")
+	checkScanPos(t, s, 111, 6, 22, '[', "[")
+	checkScanPos(t, s, 112, 6, 23, Atom, "hello")
+	checkScanPos(t, s, 117, 6, 28, ',', ",")
+	checkScanPos(t, s, 119, 6, 30, Atom, "world")
+	checkScanPos(t, s, 124, 6, 35, ']', "]")
+	checkScanPos(t, s, 125, 6, 36, ')', ")")
+	checkScanPos(t, s, 126, 6, 37, Atom, ".")
+
+	checkScanPos(t, s, 128, 7, 1, Comment, "% entire line comment")
+
+	checkScanPos(t, s, 150, 8, 1, Atom, "bye")
+	checkScanPos(t, s, 153, 8, 4, '(', "(")
+	checkScanPos(t, s, 154, 8, 5, Atom, "'tschüß'")
+	checkScanPos(t, s, 164, 8, 13, ',', ",")
+	checkScanPos(t, s, 166, 8, 15, Int, "9")
+	checkScanPos(t, s, 167, 8, 16, ',', ",")
+	checkScanPos(t, s, 169, 8, 18, Float, "3.14")
+	checkScanPos(t, s, 173, 8, 22, ')', ")")
+	checkScanPos(t, s, 174, 8, 23, Atom, ".")
+	checkScanPos(t, s, 177, 8, 26, Comment, "% postfix comment")
+
+	checkScanPos(t, s, 195, 9, 1, Atom, "greek")
+	checkScanPos(t, s, 200, 9, 6, '(', "(")
+	checkScanPos(t, s, 201, 9, 7, Atom, "λαμβδα")
+	checkScanPos(t, s, 213, 9, 13, ',', ",")
+	checkScanPos(t, s, 215, 9, 15, Int, `0'\n`)
+	checkScanPos(t, s, 219, 9, 19, ',', ",")
+	checkScanPos(t, s, 221, 9, 21, Int, `0'a`)
+	checkScanPos(t, s, 224, 9, 24, ')', ")")
+	checkScanPos(t, s, 225, 9, 25, Atom, ".")
 }
