@@ -260,9 +260,8 @@ func countNewlines(s string) int {
 	return n
 }
 
-func testScan(t *testing.T, mode uint) {
+func testScan(t *testing.T) {
 	s := new(Scanner).Init(makeSource(" \t%s\n"))
-	s.Mode = mode
 	tok := s.Scan()
 	line := 1
 	for _, k := range tokenList {
@@ -274,7 +273,7 @@ func testScan(t *testing.T, mode uint) {
 }
 
 func TestScan(t *testing.T) {
-	testScan(t, GologTokens)
+	testScan(t)
 }
 
 func TestPosition(t *testing.T) {
@@ -300,33 +299,6 @@ func TestPosition(t *testing.T) {
 	if s.ErrorCount != 0 {
 		t.Errorf("%d errors", s.ErrorCount)
 	}
-}
-
-func testScanSelectedMode(t *testing.T, mode uint, class rune) {
-	src := makeSource("%s\n")
-	s := new(Scanner).Init(src)
-	s.Mode = mode
-	tok := s.Scan()
-	for tok != EOF {
-		if tok < 0 && tok != class {
-			t.Fatalf("tok = %s, want %s", TokenString(tok), TokenString(class))
-		}
-		tok = s.Scan()
-	}
-	if s.ErrorCount != 0 {
-		t.Errorf("%d errors", s.ErrorCount)
-	}
-}
-
-func TestScanSelectedMask(t *testing.T) {
-	testScanSelectedMode(t, 0, 0)
-	// Don't test ScanIdents since part of 0'a numbers looks like an ident
-
-	// Don't test ScanInts and ScanNumbers since some parts of
-	// the floats in the source look like (illegal) octal ints
-	// and ScanNumbers may return either Int or Float.
-	testScanSelectedMode(t, ScanStrings, String)
-	testScanSelectedMode(t, ScanComments, Comment)
 }
 
 func TestScanNext(t *testing.T) {
@@ -491,16 +463,12 @@ func TestPos(t *testing.T) {
 
 	// positions after calling Scan
 	s = new(Scanner).Init(bytes.NewBufferString("abc\n本語\n\nx"))
-	s.Mode = 0
-	checkScanPos(t, s, 0, 1, 1, 'a')
+	checkScanPos(t, s, 0, 1, 1, Ident)
 	s.Peek() // peek doesn't affect the position
-	checkScanPos(t, s, 1, 1, 2, 'b')
-	checkScanPos(t, s, 2, 1, 3, 'c')
 	s.Next()
-	checkScanPos(t, s, 4, 2, 1, '本')
-	checkScanPos(t, s, 7, 2, 2, '語')
+	checkScanPos(t, s, 4, 2, 1, Ident)
 	s.Next(); s.Next()
-	checkScanPos(t, s, 12, 4, 1, 'x')
+	checkScanPos(t, s, 12, 4, 1, Ident)
 	// after EOF position doesn't change
 	for i := 10; i > 0; i-- {
 		checkScanPos(t, s, 13, 4, 2, EOF)

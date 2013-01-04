@@ -63,21 +63,6 @@ func (pos Position) String() string {
 	return s
 }
 
-// Predefined mode bits to control recognition of tokens. For instance,
-// to configure a Scanner such that it only recognizes (Go) identifiers,
-// integers, set the Scanner's Mode field to:
-//
-//	ScanIdents | ScanInts
-//
-const (
-	ScanIdents     = 1 << -Ident
-	ScanInts       = 1 << -Int
-	ScanFloats     = 1 << -Float // includes Ints
-	ScanStrings    = 1 << -String
-	ScanComments   = 1 << -Comment
-	GologTokens    = ScanIdents | ScanFloats | ScanStrings | ScanComments
-)
-
 // The result of Scan is one of the following tokens or a Unicode character.
 const (
 	EOF = -(iota + 1)
@@ -142,11 +127,6 @@ type Scanner struct {
 	// ErrorCount is incremented by one for each error encountered.
 	ErrorCount int
 
-	// The Mode field controls which tokens are recognized. For instance,
-	// to recognize Ints, set the ScanInts bit in Mode. The field may be
-	// changed at any time.
-	Mode uint
-
 	// Start position of most recently scanned token; set by Scan.
 	// Calling Init or Next invalidates the position (Line == 0).
 	// The Filename field is always left untouched by the Scanner.
@@ -157,7 +137,7 @@ type Scanner struct {
 }
 
 // Init initializes a Scanner with a new source and returns s.
-// Error is set to nil, ErrorCount is set to 0, Mode is set to GologTokens
+// Error is set to nil, ErrorCount is set to 0
 func (s *Scanner) Init(src io.Reader) *Scanner {
 	s.src = src
 
@@ -184,7 +164,6 @@ func (s *Scanner) Init(src io.Reader) *Scanner {
 	// initialize public fields
 	s.Error = nil
 	s.ErrorCount = 0
-	s.Mode = GologTokens
 	s.Line = 0 // invalidate token position
 
 	return s
@@ -395,7 +374,7 @@ func (s *Scanner) scanNumber(ch rune) (rune, rune) {
 				}
 				ch = s.next()
 			}
-			if s.Mode&ScanFloats != 0 && (ch == '.' || ch == 'e' || ch == 'E') {
+			if ch == '.' || ch == 'e' || ch == 'E' {
 				// float
 				ch = s.scanFraction(ch)
 				ch = s.scanExponent(ch)
@@ -410,7 +389,7 @@ func (s *Scanner) scanNumber(ch rune) (rune, rune) {
 	}
 	// decimal int or float
 	ch = s.scanMantissa(ch)
-	if s.Mode&ScanFloats != 0 && (ch == '.' || ch == 'e' || ch == 'E') {
+	if ch == '.' || ch == 'e' || ch == 'E' {
 		// float
 		ch = s.scanFraction(ch)
 		ch = s.scanExponent(ch)
@@ -500,7 +479,6 @@ func (s *Scanner) scanComment(ch rune) rune {
 }
 
 // Scan reads the next token or Unicode character from source and returns it.
-// It only recognizes tokens t for which the respective Mode bit (1<<-t) is set.
 // It returns EOF at the end of the source. It reports scanner errors (read and
 // token errors) by calling s.Error, if not nil; otherwise it prints an error
 // message to os.Stderr.
@@ -539,49 +517,33 @@ func (s *Scanner) Scan() rune {
 	tok := ch
 	switch {
 	case unicode.IsLetter(ch) || ch == '_':
-		if s.Mode&ScanIdents != 0 {
-			tok = Ident
-			ch = s.scanIdentifier()
-		} else {
-			ch = s.next()
-		}
+		tok = Ident
+		ch = s.scanIdentifier()
 	case isDecimal(ch):
-		if s.Mode&(ScanInts|ScanFloats) != 0 {
-			tok, ch = s.scanNumber(ch)
-		} else {
-			ch = s.next()
-		}
+		tok, ch = s.scanNumber(ch)
 	default:
 		switch ch {
 		case '"':
-			if s.Mode&ScanStrings != 0 {
-				s.scanString('"')
-				tok = String
-			}
+			s.scanString('"')
+			tok = String
 			ch = s.next()
 		case '\'':
-			if s.Mode&ScanIdents != 0 {
-				s.scanString('\'')
-				tok = Ident
-			}
+			s.scanString('\'')
+			tok = Ident
 			ch = s.next()
 		case '.':
 			ch = s.next()
-			if isDecimal(ch) && s.Mode&ScanFloats != 0 {
+			if isDecimal(ch) {
 				tok = Float
 				ch = s.scanMantissa(ch)
 				ch = s.scanExponent(ch)
 			}
 		case '%':
-			if s.Mode&ScanComments != 0 {
-				ch = s.scanComment(ch)
-				tok = Comment
-			} else {
-				ch = s.next()
-			}
+			ch = s.scanComment(ch)
+			tok = Comment
 		case '/':
 			ch = s.next()
-			if ch == '*' && s.Mode&ScanComments != 0 {
+			if ch == '*' {
 				ch = s.scanComment(ch)
 				tok = Comment
 			}
