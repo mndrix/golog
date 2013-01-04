@@ -496,12 +496,12 @@ func TestAcid(t *testing.T) {
 	s := new(Scanner).Init(bytes.NewBufferString(acidTest))
 	checkScanPos(t, s, 0, 1, 1, Comment, "/* multiline\nand /* embedded */\ncomment */")
 
-	checkScanPos(t, s, 43, 4, 1, Atom, "thing")
+	checkScanPos(t, s, 43, 4, 1, Functor, "thing")
 	checkScanPos(t, s, 48, 4, 6, '(', "(")
 	checkScanPos(t, s, 49, 4, 7, Variable, "A")
 	checkScanPos(t, s, 50, 4, 8, ')', ")")
 	checkScanPos(t, s, 52, 4, 10, Atom, ":-")
-	checkScanPos(t, s, 55, 4, 13, Atom, "foo")
+	checkScanPos(t, s, 55, 4, 13, Functor, "foo")
 	checkScanPos(t, s, 58, 4, 16, '(', "(")
 	checkScanPos(t, s, 59, 4, 17, Variable, "A")
 	checkScanPos(t, s, 60, 4, 18, ',', ",")
@@ -513,12 +513,12 @@ func TestAcid(t *testing.T) {
 	checkScanPos(t, s, 75, 4, 33, Atom, "!")
 	checkScanPos(t, s, 76, 4, 34, Atom, ".")
 
-	checkScanPos(t, s, 78, 5, 1, Atom, "thing")
+	checkScanPos(t, s, 78, 5, 1, Functor, "thing")
 	checkScanPos(t, s, 83, 5, 6, '(', "(")
 	checkScanPos(t, s, 84, 5, 7, Variable, "_")
 	checkScanPos(t, s, 85, 5, 8, ')', ")")
 	checkScanPos(t, s, 87, 5, 10, Atom, ":-")
-	checkScanPos(t, s, 94, 6, 5, Atom, "format")
+	checkScanPos(t, s, 94, 6, 5, Functor, "format")
 	checkScanPos(t, s, 100, 6, 11, '(', "(")
 	checkScanPos(t, s, 101, 6, 12, String, `"~p~p~n"`)
 	checkScanPos(t, s, 109, 6, 20, ',', ",")
@@ -532,7 +532,7 @@ func TestAcid(t *testing.T) {
 
 	checkScanPos(t, s, 128, 7, 1, Comment, "% entire line comment")
 
-	checkScanPos(t, s, 150, 8, 1, Atom, "bye")
+	checkScanPos(t, s, 150, 8, 1, Functor, "bye")
 	checkScanPos(t, s, 153, 8, 4, '(', "(")
 	checkScanPos(t, s, 154, 8, 5, Atom, "'tschüß'")
 	checkScanPos(t, s, 164, 8, 13, ',', ",")
@@ -543,7 +543,7 @@ func TestAcid(t *testing.T) {
 	checkScanPos(t, s, 174, 8, 23, Atom, ".")
 	checkScanPos(t, s, 177, 8, 26, Comment, "% postfix comment")
 
-	checkScanPos(t, s, 195, 9, 1, Atom, "greek")
+	checkScanPos(t, s, 195, 9, 1, Functor, "greek")
 	checkScanPos(t, s, 200, 9, 6, '(', "(")
 	checkScanPos(t, s, 201, 9, 7, Atom, "λαμβδα")
 	checkScanPos(t, s, 213, 9, 13, ',', ",")

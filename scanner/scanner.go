@@ -69,6 +69,7 @@ const (
 	Atom
 	Comment
 	Float
+	Functor
 	Int
 	String
 	Variable
@@ -79,6 +80,7 @@ var tokenString = map[rune]string{
 	Atom:      "Atom",
 	Comment:   "Comment",
 	Float:     "Float",
+	Functor:   "Functor",
 	Int:       "Int",
 	String:    "String",
 	Variable:  "Variable",
@@ -574,6 +576,9 @@ func (s *Scanner) Scan() rune {
 		tok = Atom
 		ch = s.next()
 		ch = s.scanAtom(ch)
+		if ch == '(' {
+			tok = Functor
+		}
 	case isVariableStart(ch):
 		tok = Variable
 		ch = s.next()
