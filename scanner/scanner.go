@@ -67,21 +67,21 @@ func (pos Position) String() string {
 const (
 	EOF = -(iota + 1)
 	Atom
-	Variable
-	Int
-	Float
-	String
 	Comment
+	Float
+	Int
+	String
+	Variable
 )
 
 var tokenString = map[rune]string{
 	EOF:       "EOF",
 	Atom:      "Atom",
-	Variable:  "Variable",
-	Int:       "Int",
-	Float:     "Float",
-	String:    "String",
 	Comment:   "Comment",
+	Float:     "Float",
+	Int:       "Int",
+	String:    "String",
+	Variable:  "Variable",
 }
 
 // TokenString returns a printable string for a token or Unicode character.
