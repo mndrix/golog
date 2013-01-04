@@ -399,7 +399,6 @@ func checkNextPos(t *testing.T, s *Scanner, offset, line, column int, char rune)
 
 func checkScanPos(t *testing.T, s *Scanner, offset, line, column int, char rune, text string) {
 	want := Position{Offset: offset, Line: line, Column: column}
-	checkPos(t, s.Pos(), want)
 	if ch := s.Scan(); ch != char {
 		t.Errorf("ch = %s, want %s", TokenString(ch), TokenString(char))
 	}
