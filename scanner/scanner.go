@@ -3,16 +3,11 @@
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
-// Package scanner provides a scanner and tokenizer for UTF-8-encoded text.
+// Package scanner tokenizes UTF-8-encoded Prolog text.
 // It takes an io.Reader providing the source, which then can be tokenized
 // through repeated calls to the Scan function.  For compatibility with
 // existing tools, the NUL character is not allowed. If the first character
 // in the source is a UTF-8 encoded byte order mark (BOM), it is discarded.
-//
-// By default, a Scanner skips white space and Go comments and recognizes all
-// literals as defined by the Go language specification.  It may be
-// customized to recognize only a subset of those literals and to recognize
-// different white space characters.
 //
 // Basic usage pattern:
 //
@@ -63,18 +58,18 @@ func (pos Position) String() string {
 	return s
 }
 
-// The result of Scan is one of the following tokens or a Unicode character.
+// The result of Scan is one of these tokens or a Unicode character.
 const (
-	EOF = -(iota + 1)
-	Atom
-	Comment
-	Float
-	Functor
-	FullStop
-	Int
-	String
-	Variable
-	Void
+	EOF = -(iota + 1)  // reached end of source
+	Atom               // a Prolog atom, possibly quoted
+	Comment            // a comment
+	Float              // a floating point number
+	Functor            // an atom used as a predicate functor
+	FullStop           // "." ending a term
+	Int                // an integer
+	String             // a double-quoted string
+	Variable           // a Prolog variable
+	Void               // the special "_" variable
 )
 
 var tokenString = map[rune]string{
