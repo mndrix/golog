@@ -489,8 +489,9 @@ thing(A) :- foo(A, bar, "baz"), !.
 thing(_) :-
     format("~p~p~n", [hello, world]).
 % entire line comment
-bye('tschüß', 9, 3.14).  % postfix comment
+...('tschüß', 9, 3.14).  % postfix comment
 greek(λαμβδα, 0'\n, 0'a).
+/+(1, 2).
 `
 func TestAcid(t *testing.T) {
 	s := new(Scanner).Init(bytes.NewBufferString(acidTest))
@@ -532,7 +533,7 @@ func TestAcid(t *testing.T) {
 
 	checkScanPos(t, s, 128, 7, 1, Comment, "% entire line comment")
 
-	checkScanPos(t, s, 150, 8, 1, Functor, "bye")
+	checkScanPos(t, s, 150, 8, 1, Functor, "...")
 	checkScanPos(t, s, 153, 8, 4, '(', "(")
 	checkScanPos(t, s, 154, 8, 5, Atom, "'tschüß'")
 	checkScanPos(t, s, 164, 8, 13, ',', ",")
@@ -552,4 +553,12 @@ func TestAcid(t *testing.T) {
 	checkScanPos(t, s, 221, 9, 21, Int, `0'a`)
 	checkScanPos(t, s, 224, 9, 24, ')', ")")
 	checkScanPos(t, s, 225, 9, 25, Atom, ".")
+
+	checkScanPos(t, s, 227, 10, 1, Functor, "/+")
+	checkScanPos(t, s, 229, 10, 3, '(', "(")
+	checkScanPos(t, s, 230, 10, 4, Int, "1")
+	checkScanPos(t, s, 231, 10, 5, ',', ",")
+	checkScanPos(t, s, 233, 10, 7, Int, "2")
+	checkScanPos(t, s, 234, 10, 8, ')', ")")
+	checkScanPos(t, s, 235, 10, 9, Atom, ".")
 }

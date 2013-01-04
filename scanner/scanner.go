@@ -558,6 +558,7 @@ func (s *Scanner) Scan() rune {
 		} else {
 			tok = Atom
 			ch = s.scanAtom(ch)
+			if ch == '(' { tok = Functor }
 		}
 	case ch == '.':		// '.' can start an atom or a float
 		ch = s.next()
@@ -568,6 +569,7 @@ func (s *Scanner) Scan() rune {
 		} else {
 			tok = Atom
 			ch = s.scanAtom(ch)
+			if ch == '(' { tok = Functor }
 		}
 	case isSolo(ch):
 		tok = Atom
@@ -576,9 +578,7 @@ func (s *Scanner) Scan() rune {
 		tok = Atom
 		ch = s.next()
 		ch = s.scanAtom(ch)
-		if ch == '(' {
-			tok = Functor
-		}
+		if ch == '(' { tok = Functor }
 	case isVariableStart(ch):
 		tok = Variable
 		ch = s.next()
