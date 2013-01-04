@@ -476,3 +476,25 @@ func TestPos(t *testing.T) {
 		t.Errorf("%d errors", s.ErrorCount)
 	}
 }
+
+// similar in spirit to the Acid Tests by the web standards project.
+// in a single sample, try to include everything that might be hard to lex
+const acidTest =
+`/* multiline
+and /* embedded */
+comment */
+thing(A) :- foo(A, bar, "baz"), !.
+thing(_) :-
+    format("~p~p~n", [hello, world])
+% entire line comment
+bye('tschüß', 9, 3.14).  % postfix comment
+greek(λαμβδα, 0'\n, 0'a).
+`
+func TestAcid(t *testing.T) {
+	s := new(Scanner).Init(bytes.NewBufferString(acidTest))
+	checkScanPos(t, s, 0, 1, 1, Comment, "/* multiline\nand /* embedded */\ncomment */")
+	checkScanPos(t, s, 43, 4, 1, Ident, "thing")
+	checkScanPos(t, s, 48, 4, 6, '(', "(")
+	checkScanPos(t, s, 49, 4, 7, Ident, "A")
+	checkScanPos(t, s, 50, 4, 8, ')', ")")
+}
