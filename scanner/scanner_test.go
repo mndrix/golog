@@ -397,14 +397,14 @@ func checkNextPos(t *testing.T, s *Scanner, offset, line, column int, char rune)
 	checkPos(t, s.Pos(), want)
 }
 
-func checkScanPos(t *testing.T, s *Scanner, offset, line, column int, char rune) {
+func checkScanPos(t *testing.T, s *Scanner, offset, line, column int, char rune, text string) {
 	want := Position{Offset: offset, Line: line, Column: column}
 	checkPos(t, s.Pos(), want)
 	if ch := s.Scan(); ch != char {
 		t.Errorf("ch = %s, want %s", TokenString(ch), TokenString(char))
-		if string(ch) != s.TokenText() {
-			t.Errorf("tok = %q, want %q", s.TokenText(), string(ch))
-		}
+	}
+	if text != s.TokenText() {
+		t.Errorf("tok = %q, want %q", s.TokenText(), text)
 	}
 	checkPos(t, s.Position, want)
 }
@@ -422,7 +422,7 @@ func TestPos(t *testing.T) {
 	checkNextPos(t, s, 1, 2, 1, '\n')
 	// after EOF position doesn't change
 	for i := 10; i > 0; i-- {
-		checkScanPos(t, s, 1, 2, 1, EOF)
+		checkScanPos(t, s, 1, 2, 1, EOF, "")
 	}
 	if s.ErrorCount != 0 {
 		t.Errorf("%d errors", s.ErrorCount)
@@ -434,7 +434,7 @@ func TestPos(t *testing.T) {
 	checkNextPos(t, s, 3, 1, 2, '本')
 	// after EOF position doesn't change
 	for i := 10; i > 0; i-- {
-		checkScanPos(t, s, 3, 1, 2, EOF)
+		checkScanPos(t, s, 3, 1, 2, EOF, "")
 	}
 	if s.ErrorCount != 0 {
 		t.Errorf("%d errors", s.ErrorCount)
@@ -455,7 +455,7 @@ func TestPos(t *testing.T) {
 	// after EOF position doesn't change
 	s.Next()
 	for i := 10; i > 0; i-- {
-		checkScanPos(t, s, 22, 4, 1, EOF)
+		checkScanPos(t, s, 22, 4, 1, EOF, "")
 	}
 	if s.ErrorCount != 0 {
 		t.Errorf("%d errors", s.ErrorCount)
@@ -463,15 +463,15 @@ func TestPos(t *testing.T) {
 
 	// positions after calling Scan
 	s = new(Scanner).Init(bytes.NewBufferString("abc\n本語\n\nx"))
-	checkScanPos(t, s, 0, 1, 1, Ident)
+	checkScanPos(t, s, 0, 1, 1, Ident, "abc")
 	s.Peek() // peek doesn't affect the position
 	s.Next()
-	checkScanPos(t, s, 4, 2, 1, Ident)
+	checkScanPos(t, s, 4, 2, 1, Ident, "本語")
 	s.Next(); s.Next()
-	checkScanPos(t, s, 12, 4, 1, Ident)
+	checkScanPos(t, s, 12, 4, 1, Ident, "x")
 	// after EOF position doesn't change
 	for i := 10; i > 0; i-- {
-		checkScanPos(t, s, 13, 4, 2, EOF)
+		checkScanPos(t, s, 13, 4, 2, EOF, "")
 	}
 	if s.ErrorCount != 0 {
 		t.Errorf("%d errors", s.ErrorCount)
