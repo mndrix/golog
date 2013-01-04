@@ -104,8 +104,8 @@ var tokenList = []token{
 	{Atom, f100},
 	{Atom, "+"},
 	{Atom, "/"},
-	{Atom, "."},
 	{Atom, "~"},
+	{FullStop, "."},
 
 	{Comment, "% variables"},
 	{Variable, "LGTM"},
@@ -512,7 +512,7 @@ func TestAcid(t *testing.T) {
 	checkScanPos(t, s, 72, 4, 30, ')', ")")
 	checkScanPos(t, s, 73, 4, 31, ',', ",")
 	checkScanPos(t, s, 75, 4, 33, Atom, "!")
-	checkScanPos(t, s, 76, 4, 34, Atom, ".")
+	checkScanPos(t, s, 76, 4, 34, FullStop, ".")
 
 	checkScanPos(t, s, 78, 5, 1, Functor, "thing")
 	checkScanPos(t, s, 83, 5, 6, '(', "(")
@@ -529,7 +529,7 @@ func TestAcid(t *testing.T) {
 	checkScanPos(t, s, 119, 6, 30, Atom, "world")
 	checkScanPos(t, s, 124, 6, 35, ']', "]")
 	checkScanPos(t, s, 125, 6, 36, ')', ")")
-	checkScanPos(t, s, 126, 6, 37, Atom, ".")
+	checkScanPos(t, s, 126, 6, 37, FullStop, ".")
 
 	checkScanPos(t, s, 128, 7, 1, Comment, "% entire line comment")
 
@@ -541,7 +541,7 @@ func TestAcid(t *testing.T) {
 	checkScanPos(t, s, 167, 8, 16, ',', ",")
 	checkScanPos(t, s, 169, 8, 18, Float, "3.14")
 	checkScanPos(t, s, 173, 8, 22, ')', ")")
-	checkScanPos(t, s, 174, 8, 23, Atom, ".")
+	checkScanPos(t, s, 174, 8, 23, FullStop, ".")
 	checkScanPos(t, s, 177, 8, 26, Comment, "% postfix comment")
 
 	checkScanPos(t, s, 195, 9, 1, Functor, "greek")
@@ -552,7 +552,7 @@ func TestAcid(t *testing.T) {
 	checkScanPos(t, s, 219, 9, 19, ',', ",")
 	checkScanPos(t, s, 221, 9, 21, Int, `0'a`)
 	checkScanPos(t, s, 224, 9, 24, ')', ")")
-	checkScanPos(t, s, 225, 9, 25, Atom, ".")
+	checkScanPos(t, s, 225, 9, 25, FullStop, ".")
 
 	checkScanPos(t, s, 227, 10, 1, Functor, "/+")
 	checkScanPos(t, s, 229, 10, 3, '(', "(")
@@ -560,5 +560,5 @@ func TestAcid(t *testing.T) {
 	checkScanPos(t, s, 231, 10, 5, ',', ",")
 	checkScanPos(t, s, 233, 10, 7, Int, "2")
 	checkScanPos(t, s, 234, 10, 8, ')', ")")
-	checkScanPos(t, s, 235, 10, 9, Atom, ".")
+	checkScanPos(t, s, 235, 10, 9, FullStop, ".")
 }

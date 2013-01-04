@@ -70,6 +70,7 @@ const (
 	Comment
 	Float
 	Functor
+	FullStop
 	Int
 	String
 	Variable
@@ -81,6 +82,7 @@ var tokenString = map[rune]string{
 	Comment:   "Comment",
 	Float:     "Float",
 	Functor:   "Functor",
+	FullStop:  "FullStop",
 	Int:       "Int",
 	String:    "String",
 	Variable:  "Variable",
@@ -607,6 +609,13 @@ func (s *Scanner) Scan() rune {
 	s.tokEnd = s.srcPos - s.lastCharLen
 
 	s.ch = ch
+
+	// last minute specializations
+	if tok == Atom {
+		switch s.TokenText() {
+			case ".": return FullStop
+		}
+	}
 	return tok
 }
 
