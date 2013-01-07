@@ -4,7 +4,6 @@ import "fmt"
 import "github.com/mndrix/ps"
 
 var NotBound = fmt.Errorf("Variable is not bound")
-var NotVariable = fmt.Errorf("Term is not a variable")
 var AlreadyBound = fmt.Errorf("Variable was already bound")
 type Environment interface {
     // Bind returns a new Environment, like the old one, but with the variable
@@ -13,7 +12,7 @@ type Environment interface {
     Bind(*Variable, Term) (Environment, error)
 
     // Value returns the value of a bound variable; error is NotBound if
-    // the variable is free or NotVariable if not a variable term
+    // the variable is free
     Value(*Variable) (Term, error)
 }
 func NewEnvironment() Environment {
