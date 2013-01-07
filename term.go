@@ -37,6 +37,9 @@ type Term interface {
     // Head returns a term's first argument; otherwise, panics
     Head() Term
 
+    // Error returns an error value if this is an error term
+    Error() error
+
     // IsClause returns true if the term is like 'Head :- Body'
     IsClause() bool
 
@@ -91,6 +94,9 @@ func (self *Structure) String() string {
 func (self *Structure) Indicator() string {
     return Sprintf("%s/%d", self.Functor(), self.Arity())
 }
+func (self *Structure) Error() error {
+    panic("Can't call Error() on a Structure")
+}
 
 
 type Variable struct {
@@ -119,6 +125,38 @@ func (self *Variable) String() string {
 }
 func (self *Variable) Indicator() string {
     return Sprintf("%s", self.Name)
+}
+func (self *Variable) Error() error {
+    panic("Can't call Error() on a Variable")
+}
+
+type Error string
+func (self *Error) Functor() string {
+    panic("Errors have no Functor()")
+}
+func (self *Error) Arity() int {
+    panic("Errors have no Arity()")
+}
+func (self *Error) Arguments() []Term {
+    panic("Errors have no Arguments()")
+}
+func (self *Error) Body() Term {
+    panic("Errors have no Body()")
+}
+func (self *Error) Head() Term {
+    panic("Errors have no Head()")
+}
+func (self *Error) IsClause() bool {
+    return false
+}
+func (self *Error) String() string {
+    return string(*self)
+}
+func (self *Error) Indicator() string {
+    panic("Errors have no Indicator()")
+}
+func (self *Error) Error() error {
+    return Errorf("%s", *self)
 }
 
 // NewTerm creates a new term with the given functor and optional arguments
@@ -153,6 +191,20 @@ func IsVariable(t Term) bool {
         case *Structure:
             return false
         case *Variable:
+            return true
+        case *Error:
+            return false
+    }
+    msg := Sprintf("Unexpected term type: %#v", t)
+    panic(msg)
+}
+func IsError(t Term) bool {
+    switch t.(type) {
+        case *Structure:
+            return false
+        case *Variable:
+            return false
+        case *Error:
             return true
     }
     msg := Sprintf("Unexpected term type: %#v", t)
