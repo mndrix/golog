@@ -490,7 +490,7 @@ func (s *Scanner) scanComment(ch rune) rune {
 		return ch
 	}
 
-	// general comment
+	// general comment.  See Note1
 	depth := 1
 	ch = s.next() // read character after "/*"
 	for depth > 0 {
@@ -510,6 +510,11 @@ func (s *Scanner) scanComment(ch rune) rune {
 	}
 	return ch
 }
+// Note1: Nested comments are prohibited by ISO Prolog §6.4.1.  To wit,
+// "The comment text of a bracketed comment shall not contain the comment
+// close sequence."  However, nested comments are ridiculously practical
+// during debugging and development, so I've chosen to deviate by being
+// more permissive than is strictly allowed.  SWI-Prolog does the same thing.
 
 // Scan reads the next token or Unicode character from source and returns it.
 // It returns EOF at the end of the source. It reports scanner errors (read and
