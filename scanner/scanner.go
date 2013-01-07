@@ -11,13 +11,10 @@
 //
 // Basic usage pattern:
 //
-//	var s scanner.Scanner
-//	s.Init(src)
-//	tok := s.Scan()
-//	for tok != scanner.EOF {
-//		// do something with tok
-//		tok = s.Scan()
-//	}
+//    lexemes := scanner.Scan(file)
+//    for lexeme := range lexemes {
+//        // do something with lexeme
+//    }
 //
 package scanner
 
@@ -31,6 +28,31 @@ import (
 )
 
 // TODO(gri): Consider changing this to use the new (token) Position package.
+
+// A lexeme encapsulating it's type and content
+type Lexeme struct {
+	Type	rune	// EOF, Atom, Comment, etc.
+	Content	string
+}
+
+// Scan tokenizes src in a separate goroutine sending lexemes down a
+// channel as they become available.  The channel is closed on EOF.
+func Scan(src io.Reader) <-chan *Lexeme {
+	ch := make(chan *Lexeme)
+	go func () {
+		s := new(Scanner).Init(src)
+		tok := s.Scan()
+		for tok != EOF {
+			ch <- &Lexeme{
+				Type:		tok,
+				Content:	s.TokenText(),
+			}
+			tok = s.Scan()
+		}
+		close(ch)
+	}()
+	return ch
+}
 
 // A source position is represented by a Position value.
 // A position is valid if Line > 0.
