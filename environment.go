@@ -11,6 +11,13 @@ type Environment interface {
     // value previously.
     Bind(*Variable, Term) (Environment, error)
 
+    // Resolve follows bindings recursively until a term is found for
+    // which no binding exists
+    Resolve(*Variable) Term
+
+    // Size returns the number of variable bindings in this environment
+    Size() int
+
     // Value returns the value of a bound variable; error is NotBound if
     // the variable is free
     Value(*Variable) (Term, error)
@@ -18,16 +25,13 @@ type Environment interface {
 func NewEnvironment() Environment {
     var newEnv envMap
     newEnv.bindings = ps.NewMap()
-    newEnv.aliases = ps.NewMap()
     return &newEnv
 }
 
 type envMap struct {
     bindings    *ps.Map     // v.Indicator() => Term
-    aliases     *ps.Map     // v.Indicator() => *Variable
 }
 func (self *envMap) Bind(v *Variable, val Term) (Environment, error) {
-    v = self.resolveAliases(v)
     _, ok := self.bindings.Lookup(v.Indicator())
     if ok {
         // binding already exists for this variable
@@ -36,30 +40,32 @@ func (self *envMap) Bind(v *Variable, val Term) (Environment, error) {
 
     // at this point, we know that v is a free variable
 
-    // are we aliasing 'v' to another variable?
-    newEnv := self.clone()
-    if IsVariable(val) {
-        val = self.resolveAliases(val.(*Variable))
-        // lexicographically smaller name is canonical
-        switch {
-            case v.Indicator() == val.Indicator():  // already aliased
-                return self, AlreadyBound
-            case v.Indicator() < val.Indicator():
-                newEnv.aliases = self.aliases.Set(val.Indicator(), v)
-            default:
-                newEnv.aliases = self.aliases.Set(v.Indicator(), val)
-        }
-        return newEnv, nil
-    }
-
     // create a new environment with the binding in place
+    newEnv := self.clone()
     newEnv.bindings = self.bindings.Set(v.Indicator(), val)
 
     // error slot in return is for attributed variables someday
     return newEnv, nil
 }
+func (self *envMap) Resolve(v *Variable) Term {
+    for {
+        t, err := self.Value(v)
+        if err == NotBound {
+            return v
+        }
+        maybePanic(err)
+        if IsVariable(t) {
+            v = t.(*Variable)
+        } else {
+            return t
+        }
+    }
+    panic("Shouldn't reach here")
+}
+func (self *envMap) Size() int {
+    return self.bindings.Size()
+}
 func (self *envMap) Value(v *Variable) (Term, error) {
-    v = self.resolveAliases(v)
     name := v.Indicator()
     value, ok := self.bindings.Lookup(name)
     if !ok {
@@ -70,16 +76,5 @@ func (self *envMap) Value(v *Variable) (Term, error) {
 func (self *envMap) clone() *envMap {
     var newEnv envMap
     newEnv.bindings = self.bindings
-    newEnv.aliases = self.aliases
     return &newEnv
-}
-func (self *envMap) resolveAliases(original *Variable) *Variable {
-    name := original.Indicator()
-    alias, ok := self.aliases.Lookup(name)
-    if !ok {
-        // this variable is not aliased
-        return original
-    }
-
-    return self.resolveAliases(alias.(*Variable))
 }

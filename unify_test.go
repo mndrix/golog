@@ -95,6 +95,19 @@ func TestUnifyNestedVariable(t *testing.T) {
     }
 }
 
+func TestUnifySameVariable(t *testing.T) {
+    env0 := NewEnvironment()
+    env1, err := Unify(env0, NewVar("X"), NewVar("X"))
+    maybePanic(err)
+
+    if env0.Size() != 0 {
+        t.Errorf("env0 has bindings")
+    }
+    if env1.Size() != 0 {
+        t.Errorf("env1 has bindings")
+    }
+}
+
 func TestUnifyVariableAliases(t *testing.T) {
     env0 := NewEnvironment()
 
@@ -107,14 +120,13 @@ func TestUnifyVariableAliases(t *testing.T) {
     maybePanic(err)
 
     // does X0 have the right value?
-    x0, err := env2.Value(nv("X0"))
-    maybePanic(err)
+    x0 := env2.Resolve(nv("X0"))
     if x0.String() != "hello" {
         t.Errorf("X0 has the wrong value: %s", x0)
     }
 
     // does X1 have the right value?
-    x1, err := env2.Value(nv("X1"))
+    x1 := env2.Resolve(nv("X1"))
     maybePanic(err)
     if x1.String() != "hello" {
         t.Errorf("X1 has the wrong value: %s", x1)
@@ -135,15 +147,13 @@ func TestUnifyVariableAliases2(t *testing.T) {
     maybePanic(err)
 
     // does X0 have the right value?
-    x0, err := env2.Value(nv("X0"))
-    maybePanic(err)
+    x0 := env2.Resolve(nv("X0"))
     if x0.String() != "hello" {
         t.Errorf("X0 has the wrong value: %s", x0)
     }
 
     // does X1 have the right value?
-    x1, err := env2.Value(nv("X1"))
-    maybePanic(err)
+    x1 := env2.Resolve(nv("X1"))
     if x1.String() != "hello" {
         t.Errorf("X1 has the wrong value: %s", x1)
     }
