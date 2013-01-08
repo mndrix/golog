@@ -27,8 +27,6 @@ import (
 	"unicode/utf8"
 )
 
-// TODO(gri): Consider changing this to use the new (token) Position package.
-
 // A lexeme encapsulating it's type and content
 type Lexeme struct {
 	Type	rune	// EOF, Atom, Comment, etc.
