@@ -41,10 +41,11 @@ func Scan(src io.Reader) <-chan *Lexeme {
 		s := new(Scanner).Init(src)
 		tok := s.Scan()
 		for tok != EOF {
-			ch <- &Lexeme{
+			l := &Lexeme{
 				Type:		tok,
 				Content:	s.TokenText(),
 			}
+			ch <- l
 			tok = s.Scan()
 		}
 		close(ch)
