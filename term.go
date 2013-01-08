@@ -50,6 +50,8 @@ type Term interface {
     Indicator() string
 }
 
+// ISO calls this a "compound term" see §6.1.2(e)
+// We currently use this type to cover atoms defined in §6.1.2(b)
 type Structure struct {
     Func    string
     Args    []Term
@@ -99,6 +101,7 @@ func (self *Structure) Error() error {
 }
 
 
+// See §6.1.2(a)
 type Variable struct {
     Name    string
 }
