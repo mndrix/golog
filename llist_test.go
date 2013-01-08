@@ -12,24 +12,28 @@ func TestLLBasic(t *testing.T) {
         close(ch)
     }()
 
-    l, err := NewLexemeList(ch)
-    maybePanic(err)
+    l := NewLexemeList(ch)
     if l.Value.Type != scanner.Atom || l.Value.Content != "1" {
         t.Errorf("Wrong lexeme: %s", l.Value.Content)
     }
 
-    l, err = l.Next()
+    l = l.Next()
     if l.Value.Type != scanner.Atom || l.Value.Content != "2" {
         t.Errorf("Wrong lexeme: %s", l.Value.Content)
     }
 
-    l, err = l.Next()
+    l = l.Next()
     if l.Value.Type != scanner.Atom || l.Value.Content != "3" {
         t.Errorf("Wrong lexeme: %s", l.Value.Content)
     }
 
-    l, err = l.Next()
-    if err != ChannelClosed {
+    l = l.Next()
+    if l.Value.Type != scanner.EOF {
         t.Errorf("Backing channel not closed")
+    }
+
+    l = l.Next()
+    if l.Value.Type != scanner.EOF {
+        t.Errorf("Backing channel still not closed")
     }
 }
