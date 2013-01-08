@@ -1,0 +1,191 @@
+package golog
+
+import "github.com/mndrix/golog/scanner"
+import "strings"
+
+// Functions match the regular expression
+//
+//    Read(String)?(One|All)?
+
+/*
+  Make a yfx operator precedence parser that mimicks a Prolog DCG.
+  See "The simple and powerful yfx operator precedence parser" by Favero.
+  The parser reads tokens from an infinite linked list which reads a new
+  token from the lexer's channel on reaching the list's end.  That way,
+  the parser doesn't have to worry about boundary conditions.
+  This technique also lets the garbage collector decide when we don't
+  need part of the list's history anymore and discards it.
+
+
+  Earlier idea (canceled):
+  Make a Pratt Parser which processes tokens from Tokenize.
+  (aka top down operator precedence parser)
+  It should have a read mode which ignores `op/3` directives.
+  It should have a consult mode which handles `op/3` directives.
+  In either case, it should produce a stream of Terms.
+
+  For details on Pratt Parsers, see:
+  http://effbot.org/zone/simple-top-down-parsing.htm
+  http://journal.stuffwithstuff.com/2011/03/19/pratt-parsers-expression-parsing-made-easy/
+  http://javascript.crockford.com/tdop/tdop.html
+*/
+type ReaderMode int
+const (
+    Read    = iota
+    Consult
+)
+
+// ISO operator specifiers per §6.3.4, table 4
+type specifier  int // xf, yf, xfy, etc.
+const (
+    fx  specifier = iota
+    fy
+    xfx
+    xfy
+    yfx
+    xf
+    yf
+)
+
+// ISO operator priorities per §6.3.4
+type priority   int     // between 1 and 1200, inclusive
+type operator   string
+
+type reader struct {
+    mode        ReaderMode
+    operators   map[operator]*[7]priority
+    dst         chan<- Term
+}
+
+func ReadTokens(tokens <-chan *scanner.Lexeme, mode ReaderMode) <-chan Term {
+    ch := make(chan Term)
+    ll := NewLexemeList(tokens)
+    r := newReader(mode, ch)
+    go r.start(ll)
+    return ch
+}
+func ReadString(s string, mode ReaderMode) <-chan Term {
+    r := strings.NewReader(s)
+    return ReadTokens(scanner.Scan(r), mode)
+}
+func ReadStringOne(s string, mode ReaderMode) (Term, error) {
+    ch := ReadString(s, mode)
+    t := <-ch
+    if IsError(t) {
+        return nil, t.Error()
+    }
+    return t, nil
+}
+func ReadStringAll(s string, mode ReaderMode) ([]Term, error) {
+    ch := ReadString(s, mode)
+    return readAll(ch)
+}
+
+func readAll(ch <-chan Term) ([]Term, error) {
+    terms := make([]Term, 1)
+    for t := range ch {
+        if IsError(t) {
+            return terms, t.Error()
+        }
+        terms = append(terms, t)
+    }
+    return terms, nil
+}
+
+
+// resetOperatorTable replaces the reader's current operator table
+// with the default table specified in §6.3.4.4, table 7
+func newReader(mode ReaderMode, ch chan<- Term) *reader {
+    r := reader{mode: mode, dst: ch}
+    r.resetOperatorTable()
+    return &r
+}
+func (r *reader) resetOperatorTable() {
+    r.operators = make(map[operator]*[7]priority)
+    r.op(1200,  xfx, []operator{`:-`, `-->`})
+    r.op(1200,   fx, []operator{`:-`, `?-`})
+    r.op(1100,  xfy, []operator{`;`})
+    r.op(1050,  xfy, []operator{`->`})
+    r.op(1000,  xfy, []operator{`,`})
+    r.op( 900,   fy, []operator{`\+`})
+    r.op( 700,  xfx, []operator{`=`, `\=`})
+    r.op( 700,  xfx, []operator{`==`, `\==`, `@<`, `@=<`, `@>`, `@>=`})
+    r.op( 700,  xfx, []operator{`=..`})
+    r.op( 700,  xfx, []operator{`is`, `=:=`, `=\=`, `<`, `=<`, `>`, `>=`})
+    r.op( 500,  yfx, []operator{`+`, `-`, `/\`, `\/`}) // syntax highlighter `
+    r.op( 400,  yfx, []operator{`*`, `/`, `//`, `rem`, `mod`, `<<`, `<<`})
+    r.op( 200,  xfx, []operator{`**`})
+    r.op( 200,  xfy, []operator{`^`})
+    r.op( 200,   fy, []operator{`-`, `\`})             // syntax highlighter `
+}
+func (r *reader) op(p priority, s specifier, os []operator) {
+    for _, o := range os {
+        priorities, ok := r.operators[o]
+        if !ok {
+            priorities = new([7]priority)
+            r.operators[o] = priorities
+        }
+        priorities[s] = p
+    }
+}
+func (r *reader) emit(t Term) {
+    r.dst <- t
+}
+func (r *reader) start(ll0 *LexemeList) {
+    var t Term
+    var ll *LexemeList
+    for r.term(1200, ll0, &ll, &t) {
+        r.emit(t)
+        ll0 = ll
+    }
+
+    // we won't generate any more terms
+    close(r.dst)
+}
+
+// parse a single functor
+func (r *reader) functor(in *LexemeList, out **LexemeList, f *string) bool {
+    if in.Value.Type == scanner.Functor {
+        *f = in.Value.Content
+        *out = in.Next()  // skip functor we just processed
+        return true
+    }
+
+    return false
+}
+
+func (r *reader) atom(in *LexemeList, out **LexemeList, a *Term) bool {
+    if in.Value.Type == scanner.Atom {
+        *out = in.Next()
+        *a = NewTerm(in.Value.Content)
+        return true
+    }
+    return false
+}
+
+// consume a single character token
+func (r *reader) tok(c rune, in *LexemeList, out **LexemeList) bool {
+    if in.Value.Type == c {
+        *out = in.Next()
+        return true
+    }
+    return false
+}
+
+// parse a single term
+func (r *reader) term(p priority, i *LexemeList, o **LexemeList, t *Term) bool {
+    var f string
+    var t0 Term
+
+    // compound term - functional notation §6.3.3
+    if r.functor(i,o,&f) && r.tok('(',*o,o) && r.term(1200,*o,o,&t0) && r.tok(')',*o,o) {
+        *t = NewTerm(f, t0)
+        return true
+    }
+
+    if r.atom(i,o,t) {
+        return true
+    }
+
+    return false
+}
