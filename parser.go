@@ -6,7 +6,7 @@ import "strings"
 
 // Functions match the regular expression
 //
-//    Read(String)?(One|All)?
+//    ReadTerm(String)?(One|All)?
 
 type ReaderMode int
 const (
@@ -36,19 +36,19 @@ type reader struct {
     dst         chan<- Term
 }
 
-func ReadTokens(tokens <-chan *scanner.Lexeme, mode ReaderMode) <-chan Term {
+func ReadTermTokens(tokens <-chan *scanner.Lexeme, mode ReaderMode) <-chan Term {
     ch := make(chan Term)
     ll := NewLexemeList(tokens)
     r := newReader(mode, ch)
     go r.start(ll)
     return ch
 }
-func ReadString(s string, mode ReaderMode) <-chan Term {
+func ReadTermString(s string, mode ReaderMode) <-chan Term {
     r := strings.NewReader(s)
-    return ReadTokens(scanner.Scan(r), mode)
+    return ReadTermTokens(scanner.Scan(r), mode)
 }
-func ReadStringOne(s string, mode ReaderMode) (Term, error) {
-    ch := ReadString(s, mode)
+func ReadTermStringOne(s string, mode ReaderMode) (Term, error) {
+    ch := ReadTermString(s, mode)
     t := <-ch
     if t == nil {  // channel closed right away
         return nil, fmt.Errorf("No terms found in `%s`", s)
@@ -58,8 +58,8 @@ func ReadStringOne(s string, mode ReaderMode) (Term, error) {
     }
     return t, nil
 }
-func ReadStringAll(s string, mode ReaderMode) ([]Term, error) {
-    ch := ReadString(s, mode)
+func ReadTermStringAll(s string, mode ReaderMode) ([]Term, error) {
+    ch := ReadTermString(s, mode)
     return readAll(ch)
 }
 

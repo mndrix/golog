@@ -6,7 +6,7 @@ func TestBasic(t *testing.T) {
 
     // reading a single simple term
     helloStr := `hello.`
-    hello, err := ReadStringOne(helloStr, Read)
+    hello, err := ReadTermStringOne(helloStr, Read)
     maybePanic(err)
     if hello.String() != "hello" {
         t.Errorf("Reading `%s` gave `%s`", helloStr, hello.String())
@@ -14,7 +14,7 @@ func TestBasic(t *testing.T) {
 
     // reading a couple simple terms
     oneTwoStr := `one. two.`
-    oneTwo, err := ReadStringAll(oneTwoStr, Read)
+    oneTwo, err := ReadTermStringAll(oneTwoStr, Read)
     maybePanic(err)
     if oneTwo[0].String() != "one" {
         t.Errorf("Expected `one` in %#v", oneTwo)
