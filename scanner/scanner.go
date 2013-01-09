@@ -325,6 +325,13 @@ func (s *Scanner) scanAtom(ch rune) rune {
 	return ch
 }
 
+func (s *Scanner) scanGraphic(ch rune) rune {
+	for isGraphic(ch) {
+		ch = s.next()
+	}
+	return ch
+}
+
 func digitVal(ch rune) int {
 	switch {
 	case '0' <= ch && ch <= '9':
@@ -339,16 +346,21 @@ func digitVal(ch rune) int {
 
 func isDecimal(ch rune) bool { return '0' <= ch && ch <= '9' }
 
+// true if the rune is a graphic token char per ISO §6.4.2
+func isGraphic(ch rune) bool {
+	return isOneOf(ch, `#$&*+-./:<=>?@^\~`)
+}
+
 // true if the rune is a valid start for an unquoted atom
 func isUnquotedAtomStart(ch rune) bool {
-	if unicode.IsLower(ch) || isSymbol(ch) {
+	if unicode.IsLower(ch) || isGraphic(ch) {
 		return true
 	}
 	return false
 }
 
 func isUnquotedAtomContinue(ch rune) bool {
-	if ch == '_' || unicode.IsLetter(ch) || unicode.IsDigit(ch) || isSymbol(ch) {
+	if ch == '_' || unicode.IsLetter(ch) || unicode.IsDigit(ch) || isGraphic(ch) {
 		return true
 	}
 	return false
@@ -359,16 +371,16 @@ func isVariableStart(ch rune) bool {
 	return ch == '_' || unicode.IsUpper(ch)
 }
 
-func isSolo(ch rune) bool { return ch == '!' || ch == ';' }
-
-func isSymbol(ch rune) bool {
-	for _, allowed := range `#&*+-./:<=>?@\^~` {
+func isOneOf(ch rune, chars string) bool {
+	for _, allowed := range chars {
 		if ch == allowed {
 			return true
 		}
 	}
 	return false
 }
+
+func isSolo(ch rune) bool { return ch == '!' || ch == ';' }
 
 func (s *Scanner) scanMantissa(ch rune) rune {
 	for isDecimal(ch) {
@@ -582,20 +594,14 @@ func (s *Scanner) Scan() rune {
 			tok = Comment
 		} else {
 			tok = Atom
-			ch = s.scanAtom(ch)
+			ch = s.scanGraphic(ch)
 			if ch == '(' { tok = Functor }
 		}
-	case ch == '.':		// '.' can start an atom or a float
+	case isGraphic(ch):
 		ch = s.next()
-		if isDecimal(ch) {
-			tok = Float
-			ch = s.scanMantissa(ch)
-			ch = s.scanExponent(ch)
-		} else {
-			tok = Atom
-			ch = s.scanAtom(ch)
-			if ch == '(' { tok = Functor }
-		}
+		tok = Atom
+		ch = s.scanGraphic(ch)
+		if ch == '(' { tok = Functor }
 	case isSolo(ch):
 		tok = Atom
 		ch = s.next()
