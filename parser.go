@@ -1,5 +1,6 @@
 package golog
 
+import "fmt"
 import "github.com/mndrix/golog/scanner"
 import "strings"
 
@@ -71,6 +72,9 @@ func ReadString(s string, mode ReaderMode) <-chan Term {
 func ReadStringOne(s string, mode ReaderMode) (Term, error) {
     ch := ReadString(s, mode)
     t := <-ch
+    if t == nil {  // channel closed right away
+        return nil, fmt.Errorf("No terms found in `%s`", s)
+    }
     if IsError(t) {
         return nil, t.Error()
     }
@@ -82,7 +86,7 @@ func ReadStringAll(s string, mode ReaderMode) ([]Term, error) {
 }
 
 func readAll(ch <-chan Term) ([]Term, error) {
-    terms := make([]Term, 1)
+    terms := make([]Term, 0)
     for t := range ch {
         if IsError(t) {
             return terms, t.Error()
@@ -134,7 +138,7 @@ func (r *reader) emit(t Term) {
 func (r *reader) start(ll0 *LexemeList) {
     var t Term
     var ll *LexemeList
-    for r.term(1200, ll0, &ll, &t) {
+    for r.readTerm(1200, ll0, &ll, &t) {
         r.emit(t)
         ll0 = ll
     }
@@ -154,15 +158,6 @@ func (r *reader) functor(in *LexemeList, out **LexemeList, f *string) bool {
     return false
 }
 
-func (r *reader) atom(in *LexemeList, out **LexemeList, a *Term) bool {
-    if in.Value.Type == scanner.Atom {
-        *out = in.Next()
-        *a = NewTerm(in.Value.Content)
-        return true
-    }
-    return false
-}
-
 // consume a single character token
 func (r *reader) tok(c rune, in *LexemeList, out **LexemeList) bool {
     if in.Value.Type == c {
@@ -172,18 +167,26 @@ func (r *reader) tok(c rune, in *LexemeList, out **LexemeList) bool {
     return false
 }
 
+func (r *reader) readTerm(p priority, i *LexemeList, o **LexemeList, t *Term) bool {
+    return r.term(p, i, o, t) && r.tok(scanner.FullStop, *o, o)
+}
+
 // parse a single term
 func (r *reader) term(p priority, i *LexemeList, o **LexemeList, t *Term) bool {
     var f string
     var t0 Term
 
+    switch i.Value.Type {
+        case scanner.Atom:      // atom term §6.3.1.3
+            *t = NewTerm(i.Value.Content)
+            *o = i.Next()
+            return true
+        default:
+    }
+
     // compound term - functional notation §6.3.3
     if r.functor(i,o,&f) && r.tok('(',*o,o) && r.term(1200,*o,o,&t0) && r.tok(')',*o,o) {
         *t = NewTerm(f, t0)
-        return true
-    }
-
-    if r.atom(i,o,t) {
         return true
     }
 
