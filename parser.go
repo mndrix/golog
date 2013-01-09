@@ -8,28 +8,6 @@ import "strings"
 //
 //    Read(String)?(One|All)?
 
-/*
-  Make a yfx operator precedence parser that mimicks a Prolog DCG.
-  See "The simple and powerful yfx operator precedence parser" by Favero.
-  The parser reads tokens from an infinite linked list which reads a new
-  token from the lexer's channel on reaching the list's end.  That way,
-  the parser doesn't have to worry about boundary conditions.
-  This technique also lets the garbage collector decide when we don't
-  need part of the list's history anymore and discards it.
-
-
-  Earlier idea (canceled):
-  Make a Pratt Parser which processes tokens from Tokenize.
-  (aka top down operator precedence parser)
-  It should have a read mode which ignores `op/3` directives.
-  It should have a consult mode which handles `op/3` directives.
-  In either case, it should produce a stream of Terms.
-
-  For details on Pratt Parsers, see:
-  http://effbot.org/zone/simple-top-down-parsing.htm
-  http://journal.stuffwithstuff.com/2011/03/19/pratt-parsers-expression-parsing-made-easy/
-  http://javascript.crockford.com/tdop/tdop.html
-*/
 type ReaderMode int
 const (
     Read    = iota
