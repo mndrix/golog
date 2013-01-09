@@ -318,8 +318,8 @@ func (s *Scanner) error(msg string) {
 	fmt.Fprintf(os.Stderr, "%s: %s\n", pos, msg)
 }
 
-func (s *Scanner) scanAtom(ch rune) rune {
-	for isUnquotedAtomContinue(ch) {
+func (s *Scanner) scanAlphanumeric(ch rune) rune {
+	for isAlphanumeric(ch) {
 		ch = s.next()
 	}
 	return ch
@@ -351,16 +351,9 @@ func isGraphic(ch rune) bool {
 	return isOneOf(ch, `#$&*+-./:<=>?@^\~`)
 }
 
-// true if the rune is a valid start for an unquoted atom
-func isUnquotedAtomStart(ch rune) bool {
-	if unicode.IsLower(ch) || isGraphic(ch) {
-		return true
-	}
-	return false
-}
-
-func isUnquotedAtomContinue(ch rune) bool {
-	if ch == '_' || unicode.IsLetter(ch) || unicode.IsDigit(ch) || isGraphic(ch) {
+// ISO §6.5.2 "alphanumeric char" extended to Unicode
+func isAlphanumeric(ch rune) bool {
+	if ch == '_' || unicode.IsLetter(ch) || unicode.IsDigit(ch) {
 		return true
 	}
 	return false
@@ -605,15 +598,15 @@ func (s *Scanner) Scan() rune {
 	case isSolo(ch):
 		tok = Atom
 		ch = s.next()
-	case isUnquotedAtomStart(ch):
+	case unicode.IsLower(ch):  // name by "letter digit token" rule §6.4.2 w/ Unicode
 		tok = Atom
 		ch = s.next()
-		ch = s.scanAtom(ch)
+		ch = s.scanAlphanumeric(ch)
 		if ch == '(' { tok = Functor }
 	case isVariableStart(ch):
 		tok = Variable
 		ch = s.next()
-		ch = s.scanAtom(ch)  // variables look like atoms after the start
+		ch = s.scanAlphanumeric(ch)  // variables look like atoms after the start
 	case isDecimal(ch):
 		tok, ch = s.scanNumber(ch)
 	default:
