@@ -186,13 +186,13 @@ func (r *TermReader) readTerm(p priority, i *LexemeList, o **LexemeList, t *Term
 
 // parse a single term
 func (r *TermReader) term(p priority, i *LexemeList, o **LexemeList, t *Term) bool {
-    var f string
-    var op, t0 Term
+    var op, f string
+    var t0 Term
     var opP, argP priority
 
     // prefix operator
     if r.prefix(&op, &opP, &argP, i, o) && opP<=p && r.term(argP, *o, o, &t0) {
-        opT := NewTerm(op.Functor(), t0)
+        opT := NewTerm(op, t0)
         return r.restTerm(opP, p, *o, o, opT, t)
     }
 
@@ -214,10 +214,11 @@ func (r *TermReader) term(p priority, i *LexemeList, o **LexemeList, t *Term) bo
 }
 
 func (r *TermReader) restTerm(leftP, p priority, i *LexemeList, o **LexemeList, leftT Term, t *Term) bool {
-    var op, rightT Term
+    var op string
+    var rightT Term
     var opP, lap, rap priority
     if r.infix(&op, &opP, &lap, &rap, i, o) && p>=opP && leftP<=lap && r.term(rap, *o, o, &rightT) {
-        t0 := NewTerm(op.Functor(), leftT, rightT)
+        t0 := NewTerm(op, leftT, rightT)
         return r.restTerm(opP, p, *o, o, t0, t)
     }
 
@@ -228,7 +229,7 @@ func (r *TermReader) restTerm(leftP, p priority, i *LexemeList, o **LexemeList, 
 }
 
 // consume an infix operator and indicate which one it was along with its priorities
-func (r *TermReader) infix(op *Term, opP, lap, rap *priority, i *LexemeList, o **LexemeList) bool {
+func (r *TermReader) infix(op *string, opP, lap, rap *priority, i *LexemeList, o **LexemeList) bool {
     if i.Value.Type != scanner.Atom && i.Value.Type != ',' {
         return false
     }
@@ -258,13 +259,13 @@ func (r *TermReader) infix(op *Term, opP, lap, rap *priority, i *LexemeList, o *
             return false
     }
 
-    *op = NewTerm(string(name))
+    *op = name
     *o = i.Next()
     return true
 }
 
 // consume a prefix operator. indicate which one it was along with its priority
-func (r *TermReader) prefix(op *Term, opP, argP *priority, i *LexemeList, o **LexemeList) bool {
+func (r *TermReader) prefix(op *string, opP, argP *priority, i *LexemeList, o **LexemeList) bool {
     if i.Value.Type != scanner.Atom {
         return false
     }
@@ -288,7 +289,7 @@ func (r *TermReader) prefix(op *Term, opP, argP *priority, i *LexemeList, o **Le
             return false
     }
 
-    *op = NewTerm(string(name))
+    *op = name
     *o = i.Next()
     return true
 }
