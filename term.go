@@ -4,6 +4,7 @@ import . "fmt"
 import . "regexp"
 import . "strings"
 import "bytes"
+import "github.com/mndrix/golog/scanner"
 
 var anonCounter <-chan int64
 func init() {
@@ -217,6 +218,18 @@ func IsError(t Term) bool {
 // QuoteFunctor returns a canonical representation of a term's name
 // by quoting characters that require quoting
 func QuoteFunctor(name string) string {
+    // names composed entirely of graphic characters need no quoting
+    allGraphic := true
+    for _, c := range name {
+        if !scanner.IsGraphic(c) {
+            allGraphic = false
+            break
+        }
+    }
+    if allGraphic {
+        return name
+    }
+
     nonAlpha, err := MatchString(`\W`, name)
     maybePanic(err)
     nonLower, err := MatchString(`^[^a-z]`, name)

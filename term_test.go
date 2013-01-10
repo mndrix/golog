@@ -70,11 +70,18 @@ func TestShallowTerm(t *testing.T) {
 }
 
 func TestQuoting(t *testing.T) {
-    // punctuation in functors must be quoted
+    // functors entirely out of punctuation don't need quotes
     x := NewTerm(":-", NewTerm("foo"), NewTerm("bar"))
-    if x.String() != "':-'(foo, bar)" {
+    if x.String() != ":-(foo, bar)" {
         t.Errorf("Clause has wrong quoting: %s", x.String())
     }
+
+    // functors with punctuation and letters need quoting
+    x = NewTerm("/a", NewTerm("foo"), NewTerm("bar"))
+    if x.String() != "'/a'(foo, bar)" {
+        t.Errorf("Clause has wrong quoting: %s", x.String())
+    }
+
 
     // initial capital letters must be quoted
     x = NewTerm("Caps")
