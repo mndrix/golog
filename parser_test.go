@@ -30,4 +30,12 @@ func TestBasic(t *testing.T) {
     if plus.String() != "+(a, b)" {
         t.Errorf("Expected `+(a, b)` but got %s", plus)
     }
+
+    // a term with one prefix operator
+    tildeStr := `\+ j.`
+    tilde, err := ReadTermStringOne(tildeStr, Read)
+    maybePanic(err)
+    if tilde.String() != `\+(j)` {
+        t.Errorf("Expected `\\+(j)` but got %s", tilde)
+    }
 }

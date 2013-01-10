@@ -152,7 +152,14 @@ func (r *reader) readTerm(p priority, i *LexemeList, o **LexemeList, t *Term) bo
 // parse a single term
 func (r *reader) term(p priority, i *LexemeList, o **LexemeList, t *Term) bool {
     var f string
-    var t0 Term
+    var op, t0 Term
+    var opP, argP priority
+
+    // prefix operator
+    if r.prefix(&op, &opP, &argP, i, o) && opP<=p && r.term(argP, *o, o, &t0) {
+        opT := NewTerm(op.Functor(), t0)
+        return r.restTerm(opP, p, *o, o, opT, t)
+    }
 
     switch i.Value.Type {
         case scanner.Atom:      // atom term §6.3.1.3
@@ -212,6 +219,36 @@ func (r *reader) infix(op *Term, opP, lap, rap *priority, i *LexemeList, o **Lex
             *opP = priorities[xfx]
             *lap = *opP - 1
             *rap = *opP - 1
+        default:    // wasn't an infix operator after all
+            return false
+    }
+
+    *op = NewTerm(string(name))
+    *o = i.Next()
+    return true
+}
+
+// consume a prefix operator. indicate which one it was along with its priority
+func (r *reader) prefix(op *Term, opP, argP *priority, i *LexemeList, o **LexemeList) bool {
+    if i.Value.Type != scanner.Atom {
+        return false
+    }
+
+    // is this an operator at all?
+    name := operator(i.Value.Content)
+    priorities, ok := r.operators[name]
+    if !ok {
+        return false
+    }
+
+    // what class of operator is it?
+    switch {
+        case priorities[fx] > 0:
+            *opP = priorities[fx]
+            *argP = *opP - 1
+        case priorities[fy] > 0:
+            *opP = priorities[fy]
+            *argP = *opP
         default:    // wasn't an infix operator after all
             return false
     }
