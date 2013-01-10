@@ -2,7 +2,7 @@ package golog
 
 import . "fmt"
 import . "regexp"
-import . "strings"
+import "strings"
 import "bytes"
 import "github.com/mndrix/golog/scanner"
 
@@ -234,7 +234,7 @@ func QuoteFunctor(name string) string {
     maybePanic(err)
     nonLower, err := MatchString(`^[^a-z]`, name)
     if nonAlpha || nonLower {
-        escapedName := Replace(name, `'`, `\'`, -1)
+        escapedName := strings.Replace(name, `'`, `\'`, -1)
         return Sprintf("'%s'", escapedName)
     }
 

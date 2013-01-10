@@ -3,8 +3,10 @@ package golog
 import "testing"
 
 func TestBasic(t *testing.T) {
+
+    // read single terms
     single := make(map[string]string)
-    single[`hello.`] = `hello`
+    single[`hello. world.`] = `hello`       // read only the first term
     single[`a + b.`] = `+(a, b)`
     single[`first, second.`] = `','(first, second)`
     single[`\+ j.`] = `\+(j)`
@@ -13,6 +15,22 @@ func TestBasic(t *testing.T) {
     single[`a^b^c.`] = `^(a, ^(b, c))`      // test right associativity
     for test, wanted := range single {
         got, err := ReadTerm(test)
+        maybePanic(err)
+        if got.String() != wanted {
+            t.Errorf("Reading `%s` gave `%s` instead of `%s`", test, got, wanted)
+        }
+    }
+
+    // read single terms (with user-defined operators)
+    user := make(map[string]string)
+    user[`a x b.`] = `x(a, b)`
+    user[`a x b x c.`] = `x(x(a, b), c)`
+    for test, wanted := range user {
+        r, err := NewReader(test)
+        maybePanic(err)
+        r.Op(400, yfx, "x")
+
+        got, err := r.Next()
         maybePanic(err)
         if got.String() != wanted {
             t.Errorf("Reading `%s` gave `%s` instead of `%s`", test, got, wanted)

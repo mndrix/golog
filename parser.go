@@ -24,12 +24,7 @@ const (
 
 // ISO operator priorities per §6.3.4
 type priority   int     // between 1 and 1200, inclusive
-type operator   string
 
-type reader struct {
-    operators   map[operator]*[7]priority
-    dst         chan<- Term
-}
 
 // ReadTerm reads a single term from a term source.  A term source can
 // be any of the following:
@@ -40,28 +35,21 @@ type reader struct {
 // Reading a term may consume more content from the source than is strictly
 // necessary.
 func ReadTerm(src interface{}) (Term, error) {
-    r, err := toReader(src)
+    r, err := NewReader(src)
     if err != nil {
         return nil, err
     }
 
-    return one(readTermsTokens(scanner.Scan(r)))
+    return r.Next()
 }
 
+// ReadTermAll reads all available terms from the source
 func ReadTermAll(src interface{}) ([]Term, error) {
-    r, err := toReader(src)
+    r, err := NewReader(src)
     if err != nil {
         return nil, err
     }
-    return all(readTermsTokens(scanner.Scan(r)))
-}
-
-func readTermsTokens(tokens <-chan *scanner.Lexeme) <-chan Term {
-    ch := make(chan Term)
-    ll := NewLexemeList(tokens)
-    r := newReader(ch)
-    go r.start(ll)
-    return ch
+    return r.All()
 }
 
 // toReader tries to convert a source into something that implements io.Reader
@@ -78,11 +66,31 @@ func toReader(src interface{}) (io.Reader, error) {
     return nil, fmt.Errorf("Can't convert %#v into io.Reader\n", src)
 }
 
-// one takes a single term out of a term channel
-func one(ch <-chan Term) (Term, error) {
-    t := <-ch
-    if t == nil {  // channel closed right away
-        return nil, fmt.Errorf("No terms found in term channel")
+type Reader struct {
+    operators   map[string]*[7]priority
+    terms       chan Term
+}
+
+func NewReader(src interface{}) (*Reader, error) {
+    ioReader, err := toReader(src)
+    if err != nil {
+        return nil, err
+    }
+
+    tokens := scanner.Scan(ioReader)
+    r := Reader{terms: make(chan Term)}
+    r.ResetOperatorTable()
+    go r.start(NewLexemeList(tokens))
+    return &r, nil
+}
+
+// Next returns the next term available from this reader.
+// Returns error NoMoreTerms if the reader can't find any more terms.
+var NoMoreTerms = fmt.Errorf("No more terms available")
+func (r *Reader) Next() (Term, error) {
+    t, ok := <-r.terms
+    if !ok {  // channel closed, no more terms
+        return nil, NoMoreTerms
     }
     if IsError(t) {
         return nil, t.Error()
@@ -90,10 +98,10 @@ func one(ch <-chan Term) (Term, error) {
     return t, nil
 }
 
-// all takes all terms out of a term channel and puts them in a slice
-func all(ch <-chan Term) ([]Term, error) {
+// All returns a slice of all terms available from this reader
+func (r *Reader) All() ([]Term, error) {
     terms := make([]Term, 0)
-    for t := range ch {
+    for t := range r.terms {
         if IsError(t) {
             return terms, t.Error()
         }
@@ -102,34 +110,30 @@ func all(ch <-chan Term) ([]Term, error) {
     return terms, nil
 }
 
-
-func newReader(ch chan<- Term) *reader {
-    r := reader{dst: ch}
-    r.resetOperatorTable()
-    return &r
+// ResetOperatorTable replaces the reader's current operator table
+// with the default table specified in ISO Prolog §6.3.4.4, table 7
+func (r *Reader) ResetOperatorTable() {
+    r.operators = make(map[string]*[7]priority)
+    r.Op(1200,  xfx, `:-`, `-->`    )
+    r.Op(1200,   fx, `:-`, `?-`     )
+    r.Op(1100,  xfy, `;`            )
+    r.Op(1050,  xfy, `->`           )
+    r.Op(1000,  xfy, `,`            )
+    r.Op( 900,   fy, `\+`           )
+    r.Op( 700,  xfx, `=`, `\=`      )
+    r.Op( 700,  xfx, `==`, `\==`, `@<`, `@=<`, `@>`, `@>=`)
+    r.Op( 700,  xfx, `=..`)
+    r.Op( 700,  xfx, `is`, `=:=`, `=\=`, `<`, `=<`, `>`, `>=`)
+    r.Op( 500,  yfx, `+`, `-`, `/\`, `\/`) // syntax highlighter `
+    r.Op( 400,  yfx, `*`, `/`, `//`, `rem`, `mod`, `<<`, `<<`)
+    r.Op( 200,  xfx, `**`       )
+    r.Op( 200,  xfy, `^`        )
+    r.Op( 200,   fy, `-`, `\`   ) // syntax highlighter `
 }
 
-// resetOperatorTable replaces the reader's current operator table
-// with the default table specified in §6.3.4.4, table 7
-func (r *reader) resetOperatorTable() {
-    r.operators = make(map[operator]*[7]priority)
-    r.op(1200,  xfx, []operator{`:-`, `-->`})
-    r.op(1200,   fx, []operator{`:-`, `?-`})
-    r.op(1100,  xfy, []operator{`;`})
-    r.op(1050,  xfy, []operator{`->`})
-    r.op(1000,  xfy, []operator{`,`})
-    r.op( 900,   fy, []operator{`\+`})
-    r.op( 700,  xfx, []operator{`=`, `\=`})
-    r.op( 700,  xfx, []operator{`==`, `\==`, `@<`, `@=<`, `@>`, `@>=`})
-    r.op( 700,  xfx, []operator{`=..`})
-    r.op( 700,  xfx, []operator{`is`, `=:=`, `=\=`, `<`, `=<`, `>`, `>=`})
-    r.op( 500,  yfx, []operator{`+`, `-`, `/\`, `\/`}) // syntax highlighter `
-    r.op( 400,  yfx, []operator{`*`, `/`, `//`, `rem`, `mod`, `<<`, `<<`})
-    r.op( 200,  xfx, []operator{`**`})
-    r.op( 200,  xfy, []operator{`^`})
-    r.op( 200,   fy, []operator{`-`, `\`})             // syntax highlighter `
-}
-func (r *reader) op(p priority, s specifier, os []operator) {
+// Op creates or changes the parsing behavior of a Prolog operator.
+// It's equivalent to op/3
+func (r *Reader) Op(p priority, s specifier, os... string) {
     for _, o := range os {
         priorities, ok := r.operators[o]
         if !ok {
@@ -139,10 +143,12 @@ func (r *reader) op(p priority, s specifier, os []operator) {
         priorities[s] = p
     }
 }
-func (r *reader) emit(t Term) {
-    r.dst <- t
+
+func (r *Reader) emit(t Term) {
+    r.terms <- t
 }
-func (r *reader) start(ll0 *LexemeList) {
+
+func (r *Reader) start(ll0 *LexemeList) {
     var t Term
     var ll *LexemeList
     for r.readTerm(1200, ll0, &ll, &t) {
@@ -151,11 +157,11 @@ func (r *reader) start(ll0 *LexemeList) {
     }
 
     // we won't generate any more terms
-    close(r.dst)
+    close(r.terms)
 }
 
 // parse a single functor
-func (r *reader) functor(in *LexemeList, out **LexemeList, f *string) bool {
+func (r *Reader) functor(in *LexemeList, out **LexemeList, f *string) bool {
     if in.Value.Type == scanner.Functor {
         *f = in.Value.Content
         *out = in.Next()  // skip functor we just processed
@@ -166,7 +172,7 @@ func (r *reader) functor(in *LexemeList, out **LexemeList, f *string) bool {
 }
 
 // consume a single character token
-func (r *reader) tok(c rune, in *LexemeList, out **LexemeList) bool {
+func (r *Reader) tok(c rune, in *LexemeList, out **LexemeList) bool {
     if in.Value.Type == c {
         *out = in.Next()
         return true
@@ -174,12 +180,12 @@ func (r *reader) tok(c rune, in *LexemeList, out **LexemeList) bool {
     return false
 }
 
-func (r *reader) readTerm(p priority, i *LexemeList, o **LexemeList, t *Term) bool {
+func (r *Reader) readTerm(p priority, i *LexemeList, o **LexemeList, t *Term) bool {
     return r.term(p, i, o, t) && r.tok(scanner.FullStop, *o, o)
 }
 
 // parse a single term
-func (r *reader) term(p priority, i *LexemeList, o **LexemeList, t *Term) bool {
+func (r *Reader) term(p priority, i *LexemeList, o **LexemeList, t *Term) bool {
     var f string
     var op, t0 Term
     var opP, argP priority
@@ -207,7 +213,7 @@ func (r *reader) term(p priority, i *LexemeList, o **LexemeList, t *Term) bool {
     return false
 }
 
-func (r *reader) restTerm(leftP, p priority, i *LexemeList, o **LexemeList, leftT Term, t *Term) bool {
+func (r *Reader) restTerm(leftP, p priority, i *LexemeList, o **LexemeList, leftT Term, t *Term) bool {
     var op, rightT Term
     var opP, lap, rap priority
     if r.infix(&op, &opP, &lap, &rap, i, o) && p>=opP && leftP<=lap && r.term(rap, *o, o, &rightT) {
@@ -222,13 +228,13 @@ func (r *reader) restTerm(leftP, p priority, i *LexemeList, o **LexemeList, left
 }
 
 // consume an infix operator and indicate which one it was along with its priorities
-func (r *reader) infix(op *Term, opP, lap, rap *priority, i *LexemeList, o **LexemeList) bool {
+func (r *Reader) infix(op *Term, opP, lap, rap *priority, i *LexemeList, o **LexemeList) bool {
     if i.Value.Type != scanner.Atom && i.Value.Type != ',' {
         return false
     }
 
     // is this an operator at all?
-    name := operator(i.Value.Content)
+    name := i.Value.Content
     priorities, ok := r.operators[name]
     if !ok {
         return false
@@ -258,13 +264,13 @@ func (r *reader) infix(op *Term, opP, lap, rap *priority, i *LexemeList, o **Lex
 }
 
 // consume a prefix operator. indicate which one it was along with its priority
-func (r *reader) prefix(op *Term, opP, argP *priority, i *LexemeList, o **LexemeList) bool {
+func (r *Reader) prefix(op *Term, opP, argP *priority, i *LexemeList, o **LexemeList) bool {
     if i.Value.Type != scanner.Atom {
         return false
     }
 
     // is this an operator at all?
-    name := operator(i.Value.Content)
+    name := i.Value.Content
     priorities, ok := r.operators[name]
     if !ok {
         return false
