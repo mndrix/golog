@@ -326,7 +326,7 @@ func (s *Scanner) scanAlphanumeric(ch rune) rune {
 }
 
 func (s *Scanner) scanGraphic(ch rune) rune {
-	for isGraphic(ch) {
+	for IsGraphic(ch) {
 		ch = s.next()
 	}
 	return ch
@@ -347,7 +347,7 @@ func digitVal(ch rune) int {
 func isDecimal(ch rune) bool { return '0' <= ch && ch <= '9' }
 
 // true if the rune is a graphic token char per ISO §6.4.2
-func isGraphic(ch rune) bool {
+func IsGraphic(ch rune) bool {
 	return isOneOf(ch, `#$&*+-./:<=>?@^\~`)
 }
 
@@ -590,7 +590,7 @@ func (s *Scanner) Scan() rune {
 			ch = s.scanGraphic(ch)
 			if ch == '(' { tok = Functor }
 		}
-	case isGraphic(ch):
+	case IsGraphic(ch):
 		ch = s.next()
 		tok = Atom
 		ch = s.scanGraphic(ch)
