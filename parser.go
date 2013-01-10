@@ -221,6 +221,10 @@ func (r *TermReader) restTerm(leftP, p priority, i *LexemeList, o **LexemeList, 
         t0 := NewTerm(op, leftT, rightT)
         return r.restTerm(opP, p, *o, o, t0, t)
     }
+    if r.postfix(&op, &opP, &lap, i, o) && opP<=p && leftP<=lap {
+        opT := NewTerm(op, leftT)
+        return r.restTerm(opP, p, *o, o, opT, t)
+    }
 
     // ε rule can always succeed
     *o = i
@@ -285,7 +289,37 @@ func (r *TermReader) prefix(op *string, opP, argP *priority, i *LexemeList, o **
         case priorities[fy] > 0:
             *opP = priorities[fy]
             *argP = *opP
-        default:    // wasn't an infix operator after all
+        default:    // wasn't a prefix operator after all
+            return false
+    }
+
+    *op = name
+    *o = i.Next()
+    return true
+}
+
+// consume a postfix operator. indicate which one it was along with its priority
+func (r *TermReader) postfix(op *string, opP, argP *priority, i *LexemeList, o **LexemeList) bool {
+    if i.Value.Type != scanner.Atom {
+        return false
+    }
+
+    // is this an operator at all?
+    name := i.Value.Content
+    priorities, ok := r.operators[name]
+    if !ok {
+        return false
+    }
+
+    // what class of operator is it?
+    switch {
+        case priorities[xf] > 0:
+            *opP = priorities[xf]
+            *argP = *opP - 1
+        case priorities[yf] > 0:
+            *opP = priorities[yf]
+            *argP = *opP
+        default:    // wasn't a postfix operator after all
             return false
     }
 

@@ -25,10 +25,12 @@ func TestBasic(t *testing.T) {
     user := make(map[string]string)
     user[`a x b.`] = `x(a, b)`
     user[`a x b x c.`] = `x(x(a, b), c)`
+    user[`two weeks.`] = `weeks(two)`
     for test, wanted := range user {
         r, err := NewTermReader(test)
         maybePanic(err)
         r.Op(400, yfx, "x")
+        r.Op(200, yf, "weeks")
 
         got, err := r.Next()
         maybePanic(err)
