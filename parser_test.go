@@ -22,4 +22,12 @@ func TestBasic(t *testing.T) {
     if oneTwo[1].String() != "two" {
         t.Errorf("Expected `two` in %#v", oneTwo)
     }
+
+    // a term with one infix operator
+    plusStr := `a + b.`
+    plus, err := ReadTermStringOne(plusStr, Read)
+    maybePanic(err)
+    if plus.String() != "+(a, b)" {
+        t.Errorf("Expected `+(a, b)` but got %s", plus)
+    }
 }

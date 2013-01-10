@@ -156,9 +156,9 @@ func (r *reader) term(p priority, i *LexemeList, o **LexemeList, t *Term) bool {
 
     switch i.Value.Type {
         case scanner.Atom:      // atom term §6.3.1.3
-            *t = NewTerm(i.Value.Content)
+            a := NewTerm(i.Value.Content)
             *o = i.Next()
-            return true
+            return r.restTerm(0, p, *o, o, a, t)
         default:
     }
 
@@ -169,4 +169,54 @@ func (r *reader) term(p priority, i *LexemeList, o **LexemeList, t *Term) bool {
     }
 
     return false
+}
+
+func (r *reader) restTerm(leftP, p priority, i *LexemeList, o **LexemeList, leftT Term, t *Term) bool {
+    var op, rightT Term
+    var opP, lap, rap priority
+    if r.infix(&op, &opP, &lap, &rap, i, o) && p>=opP && leftP<=lap && r.term(rap, *o, o, &rightT) {
+        t0 := NewTerm(op.Functor(), leftT, rightT)
+        return r.restTerm(opP, p, *o, o, t0, t)
+    }
+
+    // ε rule can always succeed
+    *o = i
+    *t = leftT
+    return true
+}
+
+// consume an infix operator and indicate which one it was along with its priorities
+func (r *reader) infix(op *Term, opP, lap, rap *priority, i *LexemeList, o **LexemeList) bool {
+    if i.Value.Type != scanner.Atom {
+        return false
+    }
+
+    // is this an operator at all?
+    name := operator(i.Value.Content)
+    priorities, ok := r.operators[name]
+    if !ok {
+        return false
+    }
+
+    // what class of operator is it?
+    switch {
+        case priorities[yfx] > 0:
+            *opP = priorities[yfx]
+            *lap = *opP
+            *rap = *opP - 1
+        case priorities[xfy] > 0:
+            *opP = priorities[xfy]
+            *lap = *opP - 1
+            *rap = *opP
+        case priorities[xfx] > 0:
+            *opP = priorities[xfx]
+            *lap = *opP - 1
+            *rap = *opP - 1
+        default:    // wasn't an infix operator after all
+            return false
+    }
+
+    *op = NewTerm(string(name))
+    *o = i.Next()
+    return true
 }
