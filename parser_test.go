@@ -8,6 +8,9 @@ func TestBasic(t *testing.T) {
     single[`a + b.`] = `+(a, b)`
     single[`first, second.`] = `','(first, second)`
     single[`\+ j.`] = `\+(j)`
+    single[`a + b*c.`] = `+(a, *(b, c))`    // test precedence
+    single[`a + b + c.`] = `+(+(a, b), c)`  // test left associativity
+    single[`a^b^c.`] = `^(a, ^(b, c))`      // test right associativity
     for test, wanted := range single {
         got, err := ReadTermStringOne(test, Read)
         maybePanic(err)
