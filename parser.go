@@ -194,7 +194,7 @@ func (r *reader) restTerm(leftP, p priority, i *LexemeList, o **LexemeList, left
 
 // consume an infix operator and indicate which one it was along with its priorities
 func (r *reader) infix(op *Term, opP, lap, rap *priority, i *LexemeList, o **LexemeList) bool {
-    if i.Value.Type != scanner.Atom {
+    if i.Value.Type != scanner.Atom && i.Value.Type != ',' {
         return false
     }
 

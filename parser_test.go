@@ -6,6 +6,7 @@ func TestBasic(t *testing.T) {
     single := make(map[string]string)
     single[`hello.`] = `hello`
     single[`a + b.`] = `+(a, b)`
+    single[`first, second.`] = `','(first, second)`
     single[`\+ j.`] = `\+(j)`
     for test, wanted := range single {
         got, err := ReadTermStringOne(test, Read)
