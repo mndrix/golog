@@ -3,13 +3,16 @@ package golog
 import "testing"
 
 func TestBasic(t *testing.T) {
-
-    // reading a single simple term
-    helloStr := `hello.`
-    hello, err := ReadTermStringOne(helloStr, Read)
-    maybePanic(err)
-    if hello.String() != "hello" {
-        t.Errorf("Reading `%s` gave `%s`", helloStr, hello.String())
+    single := make(map[string]string)
+    single[`hello.`] = `hello`
+    single[`a + b.`] = `+(a, b)`
+    single[`\+ j.`] = `\+(j)`
+    for test, wanted := range single {
+        got, err := ReadTermStringOne(test, Read)
+        maybePanic(err)
+        if got.String() != wanted {
+            t.Errorf("Reading `%s` gave `%s` instead of `%s`", test, got, wanted)
+        }
     }
 
     // reading a couple simple terms
@@ -21,21 +24,5 @@ func TestBasic(t *testing.T) {
     }
     if oneTwo[1].String() != "two" {
         t.Errorf("Expected `two` in %#v", oneTwo)
-    }
-
-    // a term with one infix operator
-    plusStr := `a + b.`
-    plus, err := ReadTermStringOne(plusStr, Read)
-    maybePanic(err)
-    if plus.String() != "+(a, b)" {
-        t.Errorf("Expected `+(a, b)` but got %s", plus)
-    }
-
-    // a term with one prefix operator
-    tildeStr := `\+ j.`
-    tilde, err := ReadTermStringOne(tildeStr, Read)
-    maybePanic(err)
-    if tilde.String() != `\+(j)` {
-        t.Errorf("Expected `\\+(j)` but got %s", tilde)
     }
 }
