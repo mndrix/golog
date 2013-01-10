@@ -12,7 +12,7 @@ func TestBasic(t *testing.T) {
     single[`a + b + c.`] = `+(+(a, b), c)`  // test left associativity
     single[`a^b^c.`] = `^(a, ^(b, c))`      // test right associativity
     for test, wanted := range single {
-        got, err := ReadTermStringOne(test, Read)
+        got, err := ReadTerm(test)
         maybePanic(err)
         if got.String() != wanted {
             t.Errorf("Reading `%s` gave `%s` instead of `%s`", test, got, wanted)
@@ -21,7 +21,7 @@ func TestBasic(t *testing.T) {
 
     // reading a couple simple terms
     oneTwoStr := `one. two.`
-    oneTwo, err := ReadTermStringAll(oneTwoStr, Read)
+    oneTwo, err := ReadTermAll(oneTwoStr)
     maybePanic(err)
     if oneTwo[0].String() != "one" {
         t.Errorf("Expected `one` in %#v", oneTwo)

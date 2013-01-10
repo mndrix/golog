@@ -2,17 +2,13 @@ package golog
 
 import "fmt"
 import "github.com/mndrix/golog/scanner"
+import "io"
+import "reflect"
 import "strings"
 
 // Functions match the regular expression
 //
-//    ReadTerm(String)?(One|All)?
-
-type ReaderMode int
-const (
-    Read    = iota
-    Consult
-)
+//    ReadTerm(All)?
 
 // ISO operator specifiers per §6.3.4, table 4
 type specifier  int // xf, yf, xfy, etc.
@@ -31,39 +27,71 @@ type priority   int     // between 1 and 1200, inclusive
 type operator   string
 
 type reader struct {
-    mode        ReaderMode
     operators   map[operator]*[7]priority
     dst         chan<- Term
 }
 
-func ReadTermTokens(tokens <-chan *scanner.Lexeme, mode ReaderMode) <-chan Term {
+// ReadTerm reads a single term from a term source.  A term source can
+// be any of the following:
+//
+//    * type that implements io.Reader
+//    * string
+//
+// Reading a term may consume more content from the source than is strictly
+// necessary.
+func ReadTerm(src interface{}) (Term, error) {
+    r, err := toReader(src)
+    if err != nil {
+        return nil, err
+    }
+
+    return one(readTermsTokens(scanner.Scan(r)))
+}
+
+func ReadTermAll(src interface{}) ([]Term, error) {
+    r, err := toReader(src)
+    if err != nil {
+        return nil, err
+    }
+    return all(readTermsTokens(scanner.Scan(r)))
+}
+
+func readTermsTokens(tokens <-chan *scanner.Lexeme) <-chan Term {
     ch := make(chan Term)
     ll := NewLexemeList(tokens)
-    r := newReader(mode, ch)
+    r := newReader(ch)
     go r.start(ll)
     return ch
 }
-func ReadTermString(s string, mode ReaderMode) <-chan Term {
-    r := strings.NewReader(s)
-    return ReadTermTokens(scanner.Scan(r), mode)
+
+// toReader tries to convert a source into something that implements io.Reader
+var _ReaderT reflect.Type = reflect.TypeOf((*io.Reader)(nil)).Elem()
+func toReader(src interface{}) (io.Reader, error) {
+    if reflect.TypeOf(src).Implements(_ReaderT) {
+        return src.(io.Reader), nil
+    }
+    switch x := src.(type) {
+        case string:
+            return strings.NewReader(x), nil
+    }
+
+    return nil, fmt.Errorf("Can't convert %#v into io.Reader\n", src)
 }
-func ReadTermStringOne(s string, mode ReaderMode) (Term, error) {
-    ch := ReadTermString(s, mode)
+
+// one takes a single term out of a term channel
+func one(ch <-chan Term) (Term, error) {
     t := <-ch
     if t == nil {  // channel closed right away
-        return nil, fmt.Errorf("No terms found in `%s`", s)
+        return nil, fmt.Errorf("No terms found in term channel")
     }
     if IsError(t) {
         return nil, t.Error()
     }
     return t, nil
 }
-func ReadTermStringAll(s string, mode ReaderMode) ([]Term, error) {
-    ch := ReadTermString(s, mode)
-    return readAll(ch)
-}
 
-func readAll(ch <-chan Term) ([]Term, error) {
+// all takes all terms out of a term channel and puts them in a slice
+func all(ch <-chan Term) ([]Term, error) {
     terms := make([]Term, 0)
     for t := range ch {
         if IsError(t) {
@@ -75,13 +103,14 @@ func readAll(ch <-chan Term) ([]Term, error) {
 }
 
 
-// resetOperatorTable replaces the reader's current operator table
-// with the default table specified in §6.3.4.4, table 7
-func newReader(mode ReaderMode, ch chan<- Term) *reader {
-    r := reader{mode: mode, dst: ch}
+func newReader(ch chan<- Term) *reader {
+    r := reader{dst: ch}
     r.resetOperatorTable()
     return &r
 }
+
+// resetOperatorTable replaces the reader's current operator table
+// with the default table specified in §6.3.4.4, table 7
 func (r *reader) resetOperatorTable() {
     r.operators = make(map[operator]*[7]priority)
     r.op(1200,  xfx, []operator{`:-`, `-->`})
