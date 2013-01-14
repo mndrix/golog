@@ -213,7 +213,10 @@ func (r *TermReader) term(p priority, i *LexemeList, o **LexemeList, t *Term) bo
             v := NewVar(i.Value.Content)
             *o = i.Next()
             return r.restTerm(0, p, *o, o, v, t)
-        default:
+        case scanner.Void:  // variable term §6.3.2
+            v := NewVar("_")
+            *o = i.Next()
+            return r.restTerm(0, p, *o, o, v, t)
     }
 
     // compound term - functional notation §6.3.3

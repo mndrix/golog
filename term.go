@@ -10,7 +10,7 @@ var anonCounter <-chan int64
 func init() {
     // goroutine providing a counter for anonymous variables
     c := make(chan int64)
-    var i int64 = 1
+    var i int64 = 1000
     go func() {
         for {
             c <- i
@@ -182,7 +182,7 @@ func NewVar(name string) Term {
     // make sure anonymous variables are unique
     if name == "_" {
         i := <-anonCounter
-        name = Sprintf("_G%d", i)
+        name = Sprintf("_A%d", i)
     }
     return &Variable{
         Name:   name,
