@@ -127,3 +127,18 @@ func TestInteger(t *testing.T) {
         t.Errorf("Can't handle large integers")
     }
 }
+
+func TestFloat(t *testing.T) {
+    tests := make(map[string]float64)
+    tests[`3.14159`] = 3.14159
+    tests[`2.0e2`] = 200.0
+    tests[`2.5e-2`] = 0.025
+    tests[`0.9E4`] = 9000.0
+
+    for text, expected := range tests {
+        x := NewFloat(text)
+        if x.Value() != expected {
+            t.Errorf("Float `%s` parsed as `%f` wanted `%f`", text, x.Value(), expected)
+        }
+    }
+}

@@ -20,6 +20,7 @@ func TestBasic(t *testing.T) {
     single[`bee(X) :- X=b.`] = `:-(bee(X), =(X, b))`
     single[`zero(X) :- 0 =:= X.`] = `:-(zero(X), =:=(0, X))`
     single[`succ(0,1) :- true.`] = `:-(succ(0, 1), true)`
+    single[`pi(3.14159).`] = `pi(3.14159)`
     for test, wanted := range single {
         got, err := ReadTerm(test)
         maybePanic(err)

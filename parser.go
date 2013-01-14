@@ -201,6 +201,10 @@ func (r *TermReader) term(p priority, i *LexemeList, o **LexemeList, t *Term) bo
             n := NewInt(i.Value.Content)
             *o = i.Next()
             return r.restTerm(0, p, *o, o, n, t)
+        case scanner.Float:     // float term §6.3.1.1
+            f := NewFloat(i.Value.Content)
+            *o = i.Next()
+            return r.restTerm(0, p, *o, o, f, t)
         case scanner.Atom:      // atom term §6.3.1.3
             a := NewTerm(i.Value.Content)
             *o = i.Next()
