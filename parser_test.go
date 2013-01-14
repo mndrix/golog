@@ -15,6 +15,7 @@ func TestBasic(t *testing.T) {
     single[`a^b^c.`] = `^(a, ^(b, c))`      // test right associativity
     single[`x(a).`] = `x(a)`
     single[`x(a,b,c).`] = `x(','(a, ','(b, c)))`
+    single[`x(A).`] = `x(A)`
     for test, wanted := range single {
         got, err := ReadTerm(test)
         maybePanic(err)

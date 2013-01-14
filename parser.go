@@ -201,6 +201,10 @@ func (r *TermReader) term(p priority, i *LexemeList, o **LexemeList, t *Term) bo
             a := NewTerm(i.Value.Content)
             *o = i.Next()
             return r.restTerm(0, p, *o, o, a, t)
+        case scanner.Variable:  // variable term §6.3.2
+            v := NewVar(i.Value.Content)
+            *o = i.Next()
+            return r.restTerm(0, p, *o, o, v, t)
         default:
     }
 
