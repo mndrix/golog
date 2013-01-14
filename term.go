@@ -53,29 +53,29 @@ type Term interface {
 
 // ISO calls this a "compound term" see §6.1.2(e)
 // We currently use this type to cover atoms defined in §6.1.2(b)
-type Structure struct {
+type Compound struct {
     Func    string
     Args    []Term
 }
-func (self *Structure) Functor() string {
+func (self *Compound) Functor() string {
     return self.Func
 }
-func (self *Structure) Arity() int {
+func (self *Compound) Arity() int {
     return len(self.Args)
 }
-func (self *Structure) Arguments() []Term {
+func (self *Compound) Arguments() []Term {
     return self.Args
 }
-func (self *Structure) Body() Term {
+func (self *Compound) Body() Term {
     return self.Args[1]
 }
-func (self *Structure) Head() Term {
+func (self *Compound) Head() Term {
     return self.Args[0]
 }
-func (self *Structure) IsClause() bool {
+func (self *Compound) IsClause() bool {
     return self.Arity() == 2 && self.Functor() == ":-"
 }
-func (self *Structure) String() string {
+func (self *Compound) String() string {
     // an atom
     quotedFunctor := QuoteFunctor(self.Functor())
     if self.Arity() == 0 {
@@ -94,10 +94,10 @@ func (self *Structure) String() string {
     Fprintf(&buf, ")")
     return buf.String()
 }
-func (self *Structure) Indicator() string {
+func (self *Compound) Indicator() string {
     return Sprintf("%s/%d", self.Functor(), self.Arity())
 }
-func (self *Structure) Error() error {
+func (self *Compound) Error() error {
     panic("Can't call Error() on a Structure")
 }
 
@@ -165,7 +165,7 @@ func (self *Error) Error() error {
 
 // NewTerm creates a new term with the given functor and optional arguments
 func NewTerm(functor string, arguments ...Term) Term {
-    return &Structure{
+    return &Compound{
         Func:   functor,
         Args:   arguments,
     }
@@ -192,7 +192,7 @@ func NewVar(name string) Term {
 
 func IsVariable(t Term) bool {
     switch t.(type) {
-        case *Structure:
+        case *Compound:
             return false
         case *Variable:
             return true
@@ -204,7 +204,7 @@ func IsVariable(t Term) bool {
 }
 func IsError(t Term) bool {
     switch t.(type) {
-        case *Structure:
+        case *Compound:
             return false
         case *Variable:
             return false
