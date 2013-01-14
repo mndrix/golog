@@ -1,5 +1,7 @@
 package golog
 
+import . "github.com/mndrix/golog/term"
+
 import "testing"
 
 func TestUnifyConstants(t *testing.T) {

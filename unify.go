@@ -1,5 +1,7 @@
 package golog
 
+import . "github.com/mndrix/golog/term"
+
 import "fmt"
 
 var CantUnify error = fmt.Errorf("Can't unify the given terms")

@@ -1,4 +1,4 @@
-package golog
+package term
 
 import "fmt"
 import "math/big"

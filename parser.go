@@ -1,5 +1,7 @@
 package golog
 
+import . "github.com/mndrix/golog/term"
+
 import "fmt"
 import "github.com/mndrix/golog/scanner"
 import "io"

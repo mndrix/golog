@@ -1,4 +1,4 @@
-package golog
+package term
 
 import . "regexp"
 import "testing"

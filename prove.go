@@ -1,5 +1,7 @@
 package golog
 
+import . "github.com/mndrix/golog/term"
+
 // IsTrue returns true if goal can be proven from facts and clauses
 // in the database
 func IsTrue(db Database, goal Term) bool {

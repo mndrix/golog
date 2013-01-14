@@ -1,6 +1,7 @@
 package golog
 
 import . "fmt"
+import . "github.com/mndrix/golog/term"
 
 import "bytes"
 import "github.com/mndrix/ps"
