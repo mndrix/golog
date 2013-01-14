@@ -2,6 +2,7 @@ package golog
 
 import . "regexp"
 import "testing"
+import "math/big"
 
 func TestAtom(t *testing.T) {
     atom := NewTerm("prolog")
@@ -99,5 +100,30 @@ func TestQuoting(t *testing.T) {
     x = NewTerm("lower_Then_Caps")
     if x.String() != "lower_Then_Caps" {
         t.Errorf("Mixed case atom shouldn't be quoted: %s", x.String())
+    }
+}
+
+func TestInteger(t *testing.T) {
+    tests := make(map[string]*big.Int)
+    tests[`123`] = big.NewInt(123)
+    tests[`0xf`] = big.NewInt(15)
+    tests[`0o10`] = big.NewInt(8)
+    tests[`0b10`] = big.NewInt(2)
+    tests[`0' `] = big.NewInt(32)
+    tests[`0'\s`] = big.NewInt(32)  // SWI-Prolog extension
+    tests[`0',`] = big.NewInt(44)
+    tests["0'\\x2218\\"] = big.NewInt(0x2218)
+    tests["0'\\21030\\"] = big.NewInt(0x2218)
+
+    for text, expected := range tests {
+        x := NewInt(text)
+        if x.Value().Cmp(expected) != 0 {
+            t.Errorf("Integer `%s` parsed as `%d` wanted `%d`", text, x.Value(), expected)
+        }
+    }
+
+    large := NewInt(`989050597012214992552592926549`)
+    if large.String() != `989050597012214992552592926549` {
+        t.Errorf("Can't handle large integers")
     }
 }
