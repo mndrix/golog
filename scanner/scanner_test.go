@@ -485,7 +485,7 @@ thing(_) :-
 ...('tschüß', 9, 3.14).  % postfix comment
 greek(λαμβδα, 0'\n, 0'a).
 /+(1, 2).
-hello.
+hello.% still a valid term
 `
 func TestAcid(t *testing.T) {
 	s := new(Scanner).Init(bytes.NewBufferString(acidTest))
@@ -558,4 +558,5 @@ func TestAcid(t *testing.T) {
 
 	checkScanPos(t, s, 237, 11, 1, Atom, "hello")
 	checkScanPos(t, s, 242, 11, 6, FullStop, ".")
+	checkScanPos(t, s, 243, 11, 7, Comment, "% still a valid term")
 }
