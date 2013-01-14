@@ -210,8 +210,8 @@ func (r *TermReader) term(p priority, i *LexemeList, o **LexemeList, t *Term) bo
 
     // compound term - functional notation §6.3.3
     if r.functor(i,o,&f) && r.tok('(',*o,o) && r.term(1200,*o,o,&t0) && r.tok(')',*o,o) {
-        *t = NewTerm(f, t0)
-        return true
+        f := NewTerm(f, t0)
+        return r.restTerm(0, p, *o, o, f, t)
     }
 
     return false
