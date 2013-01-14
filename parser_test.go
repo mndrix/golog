@@ -14,11 +14,12 @@ func TestBasic(t *testing.T) {
     single[`a + b + c.`] = `+(+(a, b), c)`  // test left associativity
     single[`a^b^c.`] = `^(a, ^(b, c))`      // test right associativity
     single[`x(a).`] = `x(a)`
-    single[`x(a,b,c).`] = `x(','(a, ','(b, c)))`
+    single[`x(a,b,c).`] = `x(a, b, c)`
     single[`x(A).`] = `x(A)`
     single[`amen :- true.`] = `:-(amen, true)`
     single[`bee(X) :- X=b.`] = `:-(bee(X), =(X, b))`
     single[`zero(X) :- 0 =:= X.`] = `:-(zero(X), =:=(0, X))`
+    single[`succ(0,1) :- true.`] = `:-(succ(0, 1), true)`
     for test, wanted := range single {
         got, err := ReadTerm(test)
         maybePanic(err)
