@@ -9,9 +9,7 @@ func TestAsserta(t *testing.T) {
     db1 := db0.Asserta(NewTerm("alpha"))
     db2 := db1.Asserta(NewTerm("beta"))
 
-    foo := NewTerm("foo", NewTerm("one"), NewTerm("two"))
-    body := NewTerm("alpha")
-    db3 := db2.Asserta(NewTerm(":-", foo, body))
+    db3 := db2.Asserta(ReadTerm_(`foo(one,two) :- alpha.`))
     t.Logf(db3.String()) // helpful for debugging
 
     // do we have the right number of clauses?
@@ -51,7 +49,7 @@ func TestAsserta(t *testing.T) {
     }
 
     // is foo/2 present where it should be?
-    term := NewTerm("foo", NewTerm("a"), NewTerm("b"))
+    term := ReadTerm_(`foo(a,b).`)
     if cs := db1.Candidates(term); len(cs) != 0 {
         t.Errorf("db1: shouldn't have found foo/2")
     }

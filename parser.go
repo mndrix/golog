@@ -45,6 +45,14 @@ func ReadTerm(src interface{}) (Term, error) {
     return r.Next()
 }
 
+// ReadTerm_ is like ReadTerm but panics instead of returning an error.
+// (Too bad Go doesn't allow ! as an identifier character)
+func ReadTerm_(src interface{}) Term {
+    t, err := ReadTerm(src)
+    maybePanic(err)
+    return t
+}
+
 // ReadTermAll reads all available terms from the source
 func ReadTermAll(src interface{}) ([]Term, error) {
     r, err := NewTermReader(src)
