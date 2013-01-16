@@ -78,7 +78,7 @@ func toReader(src interface{}) (io.Reader, error) {
 
 type TermReader struct {
     operators   map[string]*[7]priority
-    terms       chan Term
+    ll          *LexemeList
 }
 
 func NewTermReader(src interface{}) (*TermReader, error) {
@@ -88,9 +88,8 @@ func NewTermReader(src interface{}) (*TermReader, error) {
     }
 
     tokens := scanner.Scan(ioReader)
-    r := TermReader{terms: make(chan Term)}
+    r := TermReader{ll: NewLexemeList(tokens)}
     r.ResetOperatorTable()
-    go r.start(NewLexemeList(tokens))
     return &r, nil
 }
 
@@ -98,26 +97,33 @@ func NewTermReader(src interface{}) (*TermReader, error) {
 // Returns error NoMoreTerms if the reader can't find any more terms.
 var NoMoreTerms = fmt.Errorf("No more terms available")
 func (r *TermReader) Next() (Term, error) {
-    t, ok := <-r.terms
-    if !ok {  // channel closed, no more terms
-        return nil, NoMoreTerms
+    var t Term
+    var ll *LexemeList
+    if r.readTerm(1200, r.ll, &ll, &t) {
+        if IsError(t) {
+            return nil, t.Error()
+        }
+        r.ll = ll
+        return t, nil
     }
-    if IsError(t) {
-        return nil, t.Error()
-    }
-    return t, nil
+
+    return nil, NoMoreTerms
 }
 
 // All returns a slice of all terms available from this reader
 func (r *TermReader) All() ([]Term, error) {
     terms := make([]Term, 0)
-    for t := range r.terms {
-        if IsError(t) {
-            return terms, t.Error()
-        }
+
+    t, err := r.Next()
+    for err == nil {
         terms = append(terms, t)
+        t, err = r.Next()
     }
-    return terms, nil
+
+    if err == NoMoreTerms {
+        err = nil
+    }
+    return terms, err
 }
 
 // ResetOperatorTable replaces the reader's current operator table
@@ -153,23 +159,6 @@ func (r *TermReader) Op(p priority, s specifier, os... string) {
         priorities[s] = p
     }
 }
-
-func (r *TermReader) emit(t Term) {
-    r.terms <- t
-}
-
-func (r *TermReader) start(ll0 *LexemeList) {
-    var t Term
-    var ll *LexemeList
-    for r.readTerm(1200, ll0, &ll, &t) {
-        r.emit(t)
-        ll0 = ll
-    }
-
-    // we won't generate any more terms
-    close(r.terms)
-}
-
 // parse a single functor
 func (r *TermReader) functor(in *LexemeList, out **LexemeList, f *string) bool {
     if in.Value.Type == scanner.Functor {
