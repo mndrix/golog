@@ -59,6 +59,13 @@ func TermAll(src interface{}) ([]term.Term, error) {
     return r.All()
 }
 
+// TermAll_ is like TermAll but panics instead of returning an error.
+func TermAll_(src interface{}) []term.Term {
+    ts, err := TermAll(src)
+    maybePanic(err)
+    return ts
+}
+
 // toReader tries to convert a source into something that implements io.Reader
 var _ReaderT reflect.Type = reflect.TypeOf((*io.Reader)(nil)).Elem()
 func toReader(src interface{}) (io.Reader, error) {

@@ -6,9 +6,14 @@ import "testing"
 
 func TestFacts (t *testing.T) {
     rt := read.Term_
-    db := NewDatabase().
-            Asserta(rt(`father(michael).`)).
-            Asserta(rt(`father(marc).`))
+    facts := read.TermAll_(`
+        father(michael).
+        father(marc).
+    `)
+    db := NewDatabase()
+    for _, fact := range facts {
+        db = db.Asserta(fact)
+    }
     t.Logf("%s\n", db.String())
 
     // these should be provably true
