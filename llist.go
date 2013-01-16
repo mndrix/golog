@@ -1,20 +1,20 @@
 package golog
 
-import "github.com/mndrix/golog/scanner"
+import "github.com/mndrix/golog/lex"
 
 type LexemeList struct {
-    Value   *scanner.Lexeme
+    Value   *lex.Eme
     next    *LexemeList
-    src     <-chan *scanner.Lexeme
+    src     <-chan *lex.Eme
 }
 
 // NewLexemList returns a new lexeme list which pulls lexemes from
 // the given source channel.  Creating a new list consumes one lexeme
 // from the source channel.
-func NewLexemeList(src <-chan *scanner.Lexeme) *LexemeList {
+func NewLexemeList(src <-chan *lex.Eme) *LexemeList {
     lexeme, ok := <-src
     if !ok {
-        lexeme = &scanner.Lexeme{Type: scanner.EOF}
+        lexeme = &lex.Eme{Type: lex.EOF}
     }
     return &LexemeList{
         Value:  lexeme,

@@ -3,20 +3,20 @@
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
-// Package scanner tokenizes UTF-8-encoded Prolog text.
+// Package lex tokenizes UTF-8-encoded Prolog text.
 // It takes an io.Reader providing the source, which then can be tokenized
-// through repeated calls to the Scan function.  For compatibility with
+// with the Scan function.  For compatibility with
 // existing tools, the NUL character is not allowed. If the first character
 // in the source is a UTF-8 encoded byte order mark (BOM), it is discarded.
 //
 // Basic usage pattern:
 //
-//    lexemes := scanner.Scan(file)
+//    lexemes := lex.Scan(file)
 //    for lexeme := range lexemes {
 //        // do something with lexeme
 //    }
 //
-package scanner
+package lex
 
 import (
 	"bytes"
@@ -27,21 +27,21 @@ import (
 	"unicode/utf8"
 )
 
-// A lexeme encapsulating it's type and content
-type Lexeme struct {
+// A lex.Eme encapsulating its type and content
+type Eme struct {
 	Type	rune	// EOF, Atom, Comment, etc.
 	Content	string
 }
 
 // Scan tokenizes src in a separate goroutine sending lexemes down a
 // channel as they become available.  The channel is closed on EOF.
-func Scan(src io.Reader) <-chan *Lexeme {
-	ch := make(chan *Lexeme)
+func Scan(src io.Reader) <-chan *Eme {
+	ch := make(chan *Eme)
 	go func () {
 		s := new(Scanner).Init(src)
 		tok := s.Scan()
 		for tok != EOF {
-			l := &Lexeme{
+			l := &Eme{
 				Type:		tok,
 				Content:	s.TokenText(),
 			}

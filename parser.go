@@ -3,7 +3,7 @@ package golog
 import . "github.com/mndrix/golog/term"
 
 import "fmt"
-import "github.com/mndrix/golog/scanner"
+import "github.com/mndrix/golog/lex"
 import "io"
 import "reflect"
 import "strings"
@@ -87,7 +87,7 @@ func NewTermReader(src interface{}) (*TermReader, error) {
         return nil, err
     }
 
-    tokens := scanner.Scan(ioReader)
+    tokens := lex.Scan(ioReader)
     r := TermReader{ll: NewLexemeList(tokens)}
     r.ResetOperatorTable()
     return &r, nil
@@ -161,7 +161,7 @@ func (r *TermReader) Op(p priority, s specifier, os... string) {
 }
 // parse a single functor
 func (r *TermReader) functor(in *LexemeList, out **LexemeList, f *string) bool {
-    if in.Value.Type == scanner.Functor {
+    if in.Value.Type == lex.Functor {
         *f = in.Value.Content
         *out = in.Next()  // skip functor we just processed
         return true
@@ -180,7 +180,7 @@ func (r *TermReader) tok(c rune, in *LexemeList, out **LexemeList) bool {
 }
 
 func (r *TermReader) readTerm(p priority, i *LexemeList, o **LexemeList, t *Term) bool {
-    return r.term(p, i, o, t) && r.tok(scanner.FullStop, *o, o)
+    return r.term(p, i, o, t) && r.tok(lex.FullStop, *o, o)
 }
 
 // parse a single term
@@ -196,23 +196,23 @@ func (r *TermReader) term(p priority, i *LexemeList, o **LexemeList, t *Term) bo
     }
 
     switch i.Value.Type {
-        case scanner.Int:       // integer term §6.3.1.1
+        case lex.Int:       // integer term §6.3.1.1
             n := NewInt(i.Value.Content)
             *o = i.Next()
             return r.restTerm(0, p, *o, o, n, t)
-        case scanner.Float:     // float term §6.3.1.1
+        case lex.Float:     // float term §6.3.1.1
             f := NewFloat(i.Value.Content)
             *o = i.Next()
             return r.restTerm(0, p, *o, o, f, t)
-        case scanner.Atom:      // atom term §6.3.1.3
+        case lex.Atom:      // atom term §6.3.1.3
             a := NewTerm(i.Value.Content)
             *o = i.Next()
             return r.restTerm(0, p, *o, o, a, t)
-        case scanner.Variable:  // variable term §6.3.2
+        case lex.Variable:  // variable term §6.3.2
             v := NewVar(i.Value.Content)
             *o = i.Next()
             return r.restTerm(0, p, *o, o, v, t)
-        case scanner.Void:  // variable term §6.3.2
+        case lex.Void:  // variable term §6.3.2
             v := NewVar("_")
             *o = i.Next()
             return r.restTerm(0, p, *o, o, v, t)
@@ -256,7 +256,7 @@ func (r *TermReader) restTerm(leftP, p priority, i *LexemeList, o **LexemeList, 
 
 // consume an infix operator and indicate which one it was along with its priorities
 func (r *TermReader) infix(op *string, opP, lap, rap *priority, i *LexemeList, o **LexemeList) bool {
-    if i.Value.Type != scanner.Atom && i.Value.Type != ',' {
+    if i.Value.Type != lex.Atom && i.Value.Type != ',' {
         return false
     }
 
@@ -292,7 +292,7 @@ func (r *TermReader) infix(op *string, opP, lap, rap *priority, i *LexemeList, o
 
 // consume a prefix operator. indicate which one it was along with its priority
 func (r *TermReader) prefix(op *string, opP, argP *priority, i *LexemeList, o **LexemeList) bool {
-    if i.Value.Type != scanner.Atom {
+    if i.Value.Type != lex.Atom {
         return false
     }
 
@@ -322,7 +322,7 @@ func (r *TermReader) prefix(op *string, opP, argP *priority, i *LexemeList, o **
 
 // consume a postfix operator. indicate which one it was along with its priority
 func (r *TermReader) postfix(op *string, opP, argP *priority, i *LexemeList, o **LexemeList) bool {
-    if i.Value.Type != scanner.Atom {
+    if i.Value.Type != lex.Atom {
         return false
     }
 

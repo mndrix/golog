@@ -3,7 +3,7 @@ package term
 import . "fmt"
 import . "regexp"
 import "strings"
-import "github.com/mndrix/golog/scanner"
+import "github.com/mndrix/golog/lex"
 
 // Term represents a single Prolog term which might be an atom, a structure,
 // a number, etc.
@@ -68,7 +68,7 @@ func QuoteFunctor(name string) string {
     // names composed entirely of graphic characters need no quoting
     allGraphic := true
     for _, c := range name {
-        if !scanner.IsGraphic(c) {
+        if !lex.IsGraphic(c) {
             allGraphic = false
             break
         }
