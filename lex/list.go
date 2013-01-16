@@ -1,22 +1,22 @@
-package golog
+package lex
 
-import "github.com/mndrix/golog/lex"
-
-type LexemeList struct {
-    Value   *lex.Eme
-    next    *LexemeList
-    src     <-chan *lex.Eme
+// An immutable list of lexemes which populates its tail by reading
+// lexemes from a channel, such as that provided by Scan()
+type List struct {
+    Value   *Eme
+    next    *List
+    src     <-chan *Eme
 }
 
 // NewLexemList returns a new lexeme list which pulls lexemes from
 // the given source channel.  Creating a new list consumes one lexeme
 // from the source channel.
-func NewLexemeList(src <-chan *lex.Eme) *LexemeList {
+func NewList(src <-chan *Eme) *List {
     lexeme, ok := <-src
     if !ok {
-        lexeme = &lex.Eme{Type: lex.EOF}
+        lexeme = &Eme{Type: EOF}
     }
-    return &LexemeList{
+    return &List{
         Value:  lexeme,
         next:   nil,
         src:    src,
@@ -25,9 +25,9 @@ func NewLexemeList(src <-chan *lex.Eme) *LexemeList {
 
 // Next returns the next element in the lexeme list, pulling a lexeme
 // from the source channel, if necessary
-func (self *LexemeList) Next() *LexemeList {
+func (self *List) Next() *List {
     if self.next == nil {
-        next := NewLexemeList(self.src)
+        next := NewList(self.src)
         self.next = next
     }
     return self.next

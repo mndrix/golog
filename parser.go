@@ -78,7 +78,7 @@ func toReader(src interface{}) (io.Reader, error) {
 
 type TermReader struct {
     operators   map[string]*[7]priority
-    ll          *LexemeList
+    ll          *lex.List
 }
 
 func NewTermReader(src interface{}) (*TermReader, error) {
@@ -88,7 +88,7 @@ func NewTermReader(src interface{}) (*TermReader, error) {
     }
 
     tokens := lex.Scan(ioReader)
-    r := TermReader{ll: NewLexemeList(tokens)}
+    r := TermReader{ll: lex.NewList(tokens)}
     r.ResetOperatorTable()
     return &r, nil
 }
@@ -98,7 +98,7 @@ func NewTermReader(src interface{}) (*TermReader, error) {
 var NoMoreTerms = fmt.Errorf("No more terms available")
 func (r *TermReader) Next() (Term, error) {
     var t Term
-    var ll *LexemeList
+    var ll *lex.List
     if r.readTerm(1200, r.ll, &ll, &t) {
         if IsError(t) {
             return nil, t.Error()
@@ -160,7 +160,7 @@ func (r *TermReader) Op(p priority, s specifier, os... string) {
     }
 }
 // parse a single functor
-func (r *TermReader) functor(in *LexemeList, out **LexemeList, f *string) bool {
+func (r *TermReader) functor(in *lex.List, out **lex.List, f *string) bool {
     if in.Value.Type == lex.Functor {
         *f = in.Value.Content
         *out = in.Next()  // skip functor we just processed
@@ -171,7 +171,7 @@ func (r *TermReader) functor(in *LexemeList, out **LexemeList, f *string) bool {
 }
 
 // consume a single character token
-func (r *TermReader) tok(c rune, in *LexemeList, out **LexemeList) bool {
+func (r *TermReader) tok(c rune, in *lex.List, out **lex.List) bool {
     if in.Value.Type == c {
         *out = in.Next()
         return true
@@ -179,12 +179,12 @@ func (r *TermReader) tok(c rune, in *LexemeList, out **LexemeList) bool {
     return false
 }
 
-func (r *TermReader) readTerm(p priority, i *LexemeList, o **LexemeList, t *Term) bool {
+func (r *TermReader) readTerm(p priority, i *lex.List, o **lex.List, t *Term) bool {
     return r.term(p, i, o, t) && r.tok(lex.FullStop, *o, o)
 }
 
 // parse a single term
-func (r *TermReader) term(p priority, i *LexemeList, o **LexemeList, t *Term) bool {
+func (r *TermReader) term(p priority, i *lex.List, o **lex.List, t *Term) bool {
     var op, f string
     var t0 Term
     var opP, argP priority
@@ -235,7 +235,7 @@ func (r *TermReader) term(p priority, i *LexemeList, o **LexemeList, t *Term) bo
     return false
 }
 
-func (r *TermReader) restTerm(leftP, p priority, i *LexemeList, o **LexemeList, leftT Term, t *Term) bool {
+func (r *TermReader) restTerm(leftP, p priority, i *lex.List, o **lex.List, leftT Term, t *Term) bool {
     var op string
     var rightT Term
     var opP, lap, rap priority
@@ -255,7 +255,7 @@ func (r *TermReader) restTerm(leftP, p priority, i *LexemeList, o **LexemeList, 
 }
 
 // consume an infix operator and indicate which one it was along with its priorities
-func (r *TermReader) infix(op *string, opP, lap, rap *priority, i *LexemeList, o **LexemeList) bool {
+func (r *TermReader) infix(op *string, opP, lap, rap *priority, i *lex.List, o **lex.List) bool {
     if i.Value.Type != lex.Atom && i.Value.Type != ',' {
         return false
     }
@@ -291,7 +291,7 @@ func (r *TermReader) infix(op *string, opP, lap, rap *priority, i *LexemeList, o
 }
 
 // consume a prefix operator. indicate which one it was along with its priority
-func (r *TermReader) prefix(op *string, opP, argP *priority, i *LexemeList, o **LexemeList) bool {
+func (r *TermReader) prefix(op *string, opP, argP *priority, i *lex.List, o **lex.List) bool {
     if i.Value.Type != lex.Atom {
         return false
     }
@@ -321,7 +321,7 @@ func (r *TermReader) prefix(op *string, opP, argP *priority, i *LexemeList, o **
 }
 
 // consume a postfix operator. indicate which one it was along with its priority
-func (r *TermReader) postfix(op *string, opP, argP *priority, i *LexemeList, o **LexemeList) bool {
+func (r *TermReader) postfix(op *string, opP, argP *priority, i *lex.List, o **lex.List) bool {
     if i.Value.Type != lex.Atom {
         return false
     }
