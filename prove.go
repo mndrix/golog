@@ -14,7 +14,7 @@ func isTrue(env Bindings, db Database, goal Term) bool {
     for _, candidate := range candidates {
         if candidate.IsClause() {
             newEnv, err := Unify(env, goal, candidate.Head())
-            if err != nil {  // this clause applies
+            if err == nil {  // this clause applies
                 if isTrue(newEnv, db, candidate.Body()) {
                     return true
                 }

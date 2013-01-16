@@ -9,6 +9,8 @@ func TestFacts (t *testing.T) {
     facts := read.TermAll_(`
         father(michael).
         father(marc).
+        parent(X) :-
+            father(X).
     `)
     db := NewDatabase()
     for _, fact := range facts {
@@ -23,6 +25,12 @@ func TestFacts (t *testing.T) {
     if !IsTrue(db, rt(`father(marc).`)) {
         t.Errorf("Couldn't prove father(marc)")
     }
+    if !IsTrue(db, rt(`parent(michael).`)) {
+        t.Errorf("Couldn't prove parent(michael)")
+    }
+    if !IsTrue(db, rt(`parent(marc).`)) {
+        t.Errorf("Couldn't prove parent(marc)")
+    }
 
     // these should not be provable
     if IsTrue(db, rt(`father(sue).`)) {
@@ -33,5 +41,8 @@ func TestFacts (t *testing.T) {
     }
     if IsTrue(db, rt(`mother(michael).`)) {
         t.Errorf("Proved mother(michael)")
+    }
+    if IsTrue(db, rt(`parent(sue).`)) {
+        t.Errorf("Proved parent(sue)")
     }
 }
