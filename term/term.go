@@ -1,3 +1,4 @@
+// Data structures for representing Prolog terms
 package term
 
 import . "fmt"
