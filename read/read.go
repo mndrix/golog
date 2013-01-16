@@ -1,16 +1,13 @@
-package golog
+// Read Prolog terms.
+package read
 
-import . "github.com/mndrix/golog/term"
+import "github.com/mndrix/golog/term"
 
 import "fmt"
 import "github.com/mndrix/golog/lex"
 import "io"
 import "reflect"
 import "strings"
-
-// Functions match the regular expression
-//
-//    ReadTerm(All)?
 
 // ISO operator specifiers per §6.3.4, table 4
 type specifier  int // xf, yf, xfy, etc.
@@ -28,7 +25,7 @@ const (
 type priority   int     // between 1 and 1200, inclusive
 
 
-// ReadTerm reads a single term from a term source.  A term source can
+// Term reads a single term from a term source.  A term source can
 // be any of the following:
 //
 //    * type that implements io.Reader
@@ -36,7 +33,7 @@ type priority   int     // between 1 and 1200, inclusive
 //
 // Reading a term may consume more content from the source than is strictly
 // necessary.
-func ReadTerm(src interface{}) (Term, error) {
+func Term(src interface{}) (term.Term, error) {
     r, err := NewTermReader(src)
     if err != nil {
         return nil, err
@@ -45,16 +42,16 @@ func ReadTerm(src interface{}) (Term, error) {
     return r.Next()
 }
 
-// ReadTerm_ is like ReadTerm but panics instead of returning an error.
+// Term_ is like Term but panics instead of returning an error.
 // (Too bad Go doesn't allow ! as an identifier character)
-func ReadTerm_(src interface{}) Term {
-    t, err := ReadTerm(src)
+func Term_(src interface{}) term.Term {
+    t, err := Term(src)
     maybePanic(err)
     return t
 }
 
-// ReadTermAll reads all available terms from the source
-func ReadTermAll(src interface{}) ([]Term, error) {
+// TermAll reads all available terms from the source
+func TermAll(src interface{}) ([]term.Term, error) {
     r, err := NewTermReader(src)
     if err != nil {
         return nil, err
@@ -96,11 +93,11 @@ func NewTermReader(src interface{}) (*TermReader, error) {
 // Next returns the next term available from this reader.
 // Returns error NoMoreTerms if the reader can't find any more terms.
 var NoMoreTerms = fmt.Errorf("No more terms available")
-func (r *TermReader) Next() (Term, error) {
-    var t Term
+func (r *TermReader) Next() (term.Term, error) {
+    var t term.Term
     var ll *lex.List
     if r.readTerm(1200, r.ll, &ll, &t) {
-        if IsError(t) {
+        if term.IsError(t) {
             return nil, t.Error()
         }
         r.ll = ll
@@ -111,8 +108,8 @@ func (r *TermReader) Next() (Term, error) {
 }
 
 // All returns a slice of all terms available from this reader
-func (r *TermReader) All() ([]Term, error) {
-    terms := make([]Term, 0)
+func (r *TermReader) All() ([]term.Term, error) {
+    terms := make([]term.Term, 0)
 
     t, err := r.Next()
     for err == nil {
@@ -179,72 +176,72 @@ func (r *TermReader) tok(c rune, in *lex.List, out **lex.List) bool {
     return false
 }
 
-func (r *TermReader) readTerm(p priority, i *lex.List, o **lex.List, t *Term) bool {
+func (r *TermReader) readTerm(p priority, i *lex.List, o **lex.List, t *term.Term) bool {
     return r.term(p, i, o, t) && r.tok(lex.FullStop, *o, o)
 }
 
 // parse a single term
-func (r *TermReader) term(p priority, i *lex.List, o **lex.List, t *Term) bool {
+func (r *TermReader) term(p priority, i *lex.List, o **lex.List, t *term.Term) bool {
     var op, f string
-    var t0 Term
+    var t0 term.Term
     var opP, argP priority
 
     // prefix operator
     if r.prefix(&op, &opP, &argP, i, o) && opP<=p && r.term(argP, *o, o, &t0) {
-        opT := NewTerm(op, t0)
+        opT := term.NewTerm(op, t0)
         return r.restTerm(opP, p, *o, o, opT, t)
     }
 
     switch i.Value.Type {
         case lex.Int:       // integer term §6.3.1.1
-            n := NewInt(i.Value.Content)
+            n := term.NewInt(i.Value.Content)
             *o = i.Next()
             return r.restTerm(0, p, *o, o, n, t)
         case lex.Float:     // float term §6.3.1.1
-            f := NewFloat(i.Value.Content)
+            f := term.NewFloat(i.Value.Content)
             *o = i.Next()
             return r.restTerm(0, p, *o, o, f, t)
         case lex.Atom:      // atom term §6.3.1.3
-            a := NewTerm(i.Value.Content)
+            a := term.NewTerm(i.Value.Content)
             *o = i.Next()
             return r.restTerm(0, p, *o, o, a, t)
         case lex.Variable:  // variable term §6.3.2
-            v := NewVar(i.Value.Content)
+            v := term.NewVar(i.Value.Content)
             *o = i.Next()
             return r.restTerm(0, p, *o, o, v, t)
         case lex.Void:  // variable term §6.3.2
-            v := NewVar("_")
+            v := term.NewVar("_")
             *o = i.Next()
             return r.restTerm(0, p, *o, o, v, t)
     }
 
     // compound term - functional notation §6.3.3
     if r.functor(i,o,&f) && r.tok('(',*o,o) {
-        var args []Term
-        var arg Term
+        var args []term.Term
+        var arg term.Term
         for r.term(999,*o,o,&arg) {  // 999 priority per §6.3.3.1
             args = append(args, arg)
             if r.tok(')', *o, o) { break }
             if r.tok(',', *o, o) { continue }
             panic("Unexpected content inside compound term arguments")
         }
-        f := NewTerm(f, args...)
+        f := term.NewTerm(f, args...)
         return r.restTerm(0, p, *o, o, f, t)
     }
 
     return false
 }
 
-func (r *TermReader) restTerm(leftP, p priority, i *lex.List, o **lex.List, leftT Term, t *Term) bool {
+func (r *TermReader) restTerm(leftP, p priority, i *lex.List, o **lex.List, leftT term.Term, t *term.Term) bool {
     var op string
-    var rightT Term
+    var rightT term.Term
     var opP, lap, rap priority
     if r.infix(&op, &opP, &lap, &rap, i, o) && p>=opP && leftP<=lap && r.term(rap, *o, o, &rightT) {
-        t0 := NewTerm(op, leftT, rightT)
+        t0 := term.NewTerm(op, leftT, rightT)
         return r.restTerm(opP, p, *o, o, t0, t)
     }
     if r.postfix(&op, &opP, &lap, i, o) && opP<=p && leftP<=lap {
-        opT := NewTerm(op, leftT)
+        opT := term.NewTerm(op, leftT)
         return r.restTerm(opP, p, *o, o, opT, t)
     }
 
@@ -348,4 +345,10 @@ func (r *TermReader) postfix(op *string, opP, argP *priority, i *lex.List, o **l
     *op = name
     *o = i.Next()
     return true
+}
+
+func maybePanic(err error) {
+    if err != nil {
+        panic(err)
+    }
 }

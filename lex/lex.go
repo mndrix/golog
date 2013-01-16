@@ -3,7 +3,7 @@
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
-// Package lex tokenizes UTF-8-encoded Prolog text.
+// Tokenize UTF-8-encoded Prolog text.
 // It takes an io.Reader providing the source, which then can be tokenized
 // with the Scan function.  For compatibility with
 // existing tools, the NUL character is not allowed. If the first character

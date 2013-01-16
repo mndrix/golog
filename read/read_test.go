@@ -1,4 +1,4 @@
-package golog
+package read
 
 import "testing"
 
@@ -23,7 +23,7 @@ func TestBasic(t *testing.T) {
     single[`pi(3.14159).`] = `pi(3.14159)`
     single[`etc(_,_).`] = `etc(_A1000, _A1001)`
     for test, wanted := range single {
-        got, err := ReadTerm(test)
+        got, err := Term(test)
         maybePanic(err)
         if got.String() != wanted {
             t.Errorf("Reading `%s` gave `%s` instead of `%s`", test, got, wanted)
@@ -50,7 +50,7 @@ func TestBasic(t *testing.T) {
 
     // reading a couple simple terms
     oneTwoStr := `one. two.`
-    oneTwo, err := ReadTermAll(oneTwoStr)
+    oneTwo, err := TermAll(oneTwoStr)
     maybePanic(err)
     if oneTwo[0].String() != "one" {
         t.Errorf("Expected `one` in %#v", oneTwo)

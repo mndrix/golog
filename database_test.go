@@ -2,6 +2,8 @@ package golog
 
 import . "github.com/mndrix/golog/term"
 
+import "github.com/mndrix/golog/read"
+
 import "testing"
 
 func TestAsserta(t *testing.T) {
@@ -9,7 +11,7 @@ func TestAsserta(t *testing.T) {
     db1 := db0.Asserta(NewTerm("alpha"))
     db2 := db1.Asserta(NewTerm("beta"))
 
-    db3 := db2.Asserta(ReadTerm_(`foo(one,two) :- alpha.`))
+    db3 := db2.Asserta(read.Term_(`foo(one,two) :- alpha.`))
     t.Logf(db3.String()) // helpful for debugging
 
     // do we have the right number of clauses?
@@ -49,7 +51,7 @@ func TestAsserta(t *testing.T) {
     }
 
     // is foo/2 present where it should be?
-    term := ReadTerm_(`foo(a,b).`)
+    term := read.Term_(`foo(a,b).`)
     if cs := db1.Candidates(term); len(cs) != 0 {
         t.Errorf("db1: shouldn't have found foo/2")
     }
