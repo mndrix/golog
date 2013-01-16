@@ -3,7 +3,7 @@ package term
 import "testing"
 
 func TestUnifyConstants(t *testing.T) {
-    env := NewEnvironment()
+    env := NewBindings()
 
     // atoms
     _, err := Unify(env, NewTerm("hi"), NewTerm("hi"))
@@ -35,7 +35,7 @@ func nv(name string) *Variable {
 }
 
 func TestUnifyAtomWithUnboundVariable(t *testing.T) {
-    env0 := NewEnvironment()
+    env0 := NewBindings()
 
     env1, err := Unify( env0,
         NewTerm("x"),
@@ -54,7 +54,7 @@ func TestUnifyAtomWithUnboundVariable(t *testing.T) {
 }
 
 func TestUnifyUnboundVariableWithStructure(t *testing.T) {
-    env1, err := Unify( NewEnvironment(),
+    env1, err := Unify( NewBindings(),
         NewVar("X"),
         NewTerm("alpha", NewTerm("beta")),
     )
@@ -71,7 +71,7 @@ func TestUnifyUnboundVariableWithStructure(t *testing.T) {
 }
 
 func TestUnifyNestedVariable(t *testing.T) {
-    env0 := NewEnvironment()
+    env0 := NewBindings()
     env1, err := Unify( env0,
         NewTerm("etc", NewTerm("stuff")),
         NewTerm("etc", nv("A")),
@@ -96,7 +96,7 @@ func TestUnifyNestedVariable(t *testing.T) {
 }
 
 func TestUnifySameVariable(t *testing.T) {
-    env0 := NewEnvironment()
+    env0 := NewBindings()
     env1, err := Unify(env0, NewVar("X"), NewVar("X"))
     maybePanic(err)
 
@@ -109,7 +109,7 @@ func TestUnifySameVariable(t *testing.T) {
 }
 
 func TestUnifyVariableAliases(t *testing.T) {
-    env0 := NewEnvironment()
+    env0 := NewBindings()
 
     // make two variables aliases for each other
     env1, err := Unify( env0, NewVar("X0"), NewVar("X1"))
@@ -136,7 +136,7 @@ func TestUnifyVariableAliases(t *testing.T) {
 
 // same as TestUnifyVariableAliases but with first unification order switched
 func TestUnifyVariableAliases2(t *testing.T) {
-    env0 := NewEnvironment()
+    env0 := NewBindings()
 
     // make two variables aliases for each other
     env1, err := Unify( env0, nv("X1"), nv("X0"))

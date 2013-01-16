@@ -5,11 +5,11 @@ import "github.com/mndrix/ps"
 
 var NotBound = fmt.Errorf("Variable is not bound")
 var AlreadyBound = fmt.Errorf("Variable was already bound")
-type Environment interface {
+type Bindings interface {
     // Bind returns a new Environment, like the old one, but with the variable
     // bound to its new value; error is AlreadyBound if the variable had a
     // value previously.
-    Bind(*Variable, Term) (Environment, error)
+    Bind(*Variable, Term) (Bindings, error)
 
     // Resolve follows bindings recursively until a term is found for
     // which no binding exists
@@ -22,7 +22,7 @@ type Environment interface {
     // the variable is free
     Value(*Variable) (Term, error)
 }
-func NewEnvironment() Environment {
+func NewBindings() Bindings {
     var newEnv envMap
     newEnv.bindings = ps.NewMap()
     return &newEnv
@@ -31,7 +31,7 @@ func NewEnvironment() Environment {
 type envMap struct {
     bindings    *ps.Map     // v.Indicator() => Term
 }
-func (self *envMap) Bind(v *Variable, val Term) (Environment, error) {
+func (self *envMap) Bind(v *Variable, val Term) (Bindings, error) {
     _, ok := self.bindings.Lookup(v.Indicator())
     if ok {
         // binding already exists for this variable

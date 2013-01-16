@@ -5,11 +5,11 @@ import . "github.com/mndrix/golog/term"
 // IsTrue returns true if goal can be proven from facts and clauses
 // in the database
 func IsTrue(db Database, goal Term) bool {
-    env := NewEnvironment()
+    env := NewBindings()
     return isTrue(env, db, goal)
 }
 
-func isTrue(env Environment, db Database, goal Term) bool {
+func isTrue(env Bindings, db Database, goal Term) bool {
     candidates := db.Candidates(goal)
     for _, candidate := range candidates {
         if candidate.IsClause() {

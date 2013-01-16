@@ -8,7 +8,7 @@ var CantUnify error = fmt.Errorf("Can't unify the given terms")
 // On succes, returns a new environment with additional variable
 // bindings.  On failure, returns CantUnify error along with the
 // original environment
-func Unify(e Environment, a, b Term) (Environment, error) {
+func Unify(e Bindings, a, b Term) (Bindings, error) {
     // variables always unify with themselves
     if IsVariable(a) && IsVariable(b) {
         if a.Indicator() == b.Indicator() {
