@@ -1,6 +1,4 @@
-package golog
-
-import . "github.com/mndrix/golog/term"
+package term
 
 import "fmt"
 import "github.com/mndrix/ps"
@@ -79,10 +77,4 @@ func (self *envMap) clone() *envMap {
     var newEnv envMap
     newEnv.bindings = self.bindings
     return &newEnv
-}
-
-func maybePanic(err error) {
-    if err != nil {
-        panic(err)
-    }
 }

@@ -1,6 +1,4 @@
-package golog
-
-import . "github.com/mndrix/golog/term"
+package term
 
 import "testing"
 

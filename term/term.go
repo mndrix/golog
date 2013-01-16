@@ -1,4 +1,4 @@
-// Data structures for representing Prolog terms
+// Represent and unify Prolog terms.
 package term
 
 import . "fmt"
