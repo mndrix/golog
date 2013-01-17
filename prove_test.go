@@ -45,4 +45,28 @@ func TestFacts (t *testing.T) {
     if IsTrue(db, rt(`parent(sue).`)) {
         t.Errorf("Proved parent(sue)")
     }
+
+    // trivial predicate with multiple solutions
+    solutions := ProveAll(db, rt(`father(X).`))
+    if len(solutions) != 2 {
+        t.Errorf("Wrong number of solutions: %d vs 2", len(solutions))
+    }
+    if x := solutions[0].ByName_("X").String(); x != "marc" {  // 1st by Asserta
+        t.Errorf("Wrong first solution: %s", x)
+    }
+    if x := solutions[1].ByName_("X").String(); x != "michael" {  // 2nd by Asserta
+        t.Errorf("Wrong second solution: %s", x)
+    }
+
+    // simple predicate with multiple solutions
+    solutions = ProveAll(db, rt(`parent(X).`))
+    if len(solutions) != 2 {
+        t.Errorf("Wrong number of solutions: %d vs 2", len(solutions))
+    }
+    if x := solutions[0].ByName_("X").String(); x != "marc" {  // 1st by Asserta
+        t.Errorf("Wrong first solution: %s", x)
+    }
+    if x := solutions[1].ByName_("X").String(); x != "michael" {  // 2nd by Asserta
+        t.Errorf("Wrong second solution: %s", x)
+    }
 }

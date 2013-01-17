@@ -11,6 +11,13 @@ type Bindings interface {
     // value previously.
     Bind(*Variable, Term) (Bindings, error)
 
+    // ByName is similar to Value() but it searches for a variable
+    // binding by using that variable's name
+    ByName(string) (Term, error)
+
+    // ByName_ is like ByName() but panics on error
+    ByName_(string) Term
+
     // Resolve follows bindings recursively until a term is found for
     // which no binding exists
     Resolve(*Variable) Term
@@ -77,4 +84,16 @@ func (self *envMap) clone() *envMap {
     var newEnv envMap
     newEnv.bindings = self.bindings
     return &newEnv
+}
+
+func (self *envMap) ByName(name string) (Term, error) {
+    v := NewVar(name).(*Variable)
+    return self.Value(v)
+}
+
+func (self *envMap) ByName_(name string) Term {
+    v := NewVar(name).(*Variable)
+    x, err := self.Value(v)
+    maybePanic(err)
+    return x
 }
