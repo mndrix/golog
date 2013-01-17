@@ -120,13 +120,13 @@ func TestUnifyVariableAliases(t *testing.T) {
     maybePanic(err)
 
     // does X0 have the right value?
-    x0 := env2.Resolve(nv("X0"))
+    x0 := env2.Resolve_(nv("X0"))
     if x0.String() != "hello" {
         t.Errorf("X0 has the wrong value: %s", x0)
     }
 
     // does X1 have the right value?
-    x1 := env2.Resolve(nv("X1"))
+    x1 := env2.Resolve_(nv("X1"))
     maybePanic(err)
     if x1.String() != "hello" {
         t.Errorf("X1 has the wrong value: %s", x1)
@@ -147,13 +147,13 @@ func TestUnifyVariableAliases2(t *testing.T) {
     maybePanic(err)
 
     // does X0 have the right value?
-    x0 := env2.Resolve(nv("X0"))
+    x0 := env2.Resolve_(nv("X0"))
     if x0.String() != "hello" {
         t.Errorf("X0 has the wrong value: %s", x0)
     }
 
     // does X1 have the right value?
-    x1 := env2.Resolve(nv("X1"))
+    x1 := env2.Resolve_(nv("X1"))
     if x1.String() != "hello" {
         t.Errorf("X1 has the wrong value: %s", x1)
     }

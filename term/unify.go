@@ -18,10 +18,10 @@ func Unify(e Bindings, a, b Term) (Bindings, error) {
 
     // resolve any previous bindings
     if IsVariable(a) {
-        a = e.Resolve(a.(*Variable))
+        a = e.Resolve_(a.(*Variable))
     }
     if IsVariable(b) {
-        b = e.Resolve(b.(*Variable))
+        b = e.Resolve_(b.(*Variable))
     }
 
     // bind unbound variables

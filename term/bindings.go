@@ -20,7 +20,10 @@ type Bindings interface {
 
     // Resolve follows bindings recursively until a term is found for
     // which no binding exists
-    Resolve(*Variable) Term
+    Resolve(*Variable) (Term, error)
+
+    // Resolve_ is like Resolve() but panics on error
+    Resolve_(*Variable) Term
 
     // Size returns the number of variable bindings in this environment
     Size() int
@@ -54,17 +57,25 @@ func (self *envMap) Bind(v *Variable, val Term) (Bindings, error) {
     // error slot in return is for attributed variables someday
     return newEnv, nil
 }
-func (self *envMap) Resolve(v *Variable) Term {
+func (self *envMap) Resolve_(v *Variable) Term {
+    r, err := self.Resolve(v)
+    maybePanic(err)
+    return r
+}
+
+func (self *envMap) Resolve(v *Variable) (Term, error) {
     for {
         t, err := self.Value(v)
         if err == NotBound {
-            return v
+            return v, nil
         }
-        maybePanic(err)
+        if err != nil {
+            return nil, err
+        }
         if IsVariable(t) {
             v = t.(*Variable)
         } else {
-            return t
+            return t, nil
         }
     }
     panic("Shouldn't reach here")
