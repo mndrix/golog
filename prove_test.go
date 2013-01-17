@@ -71,3 +71,29 @@ func TestFacts (t *testing.T) {
         t.Errorf("Wrong third solution: %s", x)
     }
 }
+
+/* not quite ready yet
+func TestConjunction(t *testing.T) {
+    m := NewMachine().Consult(`
+        floor_wax(briwax).
+        floor_wax(shimmer).
+        floor_wax(minwax).
+
+        dessert(shimmer).
+        dessert(cake).
+        dessert(pie).
+
+        snl(Item) :-
+            floor_wax(Item),
+            dessert(Item).
+    `)
+
+    skits := m.ProveAll(`snl(X).`)
+    if len(skits) != 1 {
+        t.Errorf("Wrong number of solutions: %d vs 1", len(skits))
+    }
+    if x := skits[0].ByName_("X").String(); x != "shimmer" {
+        t.Errorf("Wrong solution: %s vs shimmer", x)
+    }
+}
+*/
