@@ -1,78 +1,73 @@
 package golog
 
-import "github.com/mndrix/golog/read"
-
 import "testing"
 
 func TestFacts (t *testing.T) {
-    rt := read.Term_
-    facts := read.TermAll_(`
+    m := NewMachine().Consult(`
         father(michael).
         father(marc).
+
         mother(gail).
+
         parent(X) :-
             father(X).
         parent(X) :-
             mother(X).
     `)
-    db := NewDatabase()
-    for _, fact := range facts {
-        db = db.Asserta(fact)
-    }
-    t.Logf("%s\n", db.String())
+    t.Logf("%s\n", m.String())
 
     // these should be provably true
-    if !IsTrue(db, rt(`father(michael).`)) {
+    if !m.CanProve(`father(michael).`) {
         t.Errorf("Couldn't prove father(michael)")
     }
-    if !IsTrue(db, rt(`father(marc).`)) {
+    if !m.CanProve(`father(marc).`) {
         t.Errorf("Couldn't prove father(marc)")
     }
-    if !IsTrue(db, rt(`parent(michael).`)) {
+    if !m.CanProve(`parent(michael).`) {
         t.Errorf("Couldn't prove parent(michael)")
     }
-    if !IsTrue(db, rt(`parent(marc).`)) {
+    if !m.CanProve(`parent(marc).`) {
         t.Errorf("Couldn't prove parent(marc)")
     }
 
     // these should not be provable
-    if IsTrue(db, rt(`father(sue).`)) {
+    if m.CanProve(`father(sue).`) {
         t.Errorf("Proved father(sue)")
     }
-    if IsTrue(db, rt(`father(michael,marc).`)) {
+    if m.CanProve(`father(michael,marc).`) {
         t.Errorf("Proved father(michael, marc)")
     }
-    if IsTrue(db, rt(`mother(michael).`)) {
+    if m.CanProve(`mother(michael).`) {
         t.Errorf("Proved mother(michael)")
     }
-    if IsTrue(db, rt(`parent(sue).`)) {
+    if m.CanProve(`parent(sue).`) {
         t.Errorf("Proved parent(sue)")
     }
 
     // trivial predicate with multiple solutions
-    solutions := ProveAll(db, rt(`father(X).`))
+    solutions := m.ProveAll(`father(X).`)
     if len(solutions) != 2 {
         t.Errorf("Wrong number of solutions: %d vs 2", len(solutions))
     }
-    if x := solutions[0].ByName_("X").String(); x != "marc" {  // 1st by Asserta
+    if x := solutions[0].ByName_("X").String(); x != "michael" {
         t.Errorf("Wrong first solution: %s", x)
     }
-    if x := solutions[1].ByName_("X").String(); x != "michael" {  // 2nd by Asserta
+    if x := solutions[1].ByName_("X").String(); x != "marc" {
         t.Errorf("Wrong second solution: %s", x)
     }
 
     // simple predicate with multiple solutions
-    solutions = ProveAll(db, rt(`parent(Name).`))
+    solutions = m.ProveAll(`parent(Name).`)
     if len(solutions) != 3 {
         t.Errorf("Wrong number of solutions: %d vs 2", len(solutions))
     }
-    if x := solutions[0].ByName_("Name").String(); x != "gail" {  // 1st by Asserta
+    if x := solutions[0].ByName_("Name").String(); x != "michael" {
         t.Errorf("Wrong first solution: %s", x)
     }
-    if x := solutions[1].ByName_("Name").String(); x != "marc" {  // 2nd by Asserta
+    if x := solutions[1].ByName_("Name").String(); x != "marc" {
         t.Errorf("Wrong second solution: %s", x)
     }
-    if x := solutions[2].ByName_("Name").String(); x != "michael" {  // 3rd by Asserta
+    if x := solutions[2].ByName_("Name").String(); x != "gail" {
         t.Errorf("Wrong third solution: %s", x)
     }
 }

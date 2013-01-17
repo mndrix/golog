@@ -13,6 +13,10 @@ type Database interface {
     // terms with the same name and arity.
     Asserta(Term) Database
 
+    // Assertz adds a term to the database at the end of any existing
+    // terms with the same name and arity.
+    Assertz(Term) Database
+
     // Candidates() returns a list of clauses that might match a term
     Candidates(Term) []Term
 
@@ -33,11 +37,20 @@ func NewDatabase() Database {
 
 type mapDb struct {
     clauseCount int     // number of clauses in the database
-    predicates  *ps.Map  // term indicator => ps.List of terms
+    predicates  *ps.Map  // term indicator => *clauses
 }
+
 func (self *mapDb) Asserta(term Term) Database {
+    return self.assert('a', term)
+}
+
+func (self *mapDb) Assertz(term Term) Database {
+    return self.assert('z', term)
+}
+
+func (self *mapDb) assert(side rune, term Term) Database {
     var newMapDb    mapDb
-    var newClauses  *ps.List
+    var cs  *clauses
 
     // find the indicator under which this term is classified
     indicator := term.Indicator()
@@ -48,42 +61,43 @@ func (self *mapDb) Asserta(term Term) Database {
 
     oldClauses, ok := self.predicates.Lookup(indicator)
     if ok {  // clauses exist for this predicate
-        newClauses = oldClauses.(*ps.List).Cons(term)
+        switch side {
+            case 'a':
+                cs = oldClauses.(*clauses).cons(term)
+            case 'z':
+                cs = oldClauses.(*clauses).snoc(term)
+        }
     } else {  // brand new predicate
-        newClauses = ps.NewList().Cons(term)
+        cs = newClauses().snoc(term)
     }
 
     newMapDb.clauseCount = self.clauseCount + 1
-    newMapDb.predicates = self.predicates.Set(indicator, newClauses)
+    newMapDb.predicates = self.predicates.Set(indicator, cs)
     return &newMapDb
 }
+
 func (self *mapDb) Candidates(t Term) []Term {
     indicator := t.Indicator()
-    clauses, ok := self.predicates.Lookup(indicator)
+    cs, ok := self.predicates.Lookup(indicator)
     if !ok {  // no clauses for this predicate
         terms := make([]Term, 0)
         return terms
     }
 
-    list := clauses.(*ps.List)
-    terms := make([]Term, list.Size())
-    i := 0
-    list.ForEach( func (t ps.Any) {
-        terms[i] = t.(Term)
-        i++
-    })
-    return terms
+    return cs.(*clauses).all()
 }
+
 func (self *mapDb) ClauseCount() int {
     return self.clauseCount
 }
+
 func (self *mapDb) String() string {
     var buf bytes.Buffer
 
     keys := self.predicates.Keys()
     for _, key := range keys {
-        clauses, _ := self.predicates.Lookup(key)
-        clauses.(*ps.List).ForEach( func (v ps.Any) { Fprintf(&buf, "%s.\n", v) } )
+        cs, _ := self.predicates.Lookup(key)
+        cs.(*clauses).forEach( func (t Term) { Fprintf(&buf, "%s.\n", t) } )
     }
     return buf.String()
 }
