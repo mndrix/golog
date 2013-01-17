@@ -9,8 +9,11 @@ func TestFacts (t *testing.T) {
     facts := read.TermAll_(`
         father(michael).
         father(marc).
+        mother(gail).
         parent(X) :-
             father(X).
+        parent(X) :-
+            mother(X).
     `)
     db := NewDatabase()
     for _, fact := range facts {
@@ -60,13 +63,16 @@ func TestFacts (t *testing.T) {
 
     // simple predicate with multiple solutions
     solutions = ProveAll(db, rt(`parent(X).`))
-    if len(solutions) != 2 {
+    if len(solutions) != 3 {
         t.Errorf("Wrong number of solutions: %d vs 2", len(solutions))
     }
-    if x := solutions[0].ByName_("X").String(); x != "marc" {  // 1st by Asserta
+    if x := solutions[0].ByName_("X").String(); x != "gail" {  // 1st by Asserta
         t.Errorf("Wrong first solution: %s", x)
     }
-    if x := solutions[1].ByName_("X").String(); x != "michael" {  // 2nd by Asserta
+    if x := solutions[1].ByName_("X").String(); x != "marc" {  // 2nd by Asserta
         t.Errorf("Wrong second solution: %s", x)
+    }
+    if x := solutions[2].ByName_("X").String(); x != "michael" {  // 3rd by Asserta
+        t.Errorf("Wrong third solution: %s", x)
     }
 }
