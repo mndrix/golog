@@ -99,12 +99,11 @@ func (self *envMap) clone() *envMap {
 
 func (self *envMap) ByName(name string) (Term, error) {
     v := NewVar(name).(*Variable)
-    return self.Value(v)
+    return self.Resolve(v)
 }
 
 func (self *envMap) ByName_(name string) Term {
-    v := NewVar(name).(*Variable)
-    x, err := self.Value(v)
+    x, err := self.ByName(name)
     maybePanic(err)
     return x
 }

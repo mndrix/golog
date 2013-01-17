@@ -62,17 +62,17 @@ func TestFacts (t *testing.T) {
     }
 
     // simple predicate with multiple solutions
-    solutions = ProveAll(db, rt(`parent(X).`))
+    solutions = ProveAll(db, rt(`parent(Name).`))
     if len(solutions) != 3 {
         t.Errorf("Wrong number of solutions: %d vs 2", len(solutions))
     }
-    if x := solutions[0].ByName_("X").String(); x != "gail" {  // 1st by Asserta
+    if x := solutions[0].ByName_("Name").String(); x != "gail" {  // 1st by Asserta
         t.Errorf("Wrong first solution: %s", x)
     }
-    if x := solutions[1].ByName_("X").String(); x != "marc" {  // 2nd by Asserta
+    if x := solutions[1].ByName_("Name").String(); x != "marc" {  // 2nd by Asserta
         t.Errorf("Wrong second solution: %s", x)
     }
-    if x := solutions[2].ByName_("X").String(); x != "michael" {  // 3rd by Asserta
+    if x := solutions[2].ByName_("Name").String(); x != "michael" {  // 3rd by Asserta
         t.Errorf("Wrong third solution: %s", x)
     }
 }
