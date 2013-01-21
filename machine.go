@@ -176,7 +176,7 @@ func (m *machine) PushGoal(goal Term, env Bindings) Machine {
     return m1
 }
 
-func (m *machine) candidates(goal Term) *ps.List {
+func (m *machine) candidates(goal Term) ps.List {
     candidates := m.db.Candidates(goal)
     disjs := ps.NewList()
     for i := len(candidates) - 1; i>=0; i-- {

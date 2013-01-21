@@ -37,7 +37,7 @@ func NewDatabase() Database {
 
 type mapDb struct {
     clauseCount int     // number of clauses in the database
-    predicates  *ps.Map  // term indicator => *clauses
+    predicates  ps.Map  // term indicator => *clauses
 }
 
 func (self *mapDb) Asserta(term Term) Database {

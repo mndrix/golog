@@ -39,7 +39,7 @@ func NewBindings() Bindings {
 }
 
 type envMap struct {
-    bindings    *ps.Map     // v.Indicator() => Term
+    bindings    ps.Map     // v.Indicator() => Term
 }
 func (self *envMap) Bind(v *Variable, val Term) (Bindings, error) {
     _, ok := self.bindings.Lookup(v.Indicator())

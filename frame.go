@@ -22,11 +22,11 @@ type Frame interface {
 
     // NewChild creates a child stack frame similar to this one with
     // this one as the child's parent
-    NewChild(Term, Bindings, *ps.List, *ps.List) Frame
+    NewChild(Term, Bindings, ps.List, ps.List) Frame
 
     // NewSibling is like NewChild but the new stack frame has the same
     // parent as the invocant
-    NewSibling(Term, Bindings, *ps.List, *ps.List) Frame
+    NewSibling(Term, Bindings, ps.List, ps.List) Frame
 
     // Parent returns this stack frame's parent stack frame
     Parent() Frame
@@ -59,8 +59,8 @@ type frame struct {
     env     Bindings
     parent  *frame
     goal    Term
-    disjs   *ps.List     // of ChoicePoint
-    conjs   *ps.List     // of Continuation
+    disjs   ps.List     // of ChoicePoint
+    conjs   ps.List     // of Continuation
 }
 
 func (f *frame) clone() *frame {
@@ -73,7 +73,7 @@ func (f *frame) clone() *frame {
     return &f1
 }
 
-func (f *frame) NewSibling(goal Term, env Bindings, conjs, disjs *ps.List) Frame {
+func (f *frame) NewSibling(goal Term, env Bindings, conjs, disjs ps.List) Frame {
     newb := f.clone()
     newb.goal = goal
     if env != nil {
@@ -88,7 +88,7 @@ func (f *frame) NewSibling(goal Term, env Bindings, conjs, disjs *ps.List) Frame
     return newb
 }
 
-func (f *frame) NewChild(goal Term, env Bindings, conjs, disjs *ps.List) Frame {
+func (f *frame) NewChild(goal Term, env Bindings, conjs, disjs ps.List) Frame {
     child := f.NewSibling(goal, env, conjs, disjs).(*frame)
     child.parent = f
     return child

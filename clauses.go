@@ -13,7 +13,7 @@ type clauses struct {
    n            int64       // number of terms in collection
    lowestId     int64
    highestId    int64
-   terms        *ps.Map     // maps int64 => Term
+   terms        ps.Map     // maps int64 => Term
 }
 
 // newClauses returns a new, empty list of clauses
