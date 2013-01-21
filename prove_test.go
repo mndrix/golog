@@ -82,9 +82,17 @@ func TestConjunction(t *testing.T) {
         dessert(cake).
         dessert(pie).
 
+        verb(glimmer).
+        verb(shimmer).
+
         snl(Item) :-
             floor_wax(Item),
             dessert(Item).
+
+        three(Item) :-
+            verb(Item),
+            dessert(Item),
+            floor_wax(Item).
     `)
 
     skits := m.ProveAll(`snl(X).`)
@@ -92,6 +100,14 @@ func TestConjunction(t *testing.T) {
         t.Errorf("Wrong number of solutions: %d vs 1", len(skits))
     }
     if x := skits[0].ByName_("X").String(); x != "shimmer" {
+        t.Errorf("Wrong solution: %s vs shimmer", x)
+    }
+
+    skits = m.ProveAll(`three(W).`)
+    if len(skits) != 1 {
+        t.Errorf("Wrong number of solutions: %d vs 1", len(skits))
+    }
+    if x := skits[0].ByName_("W").String(); x != "shimmer" {
         t.Errorf("Wrong solution: %s vs shimmer", x)
     }
 }
