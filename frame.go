@@ -60,20 +60,23 @@ func (f *frame) clone() *frame {
     return &f1
 }
 
-func (parent *frame) NewChild(goal Term, env Bindings, conjs, disjs *ps.List) Frame {
-    child := parent.clone()
-    child.parent = parent
-    child.goal = goal
+func (f *frame) update(goal Term, env Bindings, conjs, disjs *ps.List) *frame {
+    newb := f.clone()
+    newb.goal = goal
     if env != nil {
-        child.env = env
+        newb.env = env
     }
     if conjs != nil {
-        child.conjs = conjs
+        newb.conjs = conjs
     }
     if disjs != nil {
-        child.disjs = disjs
+        newb.disjs = disjs
     }
-
+    return newb
+}
+func (f *frame) NewChild(goal Term, env Bindings, conjs, disjs *ps.List) Frame {
+    child := f.update(goal, env, conjs, disjs)
+    child.parent = f
     return child
 }
 
