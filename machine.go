@@ -3,6 +3,7 @@ package golog
 import . "github.com/mndrix/golog/term"
 
 import "github.com/mndrix/golog/read"
+import "github.com/mndrix/ps"
 
 import "fmt"
 
@@ -11,21 +12,51 @@ type Machine interface {
     Consult(interface{}) Machine
     ProveAll(interface{}) []Bindings
     String() string
+
+    // BackTrack produces a new machine which has back tracked to the most
+    // recently created choice point.  Backtracking from the bottom of the
+    // call stack is a noop.
+    //
+    // This method is typically only used by ChoicePoint implementations
+    BackTrack() Machine
+
+    // Bindings returns the machine's most current variable bindings.
+    //
+    // This method is typically only used by ChoicePoint implementations
+    Bindings() Bindings
+
+    // Goal returns the goal that this machine is trying to prove.
+    // Returns nil if it's not proving anything.
+    //
+    // This method is typically only used by ChoicePoint implementations
+    Goal() Term
+
+    // PushGoal produces a new machine which, on its next step,
+    // tries to prove the given goal in the context of the given
+    // bindings.  The bindings may be nil to retain the machine's
+    // current bindings.  After proving this new goal, the new machine
+    // continues proving what the old machine would have proved.
+    //
+    // This method is typically only used by ChoicePoint implementations
+    PushGoal(Term, Bindings) Machine
 }
 
 type machine struct {
     db      Database
+    stack   Frame       // top frame in the call stack
 }
 
 func NewMachine() Machine {
     var m machine
     m.db = NewDatabase()
+    m.stack = NewFrame()  // an empty stack frame at the bottom
     return &m
 }
 
 func (m *machine) clone() *machine {
     var m1 machine
     m1.db = m.db
+    m1.stack = m.stack
     return &m1
 }
 
@@ -49,31 +80,60 @@ func (m *machine) CanProve(goal interface{}) bool {
     return len(solutions) > 0
 }
 
+var MachineDone = fmt.Errorf("Machine can't step any further")
+var PleaseBackTrack = fmt.Errorf("please backtrack")  // used by ChoicePoint implementations
 func (m *machine) ProveAll(goal interface{}) []Bindings {
-    g := m.toGoal(goal)
-    env := NewBindings()
-    return m.proveAll(env, g)
-}
+    var answer Bindings
+    var err error
+    answers := make([]Bindings, 0)
 
-func (m *machine) proveAll(env Bindings, goal Term) []Bindings {
-    solutions := make([]Bindings, 0)
-    candidates := m.db.Candidates(goal)
-    for _, candidate := range candidates {
-        if candidate.IsClause() {
-            newEnv, err := Unify(env, goal, candidate.Head())
-            if err == nil {  // this clause applies
-                subSolutions := m.proveAll(newEnv, candidate.Body())
-                solutions = append(solutions, subSolutions...)
-            }
-        } else {
-            newEnv, err := Unify(env, goal, candidate)
-            if err == nil {
-                solutions = append(solutions, newEnv)  // we proved the goal
-            }
+    m = m.PushGoal(m.toGoal(goal), nil).(*machine)
+    for {
+        m, answer, err = m.step()
+        if err == MachineDone {
+            break
+        }
+        maybePanic(err)
+        if answer != nil {
+            answers = append(answers, answer)
         }
     }
 
-    return solutions
+    return answers
+}
+
+// advance the Golog machine one step closer toward proving the goal at hand
+func (m *machine) step() (*machine, Bindings, error) {
+    frame := m.peekStack()
+
+    // there's no work to do for the bottom stack frame
+    if IsBottom(frame) {
+        return m, nil, MachineDone
+    }
+
+    // handle built ins
+    switch frame.Goal().Indicator() {
+        case "true/0":  // reached the end, emit a solution
+            m2 := m.BackTrack().(*machine)
+            return m2, frame.Env(), nil
+    }
+
+    // have we exhausted all choice points in this frame?
+    choicePoint, frame1 := frame.TakeChoicePoint()
+    if choicePoint == nil {
+        m1 := m.BackTrack().(*machine)
+        return m1, nil, nil
+    }
+    m1 := m.clone()
+    m1.stack = frame1
+
+    // we found a choice point.  try it
+    m2, err := choicePoint.Follow(m1)
+    if err == PleaseBackTrack {
+        m3 := m1.BackTrack().(*machine)
+        return m3, nil, nil
+    }
+    return m2.(*machine), nil, nil
 }
 
 func (m *machine) toGoal(thing interface{}) Term {
@@ -87,6 +147,49 @@ func (m *machine) toGoal(thing interface{}) Term {
     panic(msg)
 }
 
+func (m *machine) peekStack() Frame {
+    return m.stack
+}
+
+// pushGoal returns a new machine with this goal added to the call stack.
+// it handles adding choice points, if necessary
+func (m *machine) PushGoal(goal Term, env Bindings) Machine {
+    m1 := m.clone()
+    candidates := m.db.Candidates(goal)
+    disjs := ps.NewList()
+    for i := len(candidates) - 1; i>=0; i-- {
+        cp := NewSimpleChoicePoint(candidates[i])
+        disjs = disjs.Cons(cp)
+    }
+    top := m.peekStack()
+    m1.stack = top.NewChild(goal, env, nil, disjs)
+    return m1
+}
+
 func (m *machine) readTerm(src interface{}) Term {
     return read.Term_(src)
+}
+
+func (m *machine) Bindings() Bindings {
+    return m.peekStack().Env()
+}
+
+func (m *machine) Goal() Term {
+    return m.peekStack().Goal()
+}
+
+func (m *machine) BackTrack() Machine {
+    m1 := m.clone()
+
+    for !IsBottom(m1.stack) && !m1.stack.HasChoicePoint() {
+        m1.stack = m1.stack.Parent()
+    }
+
+    return m1
+}
+
+func maybePanic(err error) {
+    if err != nil {
+        panic(err)
+    }
 }
