@@ -72,7 +72,6 @@ func TestFacts (t *testing.T) {
     }
 }
 
-/* not quite ready yet
 func TestConjunction(t *testing.T) {
     m := NewMachine().Consult(`
         floor_wax(briwax).
@@ -96,4 +95,3 @@ func TestConjunction(t *testing.T) {
         t.Errorf("Wrong solution: %s vs shimmer", x)
     }
 }
-*/

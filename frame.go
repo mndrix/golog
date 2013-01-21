@@ -16,9 +16,17 @@ type Frame interface {
     // choicepoints
     HasChoicePoint() bool
 
+    // HasConjunctions returns true if this stack frame has unexplored
+    // conjunctions (continuations)
+    HasConjunctions() bool
+
     // NewChild creates a child stack frame similar to this one with
     // this one as the child's parent
     NewChild(Term, Bindings, *ps.List, *ps.List) Frame
+
+    // NewSibling is like NewChild but the new stack frame has the same
+    // parent as the invocant
+    NewSibling(Term, Bindings, *ps.List, *ps.List) Frame
 
     // Parent returns this stack frame's parent stack frame
     Parent() Frame
@@ -27,6 +35,11 @@ type Frame interface {
     // (nil if there isn't one) and a new frame with the remaining
     // choice points intact
     TakeChoicePoint() (ChoicePoint, Frame)
+
+    // TakeConjunction returns the next conjunction in line
+    // (panics if there are no conjunctions available) and a new frame
+    // with the remaining conjunctions intact
+    TakeConjunction() (Term, Frame)
 }
 
 var frameBottom frame
@@ -56,11 +69,11 @@ func (f *frame) clone() *frame {
     f1.parent = f.parent
     f1.goal = f.goal
     f1.disjs = f.disjs
-    f1.conjs = f1.conjs
+    f1.conjs = f.conjs
     return &f1
 }
 
-func (f *frame) update(goal Term, env Bindings, conjs, disjs *ps.List) *frame {
+func (f *frame) NewSibling(goal Term, env Bindings, conjs, disjs *ps.List) Frame {
     newb := f.clone()
     newb.goal = goal
     if env != nil {
@@ -74,8 +87,9 @@ func (f *frame) update(goal Term, env Bindings, conjs, disjs *ps.List) *frame {
     }
     return newb
 }
+
 func (f *frame) NewChild(goal Term, env Bindings, conjs, disjs *ps.List) Frame {
-    child := f.update(goal, env, conjs, disjs)
+    child := f.NewSibling(goal, env, conjs, disjs).(*frame)
     child.parent = f
     return child
 }
@@ -88,6 +102,13 @@ func (f *frame) TakeChoicePoint() (ChoicePoint, Frame) {
     f1 := f.clone()
     f1.disjs = f.disjs.Tail()
     return f.disjs.Head().(ChoicePoint), f1
+}
+
+func (f *frame) TakeConjunction() (Term, Frame) {
+    goal := f.conjs.Head().(Term)
+    f1 := f.clone()
+    f1.conjs = f.conjs.Tail()
+    return goal, f1
 }
 
 func (f *frame) Env() Bindings {
@@ -104,6 +125,10 @@ func (f *frame) Parent() Frame {
 
 func (f *frame) HasChoicePoint() bool {
     return f.disjs != nil && !f.disjs.IsNil()
+}
+
+func (f *frame) HasConjunctions() bool {
+    return !f.conjs.IsNil()
 }
 
 // is this the bottom-most stack frame?

@@ -105,6 +105,7 @@ func (m *machine) ProveAll(goal interface{}) []Bindings {
 // advance the Golog machine one step closer toward proving the goal at hand
 func (m *machine) step() (*machine, Bindings, error) {
     frame := m.peekStack()
+    m1 := m.clone()
 
     // there's no work to do for the bottom stack frame
     if IsBottom(frame) {
@@ -113,9 +114,24 @@ func (m *machine) step() (*machine, Bindings, error) {
 
     // handle built ins
     switch frame.Goal().Indicator() {
-        case "true/0":  // reached the end, emit a solution
-            m2 := m.BackTrack().(*machine)
-            return m2, frame.Env(), nil
+        case ",/2":
+            args := frame.Goal().Arguments()
+            conjs := ps.NewList().Cons(args[1])
+            disjs := m.candidates(args[0])
+            frame1 := frame.NewSibling(args[0], nil, conjs, disjs)
+            m1.stack = frame1
+            return m1, nil, nil
+        case "true/0":
+            if frame.HasConjunctions() {  // prove next conjunction
+                goal, frame1 := frame.TakeConjunction()
+                disjs := m.candidates(goal)
+                frame2 := frame1.NewSibling(goal, nil, nil, disjs)
+                m1.stack = frame2
+                return m1, nil, nil
+            } else {  // reached a leaf. emit a solution
+                m2 := m.BackTrack().(*machine)
+                return m2, frame.Env(), nil
+            }
     }
 
     // have we exhausted all choice points in this frame?
@@ -124,7 +140,6 @@ func (m *machine) step() (*machine, Bindings, error) {
         m1 := m.BackTrack().(*machine)
         return m1, nil, nil
     }
-    m1 := m.clone()
     m1.stack = frame1
 
     // we found a choice point.  try it
@@ -155,15 +170,20 @@ func (m *machine) peekStack() Frame {
 // it handles adding choice points, if necessary
 func (m *machine) PushGoal(goal Term, env Bindings) Machine {
     m1 := m.clone()
+    disjs := m.candidates(goal)
+    top := m.peekStack()
+    m1.stack = top.NewChild(goal, env, nil, disjs)
+    return m1
+}
+
+func (m *machine) candidates(goal Term) *ps.List {
     candidates := m.db.Candidates(goal)
     disjs := ps.NewList()
     for i := len(candidates) - 1; i>=0; i-- {
         cp := NewSimpleChoicePoint(candidates[i])
         disjs = disjs.Cons(cp)
     }
-    top := m.peekStack()
-    m1.stack = top.NewChild(goal, env, nil, disjs)
-    return m1
+    return disjs
 }
 
 func (m *machine) readTerm(src interface{}) Term {
