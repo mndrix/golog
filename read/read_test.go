@@ -59,3 +59,20 @@ func TestBasic(t *testing.T) {
         t.Errorf("Expected `two` in %#v", oneTwo)
     }
 }
+
+
+func TestEolComment(t *testing.T) {
+    terms := TermAll_(`
+        one.  % shouldn't hide following term
+        two.
+    `)
+    if len(terms) != 2 {
+        t.Errorf("Wrong number of terms: %d vs 2", len(terms))
+    }
+    if terms[0].String() != "one" {
+        t.Errorf("Expected `one` in %#v", terms)
+    }
+    if terms[1].String() != "two" {
+        t.Errorf("Expected `two` in %#v", terms)
+    }
+}

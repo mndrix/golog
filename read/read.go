@@ -220,6 +220,9 @@ func (r *TermReader) term(p priority, i *lex.List, o **lex.List, t *term.Term) b
             v := term.NewVar("_")
             *o = i.Next()
             return r.restTerm(0, p, *o, o, v, t)
+        case lex.Comment:
+            *o = i.Next()               // skip the comment
+            return r.term(p, *o, o, t)  // ... and try again
     }
 
     // compound term - functional notation §6.3.3
