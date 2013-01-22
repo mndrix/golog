@@ -174,6 +174,24 @@ func (r *TermReader) functor(in *lex.List, out **lex.List, f *string) bool {
     return false
 }
 
+// parse all list items after the first one
+func (r *TermReader) listItems(i *lex.List, o **lex.List, t *term.Term) bool {
+    var arg, rest term.Term
+    if r.tok(',', i, o) && r.term(999, *o, o, &arg) && r.listItems(*o, o, &rest) {
+        *t = term.NewTerm(".", arg, rest)
+        return true
+    }
+    if r.tok('|', i, o) && r.term(999, *o, o, &arg) && r.tok(']', *o, o) {
+        *t = arg
+        return true
+    }
+    if r.tok(']', i, o) {
+        *t = term.NewTerm("[]")
+        return true
+    }
+    return false
+}
+
 // consume a single character token
 func (r *TermReader) tok(c rune, in *lex.List, out **lex.List) bool {
     if in.Value.Type == c {
@@ -190,13 +208,23 @@ func (r *TermReader) readTerm(p priority, i *lex.List, o **lex.List, t *term.Ter
 // parse a single term
 func (r *TermReader) term(p priority, i *lex.List, o **lex.List, t *term.Term) bool {
     var op, f string
-    var t0 term.Term
+    var t0, t1 term.Term
     var opP, argP priority
 
     // prefix operator
     if r.prefix(&op, &opP, &argP, i, o) && opP<=p && r.term(argP, *o, o, &t0) {
         opT := term.NewTerm(op, t0)
         return r.restTerm(opP, p, *o, o, opT, t)
+    }
+
+    // list notation for compound terms §6.3.5
+    if r.tok('[', i, o) && r.term(999, *o, o, &t0) && r.listItems(*o, o, &t1) {
+        list := term.NewTerm(".", t0, t1)
+        return r.restTerm(0, p, *o, o, list, t)
+    }
+    if r.tok('[', i, o) && r.tok(']', *o, o) {
+        list := term.NewTerm("[]")
+        return r.restTerm(0, p, *o, o, list, t)
     }
 
     switch i.Value.Type {
