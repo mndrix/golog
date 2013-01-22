@@ -111,3 +111,34 @@ func TestConjunction(t *testing.T) {
         t.Errorf("Wrong solution: %s vs shimmer", x)
     }
 }
+
+func TestCut(t *testing.T) {
+    m := NewMachine().Consult(`
+        single(foo) :-
+            !.
+        single(bar).
+
+        twice(X) :-
+            single(X).  % cut inside here doesn't cut twice/1
+        twice(bar).
+    `)
+
+    proofs := m.ProveAll(`single(X).`)
+    if len(proofs) != 1 {
+        t.Errorf("Wrong number of solutions: %d vs 1", len(proofs))
+    }
+    if x := proofs[0].ByName_("X").String(); x != "foo" {
+        t.Errorf("Wrong solution: %s vs foo", x)
+    }
+
+    proofs = m.ProveAll(`twice(X).`)
+    if len(proofs) != 2 {
+        t.Errorf("Wrong number of solutions: %d vs 2", len(proofs))
+    }
+    if x := proofs[0].ByName_("X").String(); x != "foo" {
+        t.Errorf("Wrong solution: %s vs foo", x)
+    }
+    if x := proofs[1].ByName_("X").String(); x != "bar" {
+        t.Errorf("Wrong solution: %s vs bar", x)
+    }
+}

@@ -12,6 +12,10 @@ type Frame interface {
     // Goal returns this stack frame's current goal
     Goal() Term
 
+    // CutChoicePoints prunes all choice points in the call stack
+    // between the current frame and the most recent cuttable frame
+    CutChoicePoints() Frame
+
     // HasChoicePoint returns true if this stack frame has unexplored
     // choicepoints
     HasChoicePoint() bool
@@ -30,6 +34,11 @@ type Frame interface {
 
     // Parent returns this stack frame's parent stack frame
     Parent() Frame
+
+    // StopCut returns a frame which acts as a barrier against
+    // cutting choicepoints.  This should be called on any frame
+    // which begins proving a new predicate
+    StopCut() Frame
 
     // TakeChoicePoint returns the next choice point in line
     // (nil if there isn't one) and a new frame with the remaining
@@ -61,6 +70,13 @@ type frame struct {
     goal    Term
     disjs   ps.List     // of ChoicePoint
     conjs   ps.List     // of Continuation
+    stopsCut    bool    // does this stack frame stop cut propagation?
+}
+
+func (f *frame) StopCut() Frame {
+    f1 := f.clone()
+    f1.stopsCut = true
+    return f1
 }
 
 func (f *frame) clone() *frame {
@@ -70,6 +86,7 @@ func (f *frame) clone() *frame {
     f1.goal = f.goal
     f1.disjs = f.disjs
     f1.conjs = f.conjs
+    f1.stopsCut = f.stopsCut
     return &f1
 }
 
@@ -91,6 +108,7 @@ func (f *frame) NewSibling(goal Term, env Bindings, conjs, disjs ps.List) Frame 
 func (f *frame) NewChild(goal Term, env Bindings, conjs, disjs ps.List) Frame {
     child := f.NewSibling(goal, env, conjs, disjs).(*frame)
     child.parent = f
+    child.stopsCut = false
     return child
 }
 
@@ -129,6 +147,24 @@ func (f *frame) HasChoicePoint() bool {
 
 func (f *frame) HasConjunctions() bool {
     return !f.conjs.IsNil()
+}
+
+func (f *frame) CutChoicePoints() Frame {
+    // cutting bottom gives bottom
+    if IsBottom(f) {
+        return f
+    }
+
+    // cut our own choice points
+    f1 := f.clone()
+    f1.disjs = ps.NewList()
+
+    // cut parent's choice points, if needed
+    if !f1.stopsCut {
+        f1.parent = f1.Parent().CutChoicePoints().(*frame)
+    }
+
+    return f1
 }
 
 // is this the bottom-most stack frame?

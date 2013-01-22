@@ -121,6 +121,10 @@ func (m *machine) step() (*machine, Bindings, error) {
             frame1 := frame.NewSibling(args[0], nil, conjs, disjs)
             m1.stack = frame1
             return m1, nil, nil
+        case "!/0":
+            frame = frame.CutChoicePoints()
+            m1.stack = frame
+            fallthrough
         case "true/0":
             if frame.HasConjunctions() {  // prove next conjunction
                 goal, frame1 := frame.TakeConjunction()
@@ -129,7 +133,7 @@ func (m *machine) step() (*machine, Bindings, error) {
                 m1.stack = frame2
                 return m1, nil, nil
             } else {  // reached a leaf. emit a solution
-                m2 := m.BackTrack().(*machine)
+                m2 := m1.BackTrack().(*machine)
                 return m2, frame.Env(), nil
             }
     }
@@ -173,7 +177,20 @@ func (m *machine) PushGoal(goal Term, env Bindings) Machine {
     disjs := m.candidates(goal)
     top := m.peekStack()
     m1.stack = top.NewChild(goal, env, nil, disjs)
+    if !isControl(goal) {
+        m1.stack = m1.stack.StopCut()
+    }
     return m1
+}
+
+// true if goal is a control predicate
+func isControl(goal Term) bool {
+    switch goal.Indicator() {
+        case ",/2": return true
+        case "!/0": return true
+        case "true/0": return true
+    }
+    return false
 }
 
 func (m *machine) candidates(goal Term) ps.List {
