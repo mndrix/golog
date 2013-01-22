@@ -114,13 +114,6 @@ func (m *machine) step() (*machine, Bindings, error) {
 
     // handle built ins
     switch frame.Goal().Indicator() {
-        case ",/2":
-            args := frame.Goal().Arguments()
-            conjs := ps.NewList().Cons(args[1])
-            disjs := m.candidates(args[0])
-            frame1 := frame.NewSibling(args[0], nil, conjs, disjs)
-            m1.stack = frame1
-            return m1, nil, nil
         case "!/0":
             frame = frame.CutChoicePoints()
             m1.stack = frame
@@ -136,6 +129,8 @@ func (m *machine) step() (*machine, Bindings, error) {
                 m2 := m1.BackTrack().(*machine)
                 return m2, frame.Env(), nil
             }
+        case ",/2":
+            panic("Should never execute ,/2")
     }
 
     // have we exhausted all choice points in this frame?
@@ -173,14 +168,33 @@ func (m *machine) peekStack() Frame {
 // pushGoal returns a new machine with this goal added to the call stack.
 // it handles adding choice points, if necessary
 func (m *machine) PushGoal(goal Term, env Bindings) Machine {
+    var conjs ps.List
     m1 := m.clone()
+
+    // expand ,/2 into a list of conjunctions
+    if goal.Indicator() == ",/2" {
+        conjs = commaList(goal.Arguments()[1])
+        goal = goal.Arguments()[0]
+    }
+
     disjs := m.candidates(goal)
     top := m.peekStack()
-    m1.stack = top.NewChild(goal, env, nil, disjs)
+    m1.stack = top.NewChild(goal, env, conjs, disjs)
     if !isControl(goal) {
         m1.stack = m1.stack.StopCut()
     }
     return m1
+}
+
+// converts a nested comma term (like those parsed from a clause body)
+// into a list of non-comma terms
+func commaList(t Term) ps.List {
+    if t.Indicator() != ",/2" {
+        return ps.NewList().Cons(t)
+    }
+
+    args := t.Arguments()
+    return commaList(args[1]).Cons(args[0])
 }
 
 // true if goal is a control predicate

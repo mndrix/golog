@@ -24,8 +24,8 @@ type Frame interface {
     // conjunctions (continuations)
     HasConjunctions() bool
 
-    // NewChild creates a child stack frame similar to this one with
-    // this one as the child's parent
+    // NewChild creates a child stack frame similar to the invocant with
+    // the invocant as the new child's parent
     NewChild(Term, Bindings, ps.List, ps.List) Frame
 
     // NewSibling is like NewChild but the new stack frame has the same
