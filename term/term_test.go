@@ -101,6 +101,16 @@ func TestQuoting(t *testing.T) {
     if x.String() != "lower_Then_Caps" {
         t.Errorf("Mixed case atom shouldn't be quoted: %s", x.String())
     }
+
+    // empty list atom doesn't need quoting, but cons does
+    x = NewTerm("[]")
+    if x.String() != "[]" {
+        t.Errorf("empty list atom shouldn't be quoted: %s", x.String())
+    }
+    x = NewTerm(".")
+    if x.String() != "'.'" {
+        t.Errorf("cons must be quoted: %s", x.String())
+    }
 }
 
 func TestInteger(t *testing.T) {

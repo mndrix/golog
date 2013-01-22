@@ -486,6 +486,8 @@ thing(_) :-
 greek(λαμβδα, 0'\n, 0'a).
 /+(1, 2).
 hello.% still a valid term
+append([],L,L).
+append([A|B], [A|C]).
 `
 func TestAcid(t *testing.T) {
 	s := new(Scanner).Init(bytes.NewBufferString(acidTest))
@@ -559,4 +561,33 @@ func TestAcid(t *testing.T) {
 	checkScanPos(t, s, 237, 11, 1, Atom, "hello")
 	checkScanPos(t, s, 242, 11, 6, FullStop, ".")
 	checkScanPos(t, s, 243, 11, 7, Comment, "% still a valid term")
+
+    checkScanPos(t, s, 264, 12, 1, Functor, "append")
+    checkScanPos(t, s, 270, 12, 7, '(', "(")
+    checkScanPos(t, s, 271, 12, 8, '[', "[")
+    checkScanPos(t, s, 272, 12, 9, ']', "]")
+    checkScanPos(t, s, 273, 12, 10, ',', ",")
+    checkScanPos(t, s, 274, 12, 11, Variable, "L")
+    checkScanPos(t, s, 275, 12, 12, ',', ",")
+    checkScanPos(t, s, 276, 12, 13, Variable, "L")
+    checkScanPos(t, s, 277, 12, 14, ')', ")")
+	checkScanPos(t, s, 278, 12, 15, FullStop, ".")
+
+    checkScanPos(t, s, 280, 13, 1, Functor, "append")
+    checkScanPos(t, s, 286, 13, 7, '(', "(")
+    checkScanPos(t, s, 287, 13, 8, '[', "[")
+    checkScanPos(t, s, 288, 13, 9, Variable, "A")
+    checkScanPos(t, s, 289, 13, 10, '|', "|")
+    checkScanPos(t, s, 290, 13, 11, Variable, "B")
+    checkScanPos(t, s, 291, 13, 12, ']', "]")
+    checkScanPos(t, s, 292, 13, 13, ',', ",")
+    checkScanPos(t, s, 294, 13, 15, '[', "[")
+    checkScanPos(t, s, 295, 13, 16, Variable, "A")
+    checkScanPos(t, s, 296, 13, 17, '|', "|")
+    checkScanPos(t, s, 297, 13, 18, Variable, "C")
+    checkScanPos(t, s, 298, 13, 19, ']', "]")
+    checkScanPos(t, s, 299, 13, 20, ')', ")")
+    checkScanPos(t, s, 300, 13, 21, FullStop, ".")
+
+    checkScanPos(t, s, 302, 14, 1, EOF, "")
 }

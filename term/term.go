@@ -66,6 +66,11 @@ func IsError(t Term) bool {
 // QuoteFunctor returns a canonical representation of a term's name
 // by quoting characters that require quoting
 func QuoteFunctor(name string) string {
+    // cons must be quoted (to avoid confusion with full stop)
+    if name == "." {
+        return Sprintf("'%s'", name)
+    }
+
     // names composed entirely of graphic characters need no quoting
     allGraphic := true
     for _, c := range name {
@@ -74,7 +79,7 @@ func QuoteFunctor(name string) string {
             break
         }
     }
-    if allGraphic {
+    if allGraphic || name == "[]" {
         return name
     }
 
