@@ -108,7 +108,7 @@ func (r *TermReader) Next() (term.Term, error) {
             return nil, t.Error()
         }
         r.ll = ll
-        return t, nil
+        return term.RenameVariables(t), nil
     }
 
     return nil, NoMoreTerms

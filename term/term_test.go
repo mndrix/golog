@@ -25,8 +25,8 @@ func TestAtom(t *testing.T) {
 
 func TestVariable(t *testing.T) {
     v := NewVar("X")
-    if v.Indicator() != "X" {
-        t.Errorf("variable X has the wrong indicator")
+    if n := v.String(); n != "X" {
+        t.Errorf("variable X has the wrong name %s", n)
     }
 
     a0 := NewVar("_")

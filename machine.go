@@ -87,7 +87,9 @@ func (m *machine) ProveAll(goal interface{}) []Bindings {
     var err error
     answers := make([]Bindings, 0)
 
-    m = m.PushGoal(m.toGoal(goal), nil).(*machine)
+    goalTerm := m.toGoal(goal)
+    vars := Variables(goalTerm)  // preserve incoming human-readable names
+    m = m.PushGoal(goalTerm, nil).(*machine)
     for {
         m, answer, err = m.step()
         if err == MachineDone {
@@ -95,7 +97,7 @@ func (m *machine) ProveAll(goal interface{}) []Bindings {
         }
         maybePanic(err)
         if answer != nil {
-            answers = append(answers, answer)
+            answers = append(answers, answer.WithNames(vars))
         }
     }
 

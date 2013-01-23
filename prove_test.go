@@ -142,3 +142,19 @@ func TestCut(t *testing.T) {
         t.Errorf("Wrong solution: %s vs bar", x)
     }
 }
+
+func TestAppend(t *testing.T) {
+    m := NewMachine().Consult(`
+        append([], A, A).   % test same variable name as other clauses
+        append([A|B], C, [A|D]) :-
+            append(B, C, D).
+    `)
+
+    proofs := m.ProveAll(`append([a], [b], List).`)
+    if len(proofs) != 1 {
+        t.Errorf("Wrong number of answers: %d vs 1", len(proofs))
+    }
+    if x := proofs[0].ByName_("List").String(); x != "'.'(a, '.'(b, []))" {
+        t.Errorf("Wrong solution: %s vs '.'(a, '.'(b, []))", x)
+    }
+}

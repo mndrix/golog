@@ -20,9 +20,10 @@ func init() {
 // See §6.1.2(a)
 type Variable struct {
     Name    string
+    id      int64       // uniquely identifiers this variable
 }
 
-func NewVar(name string) Term {
+func NewVar(name string) *Variable {
     // sanity check the variable name's syntax
     isCapitalized, err := MatchString(`^[A-Z_]`, name)
     maybePanic(err)
@@ -31,12 +32,13 @@ func NewVar(name string) Term {
     }
 
     // make sure anonymous variables are unique
+    var i int64
     if name == "_" {
-        i := <-anonCounter
-        name = Sprintf("_A%d", i)
+        i = <-anonCounter
     }
     return &Variable{
         Name:   name,
+        id:     i,
     }
 }
 
@@ -69,7 +71,7 @@ func (self *Variable) String() string {
 }
 
 func (self *Variable) Indicator() string {
-    return Sprintf("%s", self.Name)
+    return Sprintf("_V%d", self.id)
 }
 
 func (self *Variable) Error() error {
@@ -78,4 +80,11 @@ func (self *Variable) Error() error {
 
 func (self *Variable) ReplaceVariables(env Bindings) Term {
     return env.Resolve_(self)
+}
+
+func (self *Variable) WithNewId() *Variable {
+    return &Variable{
+        Name:   self.Name,
+        id:     <-anonCounter,
+    }
 }

@@ -5,6 +5,7 @@ import . "fmt"
 import . "regexp"
 import "strings"
 import "github.com/mndrix/golog/lex"
+import "github.com/mndrix/ps"
 
 // Term represents a single Prolog term which might be an atom, a structure,
 // a number, etc.
@@ -65,6 +66,60 @@ func IsError(t Term) bool {
     }
     msg := Sprintf("Unexpected term type: %#v", t)
     panic(msg)
+}
+
+func RenameVariables(t Term) Term {
+    renamed := make(map[string]*Variable)
+    return renameVariables(t, renamed)
+}
+
+func renameVariables(t Term, renamed map[string]*Variable) Term {
+    switch x := t.(type) {
+        case *Float:    return x
+        case *Integer:  return x
+        case *Error:    return x
+        case *Compound:
+            if x.Arity() == 0 { return t }  // no variables in atoms
+            newArgs := make([]Term, x.Arity())
+            for i, arg := range x.Arguments() {
+                newArgs[i] = renameVariables(arg, renamed)
+            }
+            return NewTerm(x.Functor(), newArgs...)
+        case *Variable:
+            name := x.Name
+            v, ok := renamed[name]
+            if ok {
+                return v
+            } else {
+                v = x.WithNewId()
+                renamed[name] = v
+                return v
+            }
+    }
+    panic("Unexpected term implementation")
+}
+
+// Variables returns a ps.Map whose keys are human-readable variable names
+// and those values are *Variable
+func Variables(t Term) ps.Map {
+    names := ps.NewMap()
+    switch x := t.(type) {
+        case *Float:    return names
+        case *Integer:  return names
+        case *Error:    return names
+        case *Compound:
+            if x.Arity() == 0 { return names }  // no variables in an atom
+            for _, arg := range x.Arguments() {
+                innerNames := Variables(arg)
+                innerNames.ForEach(func (key string, val ps.Any) {
+                    names = names.Set(key, val)
+                })
+            }
+            return names
+        case *Variable:
+            return names.Set(x.Name, x)
+    }
+    panic("Unexpected term implementation")
 }
 
 // QuoteFunctor returns a canonical representation of a term's name

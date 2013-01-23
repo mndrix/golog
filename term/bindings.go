@@ -31,15 +31,21 @@ type Bindings interface {
     // Value returns the value of a bound variable; error is NotBound if
     // the variable is free
     Value(*Variable) (Term, error)
+
+    // WithNames returns a new bindings with human-readable names attached
+    // for convenient lookup.  Panics if names have already been attached
+    WithNames(ps.Map) Bindings
 }
 func NewBindings() Bindings {
     var newEnv envMap
     newEnv.bindings = ps.NewMap()
+    newEnv.names = ps.NewMap()
     return &newEnv
 }
 
 type envMap struct {
     bindings    ps.Map     // v.Indicator() => Term
+    names       ps.Map     // v.Name => *Variable
 }
 func (self *envMap) Bind(v *Variable, val Term) (Bindings, error) {
     _, ok := self.bindings.Lookup(v.Indicator())
@@ -94,16 +100,34 @@ func (self *envMap) Value(v *Variable) (Term, error) {
 func (self *envMap) clone() *envMap {
     var newEnv envMap
     newEnv.bindings = self.bindings
+    newEnv.names = self.names
     return &newEnv
 }
 
 func (self *envMap) ByName(name string) (Term, error) {
-    v := NewVar(name).(*Variable)
-    return self.Resolve(v)
+    v, ok := self.names.Lookup(name)
+    if !ok {
+        return nil, NotBound
+    }
+    return self.Resolve(v.(*Variable))
 }
 
 func (self *envMap) ByName_(name string) Term {
     x, err := self.ByName(name)
     maybePanic(err)
     return x
+}
+
+func (self *envMap) String() string {
+    return self.bindings.String()
+}
+
+func (self *envMap) WithNames(names ps.Map) Bindings {
+    if !self.names.IsNil() {
+        panic("Can't set names when names have already been set")
+    }
+
+    b := self.clone()
+    b.names = names
+    return b
 }

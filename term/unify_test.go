@@ -31,7 +31,7 @@ func TestUnifyConstants(t *testing.T) {
 }
 
 func nv(name string) *Variable {
-    return NewVar(name).(*Variable)
+    return NewVar(name)
 }
 
 func TestUnifyAtomWithUnboundVariable(t *testing.T) {
