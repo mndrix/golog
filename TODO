@@ -1,0 +1,47 @@
+* make separate types for Compound and Atom
+
+* remove most methods from Term interface
+
+* implement double quoted string syntax
+
+* implement more ISO Prolog built-ins
+
+* make Unify() a method on Term (since each term subtype knows
+  some optimizations for unifying with itself)
+
+* implement an efficient unification algorithm such as those
+  described in "An Efficient Unification Algorithm" by Martelli,
+  "A practically efficient and almost linear unification algorithm"
+  by Escalada-Imaz, "A Practically Linear Unification Algorithm"
+  by Baxter.
+
+* implement indexing as described in "The Path-Indexing Method for
+  Indexing Terms" by Stickel (see my Google Drive for a copy).  I'm
+  partial to the codeword indexing he describes.  It seems that
+  creating a codeword index for each "column" of a predicate
+  and combining the results of each column index could avoid the problems
+  he describes.  If not, just use his straight path indexing method
+
+* support or-parallelism by creating a new ChoicePoint implementation
+  which, in a separate goroutine, steps a machine until it fails or
+  finds an answer.  It then sends itself down a channel where the original
+  machine can extract its "future self" when its ready.  These goroutines
+  could be spawned on a step() call based on predicate timing information
+  collected while running.
+
+* support and-parallelism with an implementation similar to or-parallelism
+  but using a frame's conjunctions instead of their disjunctions
+
+* steal good ideas from "Implementation of a high-speed Prolog interpreter"
+  by Krall.  The abstract claims an interpreter that's as fast as
+  compiled code.
+
+* support attributed variables
+
+* support lazy variables whose thunk is only computed when the variable
+  is about ready to be unified.  this mechanism could be used to implement
+  futures that are computed in parallel.  I don't know of any Prolog
+  implementations that support this, but look around for prior art.  I'm
+  sure it's been studied somewhere.
+
+* support tabling
