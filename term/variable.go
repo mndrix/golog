@@ -75,3 +75,7 @@ func (self *Variable) Indicator() string {
 func (self *Variable) Error() error {
     panic("Can't call Error() on a Variable")
 }
+
+func (self *Variable) ReplaceVariables(env Bindings) Term {
+    return env.Resolve_(self)
+}

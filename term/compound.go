@@ -61,3 +61,16 @@ func (self *Compound) Indicator() string {
 func (self *Compound) Error() error {
     panic("Can't call Error() on a Structure")
 }
+
+func (self *Compound) ReplaceVariables(env Bindings) Term {
+    arity := self.Arity()
+    if arity == 0 {
+        return self     // atoms have no variables to replace
+    }
+
+    newArgs := make([]Term, arity)
+    for i, arg := range self.Arguments() {
+        newArgs[i] = arg.ReplaceVariables(env)
+    }
+    return NewTerm(self.Functor(), newArgs...)
+}

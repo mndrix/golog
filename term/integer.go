@@ -121,3 +121,7 @@ func (self *Integer) Indicator() string {
 func (self *Integer) Error() error {
     panic("Can't call Error() on a Variable")
 }
+
+func (self *Integer) ReplaceVariables(env Bindings) Term {
+    return self
+}

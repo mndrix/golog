@@ -75,7 +75,7 @@ func (self *envMap) Resolve(v *Variable) (Term, error) {
         if IsVariable(t) {
             v = t.(*Variable)
         } else {
-            return t, nil
+            return t.ReplaceVariables(self), nil
         }
     }
     panic("Shouldn't reach here")

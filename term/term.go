@@ -30,6 +30,10 @@ type Term interface {
     // IsClause returns true if the term is like 'Head :- Body'
     IsClause() bool
 
+    // ReplaceVariables replaces any internal variables with the values
+    // to which they're bound.  Unbound variables are left as they are
+    ReplaceVariables(Bindings) Term
+
     // String provides a string representation of a term
     String() string
 

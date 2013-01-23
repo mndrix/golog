@@ -42,3 +42,7 @@ func (self *Float) Indicator() string {
 func (self *Float) Error() error {
     panic("Can't call Error() on a Float")
 }
+
+func (self *Float) ReplaceVariables(env Bindings) Term {
+    return self
+}
