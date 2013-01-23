@@ -157,4 +157,12 @@ func TestAppend(t *testing.T) {
     if x := proofs[0].ByName_("List").String(); x != "'.'(a, '.'(b, []))" {
         t.Errorf("Wrong solution: %s vs '.'(a, '.'(b, []))", x)
     }
+
+    proofs = m.ProveAll(`append([a,b,c], [d,e], List).`)
+    if len(proofs) != 1 {
+        t.Errorf("Wrong number of answers: %d vs 1", len(proofs))
+    }
+    if x := proofs[0].ByName_("List").String(); x != "'.'(a, '.'(b, '.'(c, '.'(d, '.'(e, [])))))" {
+        t.Errorf("Wrong solution: %s", x)
+    }
 }

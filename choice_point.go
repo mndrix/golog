@@ -15,25 +15,27 @@ type ChoicePoint interface {
 }
 
 type simpleCP struct {
-    head    term.Term
-    body    term.Term
+    clause  term.Term
 }
 func NewSimpleChoicePoint(t term.Term) ChoicePoint {
     if t.IsClause() {
-        return &simpleCP{head: t.Head(), body: t.Body()}
+        return &simpleCP{clause: t}
     }
-    return &simpleCP{head: t, body: term.NewTerm("true")}
+    return &simpleCP{clause: term.NewTerm(":-", t, term.NewTerm("true"))}
 }
 func (cp *simpleCP) Follow(m Machine) (Machine, error) {
+    // rename variables so recursive clauses work
+    clause := term.RenameVariables(cp.clause)
+
     // the machine's current goal unify with our head?
     env := m.Bindings()
-    env1, err := term.Unify(env, m.Goal(), cp.head)
+    env1, err := term.Unify(env, m.Goal(), clause.Head())
     if err == term.CantUnify {
         return nil, PleaseBackTrack
     }
     maybePanic(err)
 
     // yup, update the environment and top goal
-    m1 := m.PushGoal(cp.body, env1)
+    m1 := m.PushGoal(clause.Body(), env1)
     return m1, nil
 }
