@@ -166,3 +166,22 @@ func TestAppend(t *testing.T) {
         t.Errorf("Wrong solution: %s", x)
     }
 }
+
+func BenchmarkTrue(b *testing.B) {
+    m := NewMachine()
+    for i := 0; i < b.N; i++ {
+        _ = m.ProveAll(`true.`)
+    }
+}
+
+func BenchmarkAppend(b *testing.B) {
+    m := NewMachine().Consult(`
+        append([], A, A).   % test same variable name as other clauses
+        append([A|B], C, [A|D]) :-
+            append(B, C, D).
+    `)
+
+    for i := 0; i < b.N; i++ {
+        _ = m.ProveAll(`append([a,b,c], [d,e], List).`)
+    }
+}
