@@ -38,10 +38,4 @@
 
 * support attributed variables
 
-* support lazy variables whose thunk is only computed when the variable
-  is about ready to be unified.  this mechanism could be used to implement
-  futures that are computed in parallel.  I don't know of any Prolog
-  implementations that support this, but look around for prior art.  I'm
-  sure it's been studied somewhere.
-
 * support tabling
