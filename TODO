@@ -15,12 +15,7 @@
   by Escalada-Imaz, "A Practically Linear Unification Algorithm"
   by Baxter.
 
-* implement indexing as described in "The Path-Indexing Method for
-  Indexing Terms" by Stickel (see my Google Drive for a copy).  I'm
-  partial to the codeword indexing he describes.  It seems that
-  creating a codeword index for each "column" of a predicate
-  and combining the results of each column index could avoid the problems
-  he describes.  If not, just use his straight path indexing method
+* implement indexing as described in https://gist.github.com/4642708
 
 * support or-parallelism by creating a new ChoicePoint implementation
   which, in a separate goroutine, steps a machine until it fails or
