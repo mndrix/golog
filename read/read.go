@@ -56,7 +56,7 @@ func TermAll(src interface{}) ([]term.Term, error) {
     if err != nil {
         return nil, err
     }
-    return r.All()
+    return r.all()
 }
 
 // TermAll_ is like TermAll but panics instead of returning an error.
@@ -114,8 +114,8 @@ func (r *TermReader) Next() (term.Term, error) {
     return nil, NoMoreTerms
 }
 
-// All returns a slice of all terms available from this reader
-func (r *TermReader) All() ([]term.Term, error) {
+// all returns a slice of all terms available from this reader
+func (r *TermReader) all() ([]term.Term, error) {
     terms := make([]term.Term, 0)
 
     t, err := r.Next()
