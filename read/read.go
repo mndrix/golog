@@ -265,6 +265,10 @@ func (r *TermReader) term(p priority, i *lex.List, o **lex.List, t *term.Term) b
             a := term.NewTerm(i.Value.Content)
             *o = i.Next()
             return r.restTerm(0, p, *o, o, a, t)
+        case lex.String:    // double quated string §6.3.7
+            cl := term.NewCodeList(i.Value.Content)
+            *o = i.Next()
+            return r.restTerm(0, p, *o, o, cl, t)
         case lex.Variable:  // variable term §6.3.2
             v := term.NewVar(i.Value.Content)
             *o = i.Next()

@@ -27,6 +27,9 @@ func TestBasic(t *testing.T) {
     single[`[a].`] = `'.'(a, [])`
     single[`[a,b].`] = `'.'(a, '.'(b, []))`
     single[`[a|b].`] = `'.'(a, b)`
+    single[`"".`] = `[]`
+    single[`"hi".`] = `'.'(104, '.'(105, []))`
+    single[`"✓".`] = `'.'(10003, [])`       // 0x2713 Unicode
     for test, wanted := range single {
         got, err := Term(test)
         maybePanic(err)

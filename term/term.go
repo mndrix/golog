@@ -200,6 +200,29 @@ func QuoteFunctor(name string) string {
     return name
 }
 
+// NewCodeList constructs a list of character codes from a string.
+// The string should include opening and closing " characters.
+// Nominally, the resulting term is just a chain of cons cells ('.'/2),
+// but it might actually be a more efficient implementation under the hood.
+func NewCodeList(s string) Term {
+    // make sure the content is long enough
+    runes := []rune(s)
+    end := len(runes) - 2
+    if end < 0 {
+        msg := Sprintf("Code list string must have bracketing double quotes: %s", s)
+        panic(msg)
+    }
+
+    // build a cons cell chain, starting at the end ([])
+    codes := NewTerm(`[]`)
+    for i := end; i > 0; i-- {
+        c := NewCode(runes[i])
+        codes = NewTerm(`.`, c, codes)
+    }
+
+    return codes
+}
+
 func maybePanic(err error) {
     if err != nil {
         panic(err)
