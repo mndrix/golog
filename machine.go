@@ -64,6 +64,10 @@ func (m *machine) Consult(text interface{}) Machine {
     terms := read.TermAll_(text)
     m1 := m.clone()
     for _, t := range terms {
+        if IsDirective(t) {
+            // ignore all directives, for now
+            continue
+        }
         m1.db = m1.db.Assertz(t)
     }
     return m1

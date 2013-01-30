@@ -68,6 +68,11 @@ func IsError(t Term) bool {
     panic(msg)
 }
 
+// Returns true if this term is a directive like :- foo.
+func IsDirective(t Term) bool {
+    return t.Indicator() == ":-/1"
+}
+
 func RenameVariables(t Term) Term {
     renamed := make(map[string]*Variable)
     return renameVariables(t, renamed)

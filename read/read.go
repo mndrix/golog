@@ -136,6 +136,7 @@ func (r *TermReader) ResetOperatorTable() {
     r.operators = make(map[string]*[7]priority)
     r.Op(1200,  xfx, `:-`, `-->`    )
     r.Op(1200,   fx, `:-`, `?-`     )
+    r.Op(1150,   fx, `meta_predicate`)  // SWI, YAP, etc. extension
     r.Op(1100,  xfy, `;`            )
     r.Op(1050,  xfy, `->`           )
     r.Op(1000,  xfy, `,`            )
