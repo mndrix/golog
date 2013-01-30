@@ -98,19 +98,19 @@ func (self *Integer) String() string {
 }
 
 func (self *Integer) Functor() string {
-    panic("Variables have no Functor()")
+    panic("Integers have no Functor()")
 }
 func (self *Integer) Arity() int {
-    panic("Variables have no Arity()")
+    panic("Integers have no Arity()")
 }
 func (self *Integer) Arguments() []Term {
-    panic("Variables have no Arguments()")
+    panic("Integers have no Arguments()")
 }
 func (self *Integer) Body() Term {
-    panic("Variables have no Body()")
+    panic("Integers have no Body()")
 }
 func (self *Integer) Head() Term {
-    panic("Variables have no Head()")
+    panic("Integers have no Head()")
 }
 func (self *Integer) IsClause() bool {
     return false
@@ -119,7 +119,7 @@ func (self *Integer) Indicator() string {
     return self.String()
 }
 func (self *Integer) Error() error {
-    panic("Can't call Error() on a Variable")
+    panic("Can't call Error() on an Integer")
 }
 
 func (self *Integer) ReplaceVariables(env Bindings) Term {
