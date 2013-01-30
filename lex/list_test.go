@@ -5,9 +5,9 @@ import "testing"
 func TestLLBasic(t *testing.T) {
     ch := make(chan *Eme)
     go func() {
-        ch <- &Eme{Atom, "1"}
-        ch <- &Eme{Atom, "2"}
-        ch <- &Eme{Atom, "3"}
+        ch <- &Eme{Atom, "1", nil}
+        ch <- &Eme{Atom, "2", nil}
+        ch <- &Eme{Atom, "3", nil}
         close(ch)
     }()
 

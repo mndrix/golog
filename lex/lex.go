@@ -31,6 +31,7 @@ import (
 type Eme struct {
 	Type	rune	// EOF, Atom, Comment, etc.
 	Content	string
+	Pos		*Position
 }
 
 // Scan tokenizes src in a separate goroutine sending lexemes down a
@@ -39,13 +40,16 @@ func Scan(src io.Reader) <-chan *Eme {
 	ch := make(chan *Eme)
 	go func () {
 		s := new(Scanner).Init(src)
+		p := s.Pos()
 		tok := s.Scan()
 		for tok != EOF {
 			l := &Eme{
 				Type:		tok,
 				Content:	s.TokenText(),
+				Pos:		&p,
 			}
 			ch <- l
+			p = s.Pos()
 			tok = s.Scan()
 		}
 		close(ch)
