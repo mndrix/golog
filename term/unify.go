@@ -34,6 +34,28 @@ func Unify(e Bindings, a, b Term) (Bindings, error) {
 
     // at this point, neither term is a variable so try harder
 
+    // integers and floats §7.3.2c and §6.3.1.1
+    if IsInteger(a) {
+        if IsInteger(b) {
+            if a.(*Integer).Value().Cmp(b.(*Integer).Value()) == 0 {
+                return e, nil
+            } else {
+                return e, CantUnify
+            }
+        }
+        return e, CantUnify
+    }
+    if IsFloat(a) {
+        if IsFloat(b) {
+            if a.(*Float).Value() == b.(*Float).Value() {
+                return e, nil
+            } else {
+                return e, CantUnify
+            }
+        }
+        return e, CantUnify
+    }
+
     // functor and arity must match for unification to work
     arity := a.Arity()
     if arity != b.Arity() {

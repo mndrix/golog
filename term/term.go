@@ -50,6 +50,8 @@ func IsVariable(t Term) bool {
             return true
         case *Integer:
             return false
+        case *Float:
+            return false
         case *Error:
             return false
     }
@@ -63,6 +65,10 @@ func IsError(t Term) bool {
             return false
         case *Variable:
             return false
+        case *Integer:
+            return false
+        case *Float:
+            return false
         case *Error:
             return true
     }
@@ -73,6 +79,40 @@ func IsError(t Term) bool {
 // Returns true if this term is a directive like :- foo.
 func IsDirective(t Term) bool {
     return t.Indicator() == ":-/1"
+}
+
+func IsInteger(t Term) bool {
+    switch t.(type) {
+        case *Compound:
+            return false
+        case *Variable:
+            return false
+        case *Integer:
+            return true
+        case *Float:
+            return false
+        case *Error:
+            return false
+    }
+    msg := Sprintf("Unexpected term type: %#v", t)
+    panic(msg)
+}
+
+func IsFloat(t Term) bool {
+    switch t.(type) {
+        case *Compound:
+            return false
+        case *Variable:
+            return false
+        case *Integer:
+            return false
+        case *Float:
+            return true
+        case *Error:
+            return false
+    }
+    msg := Sprintf("Unexpected term type: %#v", t)
+    panic(msg)
 }
 
 func RenameVariables(t Term) Term {

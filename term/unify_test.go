@@ -28,6 +28,32 @@ func TestUnifyConstants(t *testing.T) {
     if err == nil {
         t.Errorf("foo and bar(baz) should not unify")
     }
+
+    // integers and floats
+    _, err = Unify( env, NewInt("1234"), NewInt("1234") )
+    if err != nil {
+        t.Errorf("1234 and 1234 don't unify")
+    }
+    _, err = Unify( env, NewInt("1234"), NewInt("1235") )
+    if err == nil {
+        t.Errorf("1234 and 1235 unify")
+    }
+    _, err = Unify( env, NewFloat("99.2"), NewFloat("99.2") )
+    if err != nil {
+        t.Errorf("99.2 and 99.2 don't unify")
+    }
+    _, err = Unify( env, NewFloat("8.2"), NewFloat("8.1") )
+    if err == nil {
+        t.Errorf("8.2 and 8.1 unify")
+    }
+    _, err = Unify( env, NewInt("6"), NewFloat("6.0") )
+    if err == nil {
+        t.Errorf("6 and 6.0 unify")
+    }
+    _, err = Unify( env, NewFloat("5.0"), NewInt("5") )
+    if err == nil {
+        t.Errorf("5.0 and 5 unify")
+    }
 }
 
 func nv(name string) *Variable {
