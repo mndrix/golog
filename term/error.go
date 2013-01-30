@@ -48,7 +48,7 @@ func (self *Error) Indicator() string {
 }
 
 func (self *Error) Error() error {
-    return Errorf("%s", *self)
+    return Errorf("%s", self.String())
 }
 
 func (self *Error) ReplaceVariables(env Bindings) Term {

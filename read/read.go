@@ -201,8 +201,27 @@ func (r *TermReader) tok(c rune, in *lex.List, out **lex.List) bool {
     return false
 }
 
+// readTerm returns true if it was able to read a term or if there was an
+// error reading a term (the error is in a term.Error value).  If the stream
+// is empty, it returns false.
 func (r *TermReader) readTerm(p priority, i *lex.List, o **lex.List, t *term.Term) bool {
-    return r.term(p, i, o, t) && r.tok(lex.FullStop, *o, o)
+    if r.tok(lex.EOF, i, o) {
+        return false
+    }
+
+    if r.term(p, i, o, t) {
+        if r.tok(lex.FullStop, *o, o) {
+            return true
+        } else {
+            msg := fmt.Sprintf("expected full stop after `%s` but got `%s`", *t, (*o).Value.Content)
+            *t = term.NewError(msg, (*o).Value)
+            return true
+        }
+    }
+
+    msg := fmt.Sprintf("expected term but got `%s`", i.Value.Content)
+    *t = term.NewError(msg, i.Value)
+    return false
 }
 
 // parse a single term
