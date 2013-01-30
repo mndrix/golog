@@ -48,6 +48,8 @@ func IsVariable(t Term) bool {
             return false
         case *Variable:
             return true
+        case *Integer:
+            return false
         case *Error:
             return false
     }
