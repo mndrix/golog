@@ -15,6 +15,7 @@ func TestBasic(t *testing.T) {
     single[`a^b^c.`] = `^(a, ^(b, c))`      // test right associativity
     single[`x(a).`] = `x(a)`
     single[`x(a,b,c).`] = `x(a, b, c)`
+    single[`x((a,b)).`] = `x(','(a, b))`
     single[`x(A).`] = `x(A)`
     single[`amen :- true.`] = `:-(amen, true)`
     single[`bee(X) :- X=b.`] = `:-(bee(X), =(X, b))`

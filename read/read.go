@@ -247,6 +247,11 @@ func (r *TermReader) term(p priority, i *lex.List, o **lex.List, t *term.Term) b
         return r.restTerm(0, p, *o, o, list, t)
     }
 
+    // parenthesized terms
+    if r.tok('(', i, o) && r.term(1200, *o, o, &t0) && r.tok(')', *o, o) {
+        return r.restTerm(0, p, *o, o, t0, t)
+    }
+
     switch i.Value.Type {
         case lex.Int:       // integer term §6.3.1.1
             n := term.NewInt(i.Value.Content)
