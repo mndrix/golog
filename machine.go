@@ -38,7 +38,7 @@ type Machine interface {
     // continues proving what the old machine would have proved.
     //
     // This method is typically only used by ChoicePoint implementations
-    PushGoal(Term, Bindings) Machine
+    PushGoal(Term, Bindings) (Machine, error)
 }
 
 type machine struct {
@@ -93,7 +93,9 @@ func (m *machine) ProveAll(goal interface{}) []Bindings {
 
     goalTerm := m.toGoal(goal)
     vars := Variables(goalTerm)  // preserve incoming human-readable names
-    m = m.PushGoal(goalTerm, nil).(*machine)
+    me, err := m.PushGoal(goalTerm, nil)
+    maybePanic(err)
+    m = me.(*machine)
     for {
         m, answer, err = m.step()
         if err == MachineDone {
@@ -127,7 +129,8 @@ func (m *machine) step() (*machine, Bindings, error) {
         case "true/0":
             if frame.HasConjunctions() {  // prove next conjunction
                 goal, frame1 := frame.TakeConjunction()
-                disjs := m.candidates(goal)
+                disjs, err := m.candidates(goal)
+                if err != nil { return m, nil, err }
                 frame2 := frame1.NewSibling(goal, nil, nil, disjs)
                 m1.stack = frame2
                 return m1, nil, nil
@@ -153,6 +156,7 @@ func (m *machine) step() (*machine, Bindings, error) {
         m3 := m1.BackTrack().(*machine)
         return m3, nil, nil
     }
+    maybePanic(err)
     return m2.(*machine), nil, nil
 }
 
@@ -173,7 +177,7 @@ func (m *machine) peekStack() Frame {
 
 // pushGoal returns a new machine with this goal added to the call stack.
 // it handles adding choice points, if necessary
-func (m *machine) PushGoal(goal Term, env Bindings) Machine {
+func (m *machine) PushGoal(goal Term, env Bindings) (Machine,error) {
     var conjs ps.List
     m1 := m.clone()
 
@@ -183,13 +187,20 @@ func (m *machine) PushGoal(goal Term, env Bindings) Machine {
         goal = goal.Arguments()[0]
     }
 
-    disjs := m.candidates(goal)
+    var disjs ps.List
+    var err error
+    if m.IsBuiltin(goal) {
+        disjs = ps.NewList()
+    } else {
+        disjs, err = m.candidates(goal)
+        if err != nil { return m, err }
+    }
     top := m.peekStack()
     m1.stack = top.NewChild(goal, env, conjs, disjs)
     if !isControl(goal) {
         m1.stack = m1.stack.StopCut()
     }
-    return m1
+    return m1, nil
 }
 
 // converts a nested comma term (like those parsed from a clause body)
@@ -213,14 +224,23 @@ func isControl(goal Term) bool {
     return false
 }
 
-func (m *machine) candidates(goal Term) ps.List {
-    candidates := m.db.Candidates(goal)
+func (m *machine) IsBuiltin(goal Term) bool {
+    switch goal.Indicator() {
+        case "true/0", "listing/0", "!/0":
+            return true
+    }
+    return false
+}
+
+func (m *machine) candidates(goal Term) (ps.List, error) {
+    candidates, err := m.db.Candidates(goal)
+    if err != nil { return nil, err }
     disjs := ps.NewList()
     for i := len(candidates) - 1; i>=0; i-- {
         cp := NewSimpleChoicePoint(candidates[i])
         disjs = disjs.Cons(cp)
     }
-    return disjs
+    return disjs, nil
 }
 
 func (m *machine) readTerm(src interface{}) Term {

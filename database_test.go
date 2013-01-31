@@ -29,36 +29,36 @@ func TestAsserta(t *testing.T) {
     }
 
     // is alpha/0 present where it should be?
-    if cs := db1.Candidates(NewTerm("alpha")); len(cs) != 1 {
+    if cs := db1.Candidates_(NewTerm("alpha")); len(cs) != 1 {
         t.Errorf("db1: can't find alpha/0")
     }
-    if cs := db2.Candidates(NewTerm("alpha")); len(cs) != 1 {
+    if cs := db2.Candidates_(NewTerm("alpha")); len(cs) != 1 {
         t.Errorf("db2: can't find alpha/0")
     }
-    if cs := db3.Candidates(NewTerm("alpha")); len(cs) != 1 {
+    if cs := db3.Candidates_(NewTerm("alpha")); len(cs) != 1 {
         t.Errorf("db3: can't find alpha/0")
     }
 
     // is beta/0 present where it should be?
-    if cs := db1.Candidates(NewTerm("beta")); len(cs) != 0 {
+    if _, err := db1.Candidates(NewTerm("beta")); err == nil {
         t.Errorf("db1: shouldn't have found beta/0")
     }
-    if cs := db2.Candidates(NewTerm("beta")); len(cs) != 1 {
+    if cs := db2.Candidates_(NewTerm("beta")); len(cs) != 1 {
         t.Errorf("db2: can't find beta/0")
     }
-    if cs := db3.Candidates(NewTerm("beta")); len(cs) != 1 {
+    if cs := db3.Candidates_(NewTerm("beta")); len(cs) != 1 {
         t.Errorf("db3: can't find beta/0")
     }
 
     // is foo/2 present where it should be?
     term := read.Term_(`foo(a,b).`)
-    if cs := db1.Candidates(term); len(cs) != 0 {
+    if _, err := db1.Candidates(term); err == nil {
         t.Errorf("db1: shouldn't have found foo/2")
     }
-    if cs := db2.Candidates(term); len(cs) != 0 {
+    if _, err := db2.Candidates(term); err == nil {
         t.Errorf("db2: shouldn't have found foo/2")
     }
-    if cs := db3.Candidates(term); len(cs) != 1 {
+    if cs := db3.Candidates_(term); len(cs) != 1 {
         t.Errorf("db3: can't find foo/2")
     }
 }

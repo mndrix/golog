@@ -296,6 +296,7 @@ func (r *TermReader) term(p priority, i *lex.List, o **lex.List, t *term.Term) b
         return r.restTerm(0, p, *o, o, f, t)
     }
 
+    *t = term.NewError("Syntax error", i.Value)
     return false
 }
 

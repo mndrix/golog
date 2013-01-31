@@ -17,8 +17,13 @@ type Database interface {
     // terms with the same name and arity.
     Assertz(Term) Database
 
-    // Candidates() returns a list of clauses that might match a term
-    Candidates(Term) []Term
+    // Candidates() returns a list of clauses that might match a term.
+    // Returns error if no predicate with appropriate
+    // name and arity has been defined.
+    Candidates(Term) ([]Term, error)
+
+    // Candidates_() is like Candidates() but panics on error.
+    Candidates_(Term) []Term
 
     // ClauseCount returns the number of clauses in the database
     ClauseCount() int
@@ -76,15 +81,20 @@ func (self *mapDb) assert(side rune, term Term) Database {
     return &newMapDb
 }
 
-func (self *mapDb) Candidates(t Term) []Term {
+func (self *mapDb) Candidates_(t Term) []Term {
+    ts, err := self.Candidates(t)
+    if err != nil { panic(err) }
+    return ts
+}
+
+func (self *mapDb) Candidates(t Term) ([]Term, error) {
     indicator := t.Indicator()
     cs, ok := self.predicates.Lookup(indicator)
-    if !ok {  // no clauses for this predicate
-        terms := make([]Term, 0)
-        return terms
+    if !ok {  // this predicate hasn't been defined
+        return nil, Errorf("Undefined predicate: %s", indicator)
     }
 
-    return cs.(*clauses).all()
+    return cs.(*clauses).all(), nil
 }
 
 func (self *mapDb) ClauseCount() int {

@@ -34,9 +34,6 @@ func TestFacts (t *testing.T) {
     if m.CanProve(`father(sue).`) {
         t.Errorf("Proved father(sue)")
     }
-    if m.CanProve(`father(michael,marc).`) {
-        t.Errorf("Proved father(michael, marc)")
-    }
     if m.CanProve(`mother(michael).`) {
         t.Errorf("Proved mother(michael)")
     }

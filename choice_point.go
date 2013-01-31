@@ -36,6 +36,5 @@ func (cp *simpleCP) Follow(m Machine) (Machine, error) {
     maybePanic(err)
 
     // yup, update the environment and top goal
-    m1 := m.PushGoal(clause.Body(), env1)
-    return m1, nil
+    return m.PushGoal(clause.Body(), env1)
 }
