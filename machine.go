@@ -3,6 +3,7 @@ package golog
 import . "github.com/mndrix/golog/term"
 
 import "github.com/mndrix/golog/read"
+import "github.com/mndrix/golog/prelude"
 import "github.com/mndrix/ps"
 
 import "fmt"
@@ -46,7 +47,16 @@ type machine struct {
     stack   Frame       // top frame in the call stack
 }
 
+// NewMachine creates a new Golog machine.  This machine has the standard
+// library already loaded and is typically the way one wants to obtain
+// a machine.
 func NewMachine() Machine {
+    return NewBlankMachine().Consult(prelude.Prelude)
+}
+
+// NewBlankMachine creates a new Golog machine without loading the
+// standard library (prelude)
+func NewBlankMachine() Machine {
     var m machine
     m.db = NewDatabase()
     m.stack = NewFrame()  // an empty stack frame at the bottom
