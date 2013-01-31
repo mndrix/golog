@@ -29,7 +29,7 @@ func TestClauses(t *testing.T) {
     }
     for i, got := range cs1.all() {
         if got.String() != expected[i] {
-            t.Errorf("Clause %d wrong: %s vs %s", got, expected[i])
+            t.Errorf("Clause %d wrong: %s vs %s", i, got, expected[i])
         }
     }
 }
