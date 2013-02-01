@@ -40,11 +40,23 @@ type Machine interface {
     //
     // This method is typically only used by ChoicePoint implementations
     PushGoal(Term, Bindings) (Machine, error)
+
+    // RegisterForeign registers Go functions to implement Golog predicates.
+    // When Golog tries to prove a predicate with one of these predicate
+    // indicators, it executes the given function instead.
+    // Calling RegisterForeign with a predicate indicator that's already
+    // been registered replaces the predicate implementation.
+    RegisterForeign(map[string]ForeignPredicate) Machine
 }
+
+// ForeignPredicate is the type of functions which implement Golog predicates
+// that are defined in Go
+type ForeignPredicate func(Machine, []Term) (bool,Machine)
 
 type machine struct {
     db      Database
     stack   Frame       // top frame in the call stack
+    foreign ps.Map      // predicate indicator => ForeignPredicate
 }
 
 // NewMachine creates a new Golog machine.  This machine has the standard
@@ -60,6 +72,7 @@ func NewBlankMachine() Machine {
     var m machine
     m.db = NewDatabase()
     m.stack = NewFrame()  // an empty stack frame at the bottom
+    m.foreign = ps.NewMap()
     return &m
 }
 
@@ -67,6 +80,7 @@ func (m *machine) clone() *machine {
     var m1 machine
     m1.db = m.db
     m1.stack = m.stack
+    m1.foreign = m.foreign
     return &m1
 }
 
@@ -79,6 +93,14 @@ func (m *machine) Consult(text interface{}) Machine {
             continue
         }
         m1.db = m1.db.Assertz(t)
+    }
+    return m1
+}
+
+func (m *machine) RegisterForeign(fs map[string]ForeignPredicate) Machine {
+    m1 := m.clone()
+    for indicator, f := range fs {
+        m1.foreign = m1.foreign.Set(indicator, f)
     }
     return m1
 }
@@ -131,7 +153,21 @@ func (m *machine) step() (*machine, Bindings, error) {
     }
 
     // handle built ins
-    switch frame.Goal().Indicator() {
+    indicator := frame.Goal().Indicator()
+    v, ok := m.foreign.Lookup(frame.Goal().Indicator())
+    if ok {
+        f := v.(ForeignPredicate)
+        success, foreignM := f(m, nil)
+        if success {
+            if foreignM != nil {
+                m1 = foreignM.(*machine)
+            }
+            indicator = "true/0"    // lies!
+        } else {
+            panic("foreign predicates can't fail yet")
+        }
+    }
+    switch indicator {
         case "!/0":
             frame = frame.CutChoicePoints()
             m1.stack = frame
@@ -235,11 +271,13 @@ func isControl(goal Term) bool {
 }
 
 func (m *machine) IsBuiltin(goal Term) bool {
-    switch goal.Indicator() {
+    indicator := goal.Indicator()
+    switch indicator {
         case "true/0", "listing/0", "!/0":
             return true
     }
-    return false
+    _, ok := m.foreign.Lookup(indicator)
+    return ok
 }
 
 func (m *machine) candidates(goal Term) (ps.List, error) {
