@@ -14,7 +14,6 @@ func TestFacts (t *testing.T) {
         parent(X) :-
             mother(X).
     `)
-    t.Logf("%s\n", m.String())
 
     // these should be provably true
     if !m.CanProve(`father(michael).`) {
@@ -161,6 +160,27 @@ func TestAppend(t *testing.T) {
     }
     if x := proofs[0].ByName_("List").String(); x != "'.'(a, '.'(b, '.'(c, '.'(d, '.'(e, [])))))" {
         t.Errorf("Wrong solution: %s", x)
+    }
+}
+
+func TestCall (t *testing.T) {
+    m := NewMachine().Consult(`
+        bug(spider).
+        bug(fly).
+
+        squash(Animal, Class) :-
+            call(Class, Animal).
+    `)
+
+    proofs := m.ProveAll(`squash(It, bug).`)
+    if len(proofs) != 2 {
+        t.Errorf("Wrong number of answers: %d vs 2", len(proofs))
+    }
+    if x := proofs[0].ByName_("It").String(); x != "spider" {
+        t.Errorf("Wrong solution: %s vs spider", x)
+    }
+    if x := proofs[1].ByName_("It").String(); x != "fly" {
+        t.Errorf("Wrong solution: %s vs fly", x)
     }
 }
 

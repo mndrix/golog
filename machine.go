@@ -73,6 +73,12 @@ func NewMachine() Machine {
             Consult(prelude.Prelude).
             RegisterForeign(map[string]ForeignPredicate{
                 "!/0" :         BuiltinCut,
+                "call/1" :      BuiltinCall,
+                "call/2" :      BuiltinCall,
+                "call/3" :      BuiltinCall,
+                "call/4" :      BuiltinCall,
+                "call/5" :      BuiltinCall,
+                "call/6" :      BuiltinCall,
                 "listing/0" :   BuiltinListing0,
             })
 }
@@ -165,14 +171,15 @@ func (m *machine) step() (*machine, Bindings, error) {
 
     // handle built ins
     indicator := frame.Goal().Indicator()
-    v, ok := m.foreign.Lookup(frame.Goal().Indicator())
+    v, ok := m.foreign.Lookup(indicator)
     if ok {
         f := v.(ForeignPredicate)
-        success, foreignM := f(m, nil)
+        success, foreignM := f(m, frame.Goal().Arguments())
         if success {
             if foreignM != nil {
                 m1 = foreignM.(*machine)
                 frame = m1.Stack()
+                return m1, nil, nil
             }
             indicator = "true/0"    // lies!
         } else {
@@ -235,8 +242,6 @@ func (m *machine) SetStack(f Frame) Machine {
     return m1
 }
 
-// pushGoal returns a new machine with this goal added to the call stack.
-// it handles adding choice points, if necessary
 func (m *machine) PushGoal(goal Term, env Bindings) (Machine,error) {
     var conjs ps.List
     m1 := m.clone()
