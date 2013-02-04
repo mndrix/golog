@@ -50,6 +50,9 @@ type Machine interface {
 
     // Stack returns the machine's top stack frame
     Stack() Frame
+
+    // SetStack returns a new machine whose top stack frame is the one given
+    SetStack(Frame) Machine
 }
 
 // ForeignPredicate is the type of functions which implement Golog predicates
@@ -222,6 +225,12 @@ func (m *machine) toGoal(thing interface{}) Term {
 
 func (m *machine) Stack() Frame {
     return m.stack
+}
+
+func (m *machine) SetStack(f Frame) Machine {
+    m1 := m.clone()
+    m1.stack = f
+    return m1
 }
 
 // pushGoal returns a new machine with this goal added to the call stack.
