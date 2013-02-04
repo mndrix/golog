@@ -184,6 +184,26 @@ func TestCall (t *testing.T) {
     }
 }
 
+func TestDisjunction (t *testing.T) {
+    m := NewMachine().Consult(`
+        insect(fly).
+        arachnid(spider).
+        squash(Critter) :-
+            arachnid(Critter) ; insect(Critter).
+    `)
+
+    proofs := m.ProveAll(`squash(It).`)
+    if len(proofs) != 2 {
+        t.Errorf("Wrong number of answers: %d vs 2", len(proofs))
+    }
+    if x := proofs[0].ByName_("It").String(); x != "spider" {
+        t.Errorf("Wrong solution: %s vs spider", x)
+    }
+    if x := proofs[1].ByName_("It").String(); x != "fly" {
+        t.Errorf("Wrong solution: %s vs fly", x)
+    }
+}
+
 func BenchmarkTrue(b *testing.B) {
     m := NewMachine()
     for i := 0; i < b.N; i++ {

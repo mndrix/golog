@@ -38,3 +38,13 @@ func (cp *headbodyCP) Follow(m Machine) (Machine, error) {
     // yup, update the environment and top goal
     return m.PushGoal(clause.Body(), env1)
 }
+
+type simpleCP struct {
+    t   term.Term
+}
+func NewSimpleChoicePoint(t term.Term) ChoicePoint {
+    return &simpleCP{t: t}
+}
+func (cp *simpleCP) Follow(m Machine) (Machine, error) {
+    return m.PushGoal(cp.t, nil)
+}

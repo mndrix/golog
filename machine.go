@@ -279,10 +279,23 @@ func commaList(t Term) ps.List {
     return commaList(args[1]).Cons(args[0])
 }
 
+// appends the terms in a nested semicolon term onto a slice
+// terms.
+func semicolonList(ts []Term, t Term) []Term {
+    if t.Indicator() != ";/2" {
+        return append(ts, t)
+    }
+
+    args := t.Arguments()
+    ts = append(ts, args[0])
+    return semicolonList(ts, args[1])
+}
+
 // true if goal is a control predicate
 func isControl(goal Term) bool {
     switch goal.Indicator() {
         case ",/2": return true
+        case ";/2": return true
         case "!/0": return true
         case "true/0": return true
     }
@@ -297,11 +310,28 @@ func (m *machine) IsBuiltin(goal Term) bool {
 }
 
 func (m *machine) candidates(goal Term) (ps.List, error) {
-    candidates, err := m.db.Candidates(goal)
-    if err != nil { return nil, err }
+    var err error
+    var candidates []Term
+    var fromDB bool
+
+    if goal.Indicator() == ";/2" {
+        candidates = make([]Term, 0)
+        candidates = semicolonList(candidates, goal)
+        fromDB = false
+    } else {
+        candidates, err = m.db.Candidates(goal)
+        if err != nil { return nil, err }
+        fromDB = true
+    }
+
     disjs := ps.NewList()
     for i := len(candidates) - 1; i>=0; i-- {
-        cp := NewHeadBodyChoicePoint(candidates[i])
+        var cp ChoicePoint
+        if fromDB {
+            cp = NewHeadBodyChoicePoint(candidates[i])
+        } else {
+            cp = NewSimpleChoicePoint(candidates[i])
+        }
         disjs = disjs.Cons(cp)
     }
     return disjs, nil
