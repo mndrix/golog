@@ -69,7 +69,11 @@ type machine struct {
 // library already loaded and is typically the way one wants to obtain
 // a machine.
 func NewMachine() Machine {
-    return NewBlankMachine().Consult(prelude.Prelude)
+    return NewBlankMachine().
+            Consult(prelude.Prelude).
+            RegisterForeign(map[string]ForeignPredicate{
+                "!/0" : BuiltinCut,
+            })
 }
 
 // NewBlankMachine creates a new Golog machine without loading the
@@ -167,6 +171,7 @@ func (m *machine) step() (*machine, Bindings, error) {
         if success {
             if foreignM != nil {
                 m1 = foreignM.(*machine)
+                frame = m1.Stack()
             }
             indicator = "true/0"    // lies!
         } else {
@@ -174,18 +179,14 @@ func (m *machine) step() (*machine, Bindings, error) {
         }
     }
     switch indicator {
-        case "!/0":
-            frame = frame.CutChoicePoints()
-            m1.stack = frame
-            fallthrough
         case "true/0":
             if frame.HasConjunctions() {  // prove next conjunction
                 goal, frame1 := frame.TakeConjunction()
-                disjs, err := m.candidates(goal)
-                if err != nil { return m, nil, err }
+                disjs, err := m1.candidates(goal)
+                if err != nil { return m1, nil, err }
                 frame2 := frame1.NewSibling(goal, nil, nil, disjs)
-                m1.stack = frame2
-                return m1, nil, nil
+                m2 := m1.SetStack(frame2).(*machine)
+                return m2, nil, nil
             } else {  // reached a leaf. emit a solution
                 m2 := m1.BackTrack().(*machine)
                 return m2, frame.Env(), nil
@@ -285,7 +286,7 @@ func isControl(goal Term) bool {
 func (m *machine) IsBuiltin(goal Term) bool {
     indicator := goal.Indicator()
     switch indicator {
-        case "true/0", "listing/0", "!/0":
+        case "true/0":
             return true
     }
     _, ok := m.foreign.Lookup(indicator)
