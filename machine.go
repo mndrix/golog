@@ -301,7 +301,7 @@ func (m *machine) candidates(goal Term) (ps.List, error) {
     if err != nil { return nil, err }
     disjs := ps.NewList()
     for i := len(candidates) - 1; i>=0; i-- {
-        cp := NewSimpleChoicePoint(candidates[i])
+        cp := NewHeadBodyChoicePoint(candidates[i])
         disjs = disjs.Cons(cp)
     }
     return disjs, nil

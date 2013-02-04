@@ -14,16 +14,16 @@ type ChoicePoint interface {
     Follow(Machine) (Machine, error)
 }
 
-type simpleCP struct {
+type headbodyCP struct {
     clause  term.Term
 }
-func NewSimpleChoicePoint(t term.Term) ChoicePoint {
+func NewHeadBodyChoicePoint(t term.Term) ChoicePoint {
     if t.IsClause() {
-        return &simpleCP{clause: t}
+        return &headbodyCP{clause: t}
     }
-    return &simpleCP{clause: term.NewTerm(":-", t, term.NewTerm("true"))}
+    return &headbodyCP{clause: term.NewTerm(":-", t, term.NewTerm("true"))}
 }
-func (cp *simpleCP) Follow(m Machine) (Machine, error) {
+func (cp *headbodyCP) Follow(m Machine) (Machine, error) {
     // rename variables so recursive clauses work
     clause := term.RenameVariables(cp.clause)
 
