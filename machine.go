@@ -72,7 +72,8 @@ func NewMachine() Machine {
     return NewBlankMachine().
             Consult(prelude.Prelude).
             RegisterForeign(map[string]ForeignPredicate{
-                "!/0" : BuiltinCut,
+                "!/0" :         BuiltinCut,
+                "listing/0" :   BuiltinListing0,
             })
 }
 
@@ -285,10 +286,7 @@ func isControl(goal Term) bool {
 
 func (m *machine) IsBuiltin(goal Term) bool {
     indicator := goal.Indicator()
-    switch indicator {
-        case "true/0":
-            return true
-    }
+    if indicator == "true/0" { return true }
     _, ok := m.foreign.Lookup(indicator)
     return ok
 }
