@@ -47,6 +47,9 @@ type Machine interface {
     // Calling RegisterForeign with a predicate indicator that's already
     // been registered replaces the predicate implementation.
     RegisterForeign(map[string]ForeignPredicate) Machine
+
+    // Stack returns the machine's top stack frame
+    Stack() Frame
 }
 
 // ForeignPredicate is the type of functions which implement Golog predicates
@@ -144,7 +147,7 @@ func (m *machine) ProveAll(goal interface{}) []Bindings {
 
 // advance the Golog machine one step closer toward proving the goal at hand
 func (m *machine) step() (*machine, Bindings, error) {
-    frame := m.peekStack()
+    frame := m.Stack()
     m1 := m.clone()
 
     // there's no work to do for the bottom stack frame
@@ -217,7 +220,7 @@ func (m *machine) toGoal(thing interface{}) Term {
     panic(msg)
 }
 
-func (m *machine) peekStack() Frame {
+func (m *machine) Stack() Frame {
     return m.stack
 }
 
@@ -241,7 +244,7 @@ func (m *machine) PushGoal(goal Term, env Bindings) (Machine,error) {
         disjs, err = m.candidates(goal)
         if err != nil { return m, err }
     }
-    top := m.peekStack()
+    top := m.Stack()
     m1.stack = top.NewChild(goal, env, conjs, disjs)
     if !isControl(goal) {
         m1.stack = m1.stack.StopCut()
@@ -296,11 +299,11 @@ func (m *machine) readTerm(src interface{}) Term {
 }
 
 func (m *machine) Bindings() Bindings {
-    return m.peekStack().Env()
+    return m.Stack().Env()
 }
 
 func (m *machine) Goal() Term {
-    return m.peekStack().Goal()
+    return m.Stack().Goal()
 }
 
 func (m *machine) BackTrack() Machine {
