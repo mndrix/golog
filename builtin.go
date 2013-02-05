@@ -17,6 +17,18 @@ func BuiltinCut(m Machine, args []term.Term) (bool, Machine) {
     return true, m1
 }
 
+// =/2
+func BuiltinUnify(m Machine, args []term.Term) (bool, Machine) {
+    bindings, err := term.Unify( m.Bindings(), args[0], args[1])
+    if err == term.CantUnify {
+        return false, nil
+    }
+
+    m1, err := m.PushGoal(term.NewTerm("true"), bindings)
+    maybePanic(err)
+    return true, m1
+}
+
 // call/*
 func BuiltinCall(m Machine, args []term.Term) (bool, Machine) {
     // which goal is being called?

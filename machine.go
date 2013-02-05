@@ -73,6 +73,7 @@ func NewMachine() Machine {
             Consult(prelude.Prelude).
             RegisterForeign(map[string]ForeignPredicate{
                 "!/0" :         BuiltinCut,
+                "=/2" :         BuiltinUnify,
                 "call/1" :      BuiltinCall,
                 "call/2" :      BuiltinCall,
                 "call/3" :      BuiltinCall,
@@ -190,11 +191,9 @@ func (m *machine) step() (*machine, Bindings, error) {
         case "true/0":
             if frame.HasConjunctions() {  // prove next conjunction
                 goal, frame1 := frame.TakeConjunction()
-                disjs, err := m1.candidates(goal)
-                if err != nil { return m1, nil, err }
-                frame2 := frame1.NewSibling(goal, nil, nil, disjs)
-                m2 := m1.SetStack(frame2).(*machine)
-                return m2, nil, nil
+                m1, err := m.SetStack(frame1).PushGoal(goal, nil)
+                maybePanic(err)
+                return m1.(*machine), nil, nil
             } else {  // reached a leaf. emit a solution
                 m2 := m1.BackTrack().(*machine)
                 return m2, frame.Env(), nil

@@ -92,7 +92,9 @@ func (f *frame) clone() *frame {
 
 func (f *frame) NewSibling(goal Term, env Bindings, conjs, disjs ps.List) Frame {
     newb := f.clone()
-    newb.goal = goal
+    if goal != nil {
+        newb.goal = goal
+    }
     if env != nil {
         newb.env = env
     }

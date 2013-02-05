@@ -184,6 +184,35 @@ func TestCall (t *testing.T) {
     }
 }
 
+func TestUnify (t *testing.T) {
+    m := NewMachine().Consult(`
+        thing(Z) :-
+            Z = whatever.
+        two(X, Y) :-
+            X = a,
+            Y = b.
+    `)
+
+    proofs := m.ProveAll(`thing(It).`)
+    if len(proofs) != 1 {
+        t.Errorf("Wrong number of answers: %d vs 1", len(proofs))
+    }
+    if x := proofs[0].ByName_("It").String(); x != "whatever" {
+        t.Errorf("Wrong solution: %s vs whatever", x)
+    }
+
+    proofs = m.ProveAll(`two(First, Second).`)
+    if len(proofs) != 1 {
+        t.Errorf("Wrong number of answers: %d vs 1", len(proofs))
+    }
+    if x := proofs[0].ByName_("First").String(); x != "a" {
+        t.Errorf("Wrong solution: %s vs a", x)
+    }
+    if x := proofs[0].ByName_("Second").String(); x != "b" {
+        t.Errorf("Wrong solution: %s vs b", x)
+    }
+}
+
 func TestDisjunction (t *testing.T) {
     m := NewMachine().Consult(`
         insect(fly).
