@@ -185,7 +185,7 @@ func QuoteFunctor(name string) string {
             break
         }
     }
-    if allGraphic || name == "[]" {
+    if allGraphic || name == "[]" || name == "!" {
         return name
     }
 

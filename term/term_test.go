@@ -111,6 +111,12 @@ func TestQuoting(t *testing.T) {
     if x.String() != "'.'" {
         t.Errorf("cons must be quoted: %s", x.String())
     }
+
+    // cut doesn't need quoting
+    x = NewTerm("!")
+    if x.String() != "!" {
+        t.Errorf("cut shouldn't be quoted: %s", x.String())
+    }
 }
 
 func TestInteger(t *testing.T) {
