@@ -287,3 +287,22 @@ func BenchmarkAppend(b *testing.B) {
         _ = m.ProveAll(`append([a,b,c], [d,e], List).`)
     }
 }
+
+// test performance of a standard maplist implementation
+func BenchmarkMaplist(b *testing.B) {
+    m := NewMachine().Consult(`
+        always_a(_, a).
+
+        maplist(C, A, B) :-
+            maplist_(A, B, C).
+
+        maplist_([], [], _).
+        maplist_([B|D], [C|E], A) :-
+            call(A, B, C),
+            maplist_(D, E, A).
+    `)
+
+    for i := 0; i < b.N; i++ {
+        _ = m.ProveAll(`maplist(always_a, [1,2,3,4,5], As).`)
+    }
+}
