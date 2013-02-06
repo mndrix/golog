@@ -211,6 +211,11 @@ func TestUnify (t *testing.T) {
     if x := proofs[0].ByName_("Second").String(); x != "b" {
         t.Errorf("Wrong solution: %s vs b", x)
     }
+
+    proofs = m.ProveAll(`two(j, k).`)
+    if len(proofs) != 0 {
+        t.Errorf("Proved the impossible")
+    }
 }
 
 func TestDisjunction (t *testing.T) {
@@ -230,6 +235,28 @@ func TestDisjunction (t *testing.T) {
     }
     if x := proofs[1].ByName_("It").String(); x != "fly" {
         t.Errorf("Wrong solution: %s vs fly", x)
+    }
+}
+
+func TestIfThenElse (t *testing.T) {
+    m := NewMachine().Consult(`
+        succeeds(yes).
+        succeeds(yup).
+        alpha(X) :- succeeds(yes) -> X = ok.
+        beta(X) :- succeeds(no) -> X = ok.
+    `)
+
+    proofs := m.ProveAll(`alpha(Y).`)
+    if len(proofs) != 1 {
+        t.Errorf("Wrong number of answers: %d vs 1", len(proofs))
+    }
+    if x := proofs[0].ByName_("Y").String(); x != "ok" {
+        t.Errorf("Wrong solution: %s vs ok", x)
+    }
+
+    proofs = m.ProveAll(`beta(Y).`)
+    if len(proofs) != 0 {
+        t.Errorf("Wrong number of answers: %d vs 0", len(proofs))
     }
 }
 

@@ -9,9 +9,11 @@ import "github.com/mndrix/ps"
 import "fmt"
 
 type Machine interface {
+    // these three should be functions that take a Machine rather than methods
     CanProve(interface{}) bool
     Consult(interface{}) Machine
     ProveAll(interface{}) []Bindings
+
     String() string
 
     // BackTrack produces a new machine which has back tracked to the most
@@ -73,6 +75,7 @@ func NewMachine() Machine {
             Consult(prelude.Prelude).
             RegisterForeign(map[string]ForeignPredicate{
                 "!/0" :         BuiltinCut,
+                "->/2" :        BuiltinIfThenElse,
                 "=/2" :         BuiltinUnify,
                 "call/1" :      BuiltinCall,
                 "call/2" :      BuiltinCall,
@@ -184,7 +187,7 @@ func (m *machine) step() (*machine, Bindings, error) {
             }
             indicator = "true/0"    // lies!
         } else {
-            panic("foreign predicates can't fail yet")
+            return m.BackTrack().(*machine), nil, nil
         }
     }
     switch indicator {

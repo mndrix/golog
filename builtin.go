@@ -17,6 +17,23 @@ func BuiltinCut(m Machine, args []term.Term) (bool, Machine) {
     return true, m1
 }
 
+// ->/2 and ->; combo
+func BuiltinIfThenElse(m Machine, args []term.Term) (bool, Machine) {
+    cond := args[0]
+    then := args[1]
+    cut := term.NewTerm("!")
+
+    // Cond, !, Then
+    goal := term.NewTerm(",", cond, term.NewTerm(",", cut, then))
+    m1, err := m.PushGoal(goal, nil)
+    maybePanic(err)
+
+    // stop cuts so they stay local to ->
+    frame := m1.Stack().StopCut()
+
+    return true, m1.SetStack(frame)
+}
+
 // =/2
 func BuiltinUnify(m Machine, args []term.Term) (bool, Machine) {
     bindings, err := term.Unify( m.Bindings(), args[0], args[1])
