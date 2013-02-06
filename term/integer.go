@@ -31,6 +31,11 @@ func NewInt(text string) *Integer {
     return parseInteger("%d", text)
 }
 
+// helper for when an int64 is already available
+func NewInt64(i int64) *Integer {
+    return (*Integer)(big.NewInt(i))
+}
+
 // NewCode returns an integer whose value is the character code if
 // the given rune.
 func NewCode(c rune) *Integer {

@@ -7,47 +7,55 @@ import "fmt"
 import "github.com/mndrix/golog/term"
 
 // !/0
-func BuiltinCut(m Machine, args []term.Term) (bool, Machine) {
-    frame := m.Stack()
-    frame = frame.CutChoicePoints()
-
-    // push true/0 to handle conjunctions following the cut
-    m1, err := m.SetStack(frame).PushGoal(term.NewTerm("true"), nil)
-    maybePanic(err)
-    return true, m1
+func BuiltinCut(m Machine, args []term.Term) (Machine, bool) {
+    // if were anything to cut, !/0 would have already been
+    // replaced with '$cut_to/1'  Since this goal wasn't there
+    // must be nothing cut, so treat it as an alias for "true/0"
+    return m, true
 }
 
-// ->/2 and ->; combo
-func BuiltinIfThenElse(m Machine, args []term.Term) (bool, Machine) {
+// $cut_to/1
+func BuiltinCutTo(m Machine, args []term.Term) (Machine, bool) {
+    barrierId := args[0].(*term.Integer).Value().Int64()
+    return m.CutTo(barrierId), true
+}
+
+// ,/2
+func BuiltinComma(m Machine, args []term.Term) (Machine, bool) {
+    return m.PushConj(args[1]).PushConj(args[0]), true
+}
+
+// ->/2
+func BuiltinIfThen(m Machine, args []term.Term) (Machine, bool) {
     cond := args[0]
     then := args[1]
+
     cut := term.NewTerm("!")
-
-    // Cond, !, Then
     goal := term.NewTerm(",", cond, term.NewTerm(",", cut, then))
-    m1, err := m.PushGoal(goal, nil)
-    maybePanic(err)
+    m1 := m.PushCutBarrier().PushConj(goal)
+    return m1, true
+}
 
-    // stop cuts so they stay local to ->
-    frame := m1.Stack().StopCut()
+// ;/2
+func BuiltinSemicolon(m Machine, args []term.Term) (Machine, bool) {
+    cp := NewSimpleChoicePoint(m, args[1])
+    m = m.PushDisj(cp)
 
-    return true, m1.SetStack(frame)
+    return m.PushConj(args[0]), true
 }
 
 // =/2
-func BuiltinUnify(m Machine, args []term.Term) (bool, Machine) {
+func BuiltinUnify(m Machine, args []term.Term) (Machine, bool) {
     bindings, err := term.Unify( m.Bindings(), args[0], args[1])
     if err == term.CantUnify {
-        return false, nil
+        return nil, false
     }
 
-    m1, err := m.PushGoal(term.NewTerm("true"), bindings)
-    maybePanic(err)
-    return true, m1
+    return m.SetBindings(bindings), true
 }
 
 // call/*
-func BuiltinCall(m Machine, args []term.Term) (bool, Machine) {
+func BuiltinCall(m Machine, args []term.Term) (Machine, bool) {
     // which goal is being called?
     bodyTerm := args[0]
     if term.IsVariable(bodyTerm) {
@@ -62,16 +70,19 @@ func BuiltinCall(m Machine, args []term.Term) (bool, Machine) {
     newArgs = append(newArgs, args[1:]...)
     goal := term.NewTerm(functor, newArgs...)
 
-    // construct a machine that will prove this goal
-    m1, err := m.PushGoal(goal, nil)
-    maybePanic(err)
-    return true, m1
+    // construct a machine that will prove this goal next
+    return m.PushCutBarrier().PushConj(goal), true
+}
+
+// fail/0
+func BuiltinFail(m Machine, args []term.Term) (Machine, bool) {
+    return nil, false
 }
 
 // listing/0
 // This should be implemented in pure Prolog, but for debugging purposes,
 // I'm doing it for now as a foreign predicate.
-func BuiltinListing0(m Machine, args []term.Term) (bool, Machine) {
+func BuiltinListing0(m Machine, args []term.Term) (Machine, bool) {
     fmt.Println(m.String())
-    return true, nil
+    return m, true
 }

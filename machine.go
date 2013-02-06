@@ -6,6 +6,7 @@ import "github.com/mndrix/golog/read"
 import "github.com/mndrix/golog/prelude"
 import "github.com/mndrix/ps"
 
+import "bytes"
 import "fmt"
 
 type Machine interface {
@@ -16,32 +17,50 @@ type Machine interface {
 
     String() string
 
-    // BackTrack produces a new machine which has back tracked to the most
-    // recently created choice point.  Backtracking from the bottom of the
-    // call stack is a noop.
-    //
-    // This method is typically only used by ChoicePoint implementations
-    BackTrack() Machine
-
     // Bindings returns the machine's most current variable bindings.
     //
     // This method is typically only used by ChoicePoint implementations
     Bindings() Bindings
 
-    // Goal returns the goal that this machine is trying to prove.
-    // Returns nil if it's not proving anything.
-    //
-    // This method is typically only used by ChoicePoint implementations
-    Goal() Term
+    // SetBindings returns a new machine like this one but with the given
+    // bindings
+    SetBindings(Bindings) Machine
 
-    // PushGoal produces a new machine which, on its next step,
-    // tries to prove the given goal in the context of the given
-    // bindings.  The bindings may be nil to retain the machine's
-    // current bindings.  After proving this new goal, the new machine
-    // continues proving what the old machine would have proved.
-    //
-    // This method is typically only used by ChoicePoint implementations
-    PushGoal(Term, Bindings) (Machine, error)
+    // PushConj returns a machine like this one but with an extra term
+    // on front of the conjunction stack
+    PushConj(Term) Machine
+
+    // PopConj returns a machine with one fewer items on the conjunction stack
+    // along with the term removed.  Returns err = EmptyConjunctions if there
+    // are no more conjunctions on that stack
+    PopConj() (Term, Machine, error)
+
+    // PushCutBarrier pushes a special marker onto the disjunction stack.
+    // This marker can be used to locate which disjunctions came immediately
+    // before the marker existed.
+    PushCutBarrier() Machine
+
+    // MostRecentCutBarrier returns an opaque value which uniquely
+    // identifies the most recent cut barrier in the disjunction stack.
+    // Used with CutTo to remove several disjunctions at once.
+    // Returns NoBarriers if there are no cut barriers on the disjunctions
+    // stack.
+    MostRecentCutBarrier() (int64, error)
+
+    // CutTo removes all disjunctions stacked on top of a specific cut barrier.
+    // It also removes the cut barrier itself.
+    // A barrier ID is obtained from MostRecentCutBarrier.
+    CutTo(int64) Machine
+
+    // PushDisj returns a machine like this one but with an extra ChoicePoint
+    // on the disjunctions stack.
+    PushDisj(ChoicePoint) Machine
+
+    // PopDisj returns a machine with one fewer choice points on the
+    // disjunction stack and the choice point that was removed.  Returns
+    // err = EmptyDisjunctions if there are no more disjunctions on
+    // that stack
+    PopDisj() (ChoicePoint, Machine, error)
 
     // RegisterForeign registers Go functions to implement Golog predicates.
     // When Golog tries to prove a predicate with one of these predicate
@@ -50,21 +69,23 @@ type Machine interface {
     // been registered replaces the predicate implementation.
     RegisterForeign(map[string]ForeignPredicate) Machine
 
-    // Stack returns the machine's top stack frame
-    Stack() Frame
-
-    // SetStack returns a new machine whose top stack frame is the one given
-    SetStack(Frame) Machine
+    // Step advances the machine one "step" (implementation dependent).
+    // It produces a new machine which can take the next step.  It might
+    // produce a proof by giving some variable bindings.  When the machine
+    // has done as much work as it can do, it returns err=MachineDone
+    Step() (Machine, Bindings, error)
 }
 
 // ForeignPredicate is the type of functions which implement Golog predicates
 // that are defined in Go
-type ForeignPredicate func(Machine, []Term) (bool,Machine)
+type ForeignPredicate func(Machine, []Term) (Machine, bool)
 
 type machine struct {
     db      Database
-    stack   Frame       // top frame in the call stack
     foreign ps.Map      // predicate indicator => ForeignPredicate
+    env     Bindings
+    disjs   ps.List     // of ChoicePoint
+    conjs   ps.List     // of Term
 }
 
 // NewMachine creates a new Golog machine.  This machine has the standard
@@ -75,7 +96,10 @@ func NewMachine() Machine {
             Consult(prelude.Prelude).
             RegisterForeign(map[string]ForeignPredicate{
                 "!/0" :         BuiltinCut,
-                "->/2" :        BuiltinIfThenElse,
+                "$cut_to/1" :   BuiltinCutTo,
+                ",/2" :         BuiltinComma,
+                "->/2" :        BuiltinIfThen,
+                ";/2" :         BuiltinSemicolon,
                 "=/2" :         BuiltinUnify,
                 "call/1" :      BuiltinCall,
                 "call/2" :      BuiltinCall,
@@ -83,6 +107,7 @@ func NewMachine() Machine {
                 "call/4" :      BuiltinCall,
                 "call/5" :      BuiltinCall,
                 "call/6" :      BuiltinCall,
+                "fail/0" :      BuiltinFail,
                 "listing/0" :   BuiltinListing0,
             })
 }
@@ -92,16 +117,20 @@ func NewMachine() Machine {
 func NewBlankMachine() Machine {
     var m machine
     m.db = NewDatabase()
-    m.stack = NewFrame()  // an empty stack frame at the bottom
     m.foreign = ps.NewMap()
+    m.env = NewBindings()
+    m.disjs = ps.NewList()
+    m.conjs = ps.NewList()
     return &m
 }
 
 func (m *machine) clone() *machine {
     var m1 machine
-    m1.db = m.db
-    m1.stack = m.stack
-    m1.foreign = m.foreign
+    m1.db       = m.db
+    m1.foreign  = m.foreign
+    m1.env      = m.env
+    m1.disjs    = m.disjs
+    m1.conjs    = m.conjs
     return &m1
 }
 
@@ -127,10 +156,20 @@ func (m *machine) RegisterForeign(fs map[string]ForeignPredicate) Machine {
 }
 
 func (m *machine) String() string {
-    return m.db.String()
+    var buf bytes.Buffer
+    fmt.Fprintf(&buf, "disjs:\n")
+    m.disjs.ForEach( func (v ps.Any) {
+        fmt.Fprintf(&buf, "  %s\n", v)
+    })
+    fmt.Fprintf(&buf, "conjs:\n")
+    m.conjs.ForEach( func (v ps.Any) {
+        fmt.Fprintf(&buf, "  %s\n", v)
+    })
+    fmt.Fprintf(&buf, "bindings: %s", m.env)
+    return buf.String()
 }
 
-// IsTrue returns true if goal can be proven from facts and clauses
+// CanProve returns true if goal can be proven from facts and clauses
 // in the database
 func (m *machine) CanProve(goal interface{}) bool {
     solutions := m.ProveAll(goal)
@@ -138,19 +177,16 @@ func (m *machine) CanProve(goal interface{}) bool {
 }
 
 var MachineDone = fmt.Errorf("Machine can't step any further")
-var PleaseBackTrack = fmt.Errorf("please backtrack")  // used by ChoicePoint implementations
-func (m *machine) ProveAll(goal interface{}) []Bindings {
+func (self *machine) ProveAll(goal interface{}) []Bindings {
     var answer Bindings
     var err error
     answers := make([]Bindings, 0)
 
-    goalTerm := m.toGoal(goal)
+    goalTerm := self.toGoal(goal)
     vars := Variables(goalTerm)  // preserve incoming human-readable names
-    me, err := m.PushGoal(goalTerm, nil)
-    maybePanic(err)
-    m = me.(*machine)
+    m := self.PushConj(goalTerm)
     for {
-        m, answer, err = m.step()
+        m, answer, err = m.Step()
         if err == MachineDone {
             break
         }
@@ -163,64 +199,72 @@ func (m *machine) ProveAll(goal interface{}) []Bindings {
     return answers
 }
 
-// advance the Golog machine one step closer toward proving the goal at hand
-func (m *machine) step() (*machine, Bindings, error) {
-    frame := m.Stack()
-    m1 := m.clone()
+// advance the Golog machine one step closer to proving the goal at hand.
+// at the end of each invocation, the top item on the conjunctions stack
+// is the goal we should next try to prove.
+func (self *machine) Step() (Machine, Bindings, error) {
+    var m Machine = self
+    var goal Term
+    var err error
+    var cp ChoicePoint
 
-    // there's no work to do for the bottom stack frame
-    if IsBottom(frame) {
-        return m, nil, MachineDone
+//  fmt.Printf("stepping...\n%s\n", self)
+
+    // find a goal other than true/0 to prove
+    indicator := "true/0"
+    for indicator == "true/0" {
+        var mTmp Machine
+        goal, mTmp, err = m.PopConj()
+        if err == EmptyConjunctions {   // found an answer
+            answer := m.Bindings()
+//          fmt.Printf("  emitting answer %s\n", answer)
+            m = m.PushConj(NewTerm("fail"))  // backtrack on next Step()
+            return m, answer, nil
+        }
+        maybePanic(err)
+        m = mTmp
+        indicator = goal.Indicator()
     }
 
-    // handle built ins
-    indicator := frame.Goal().Indicator()
-    v, ok := m.foreign.Lookup(indicator)
-    if ok {
-        f := v.(ForeignPredicate)
-        success, foreignM := f(m, frame.Goal().Arguments())
-        if success {
-            if foreignM != nil {
-                m1 = foreignM.(*machine)
-                frame = m1.Stack()
-                return m1, nil, nil
-            }
-            indicator = "true/0"    // lies!
+    // are we proving a foreign predicate?
+    f, ok := m.(*machine).foreign.Lookup(indicator)
+    if ok {     // foreign predicate
+//      fmt.Printf("  running foreign predicate %s\n", indicator)
+        mTmp, ok := f.(ForeignPredicate)(m, goal.Arguments())
+        if ok {     // success
+            return mTmp, nil, nil
         } else {
-            return m.BackTrack().(*machine), nil, nil
+            // on failure, fall through to iterate disjunctions
+        }
+    } else {    // user-defined predicate, push all its disjunctions
+//      fmt.Printf("  running user-defined predicate %s\n", indicator)
+        clauses, err := m.(*machine).db.Candidates(goal)
+        maybePanic(err)
+        m = m.PushCutBarrier()
+        for i:=len(clauses)-1; i>=0; i-- {
+            clause := clauses[i]
+            cp := NewHeadBodyChoicePoint(m, goal, clause)
+            m = m.PushDisj(cp)
         }
     }
-    switch indicator {
-        case "true/0":
-            if frame.HasConjunctions() {  // prove next conjunction
-                goal, frame1 := frame.TakeConjunction()
-                m1, err := m.SetStack(frame1).PushGoal(goal, nil)
-                maybePanic(err)
-                return m1.(*machine), nil, nil
-            } else {  // reached a leaf. emit a solution
-                m2 := m1.BackTrack().(*machine)
-                return m2, frame.Env(), nil
-            }
-        case ",/2":
-            panic("Should never execute ,/2")
+
+    // iterate disjunctions looking for one that succeeds
+    for {
+        cp, m, err = m.PopDisj()
+        if err == EmptyDisjunctions {   // nothing left to do
+            return nil, nil, MachineDone
+        }
+        maybePanic(err)
+
+        // follow the next choice point
+        mTmp, err := cp.Follow()
+        if err == nil {
+//          fmt.Printf("  followed CP %s\n", cp)
+            return mTmp, nil, nil
+        }
     }
 
-    // have we exhausted all choice points in this frame?
-    choicePoint, frame1 := frame.TakeChoicePoint()
-    if choicePoint == nil {
-        m1 := m.BackTrack().(*machine)
-        return m1, nil, nil
-    }
-    m1.stack = frame1
-
-    // we found a choice point.  try it
-    m2, err := choicePoint.Follow(m1)
-    if err == PleaseBackTrack {
-        m3 := m1.BackTrack().(*machine)
-        return m3, nil, nil
-    }
-    maybePanic(err)
-    return m2.(*machine), nil, nil
+    panic("Stepped a machine past the end")
 }
 
 func (m *machine) toGoal(thing interface{}) Term {
@@ -234,131 +278,123 @@ func (m *machine) toGoal(thing interface{}) Term {
     panic(msg)
 }
 
-func (m *machine) Stack() Frame {
-    return m.stack
-}
-
-func (m *machine) SetStack(f Frame) Machine {
-    m1 := m.clone()
-    m1.stack = f
-    return m1
-}
-
-func (m *machine) PushGoal(goal Term, env Bindings) (Machine,error) {
-    var conjs ps.List
-    m1 := m.clone()
-
-    // expand ,/2 into a list of conjunctions
-    if goal.Indicator() == ",/2" {
-        conjs = commaList(goal.Arguments()[1])
-        goal = goal.Arguments()[0]
-    }
-
-    var disjs ps.List
-    var err error
-    if m.IsBuiltin(goal) {
-        disjs = ps.NewList()
-    } else {
-        disjs, err = m.candidates(goal)
-        if err != nil { return m, err }
-    }
-    top := m.Stack()
-    m1.stack = top.NewChild(goal, env, conjs, disjs)
-    if !isControl(goal) {
-        m1.stack = m1.stack.StopCut()
-    }
-    return m1, nil
-}
-
-// converts a nested comma term (like those parsed from a clause body)
-// into a list of non-comma terms
-func commaList(t Term) ps.List {
-    if t.Indicator() != ",/2" {
-        return ps.NewList().Cons(t)
-    }
-
-    args := t.Arguments()
-    return commaList(args[1]).Cons(args[0])
-}
-
-// appends the terms in a nested semicolon term onto a slice
-// terms.
-func semicolonList(ts []Term, t Term) []Term {
-    if t.Indicator() != ";/2" {
-        return append(ts, t)
-    }
-
-    args := t.Arguments()
-    ts = append(ts, args[0])
-    return semicolonList(ts, args[1])
-}
-
-// true if goal is a control predicate
-func isControl(goal Term) bool {
-    switch goal.Indicator() {
-        case ",/2": return true
-        case ";/2": return true
-        case "!/0": return true
-        case "true/0": return true
-    }
-    return false
-}
-
-func (m *machine) IsBuiltin(goal Term) bool {
-    indicator := goal.Indicator()
-    if indicator == "true/0" { return true }
-    _, ok := m.foreign.Lookup(indicator)
-    return ok
-}
-
-func (m *machine) candidates(goal Term) (ps.List, error) {
-    var err error
-    var candidates []Term
-    var fromDB bool
-
-    if goal.Indicator() == ";/2" {
-        candidates = make([]Term, 0)
-        candidates = semicolonList(candidates, goal)
-        fromDB = false
-    } else {
-        candidates, err = m.db.Candidates(goal)
-        if err != nil { return nil, err }
-        fromDB = true
-    }
-
-    disjs := ps.NewList()
-    for i := len(candidates) - 1; i>=0; i-- {
-        var cp ChoicePoint
-        if fromDB {
-            cp = NewHeadBodyChoicePoint(candidates[i])
-        } else {
-            cp = NewSimpleChoicePoint(candidates[i])
-        }
-        disjs = disjs.Cons(cp)
-    }
-    return disjs, nil
-}
-
 func (m *machine) readTerm(src interface{}) Term {
     return read.Term_(src)
 }
 
 func (m *machine) Bindings() Bindings {
-    return m.Stack().Env()
+    return m.env
 }
 
-func (m *machine) Goal() Term {
-    return m.Stack().Goal()
-}
-
-func (m *machine) BackTrack() Machine {
+func (m *machine) SetBindings(env Bindings) Machine {
     m1 := m.clone()
+    m1.env = env
+    return m1
+}
 
-    for !IsBottom(m1.stack) && !m1.stack.HasChoicePoint() {
-        m1.stack = m1.stack.Parent()
+func (m *machine) PushConj(t Term) Machine {
+    // change all !/0 goals into '$cut_to'(RecentBarrierId) goals
+    barrierID, err := m.MostRecentCutBarrier()
+    if err == nil {
+        t = resolveCuts(barrierID, t)
     }
 
+    m1 := m.clone()
+    m1.conjs = m.conjs.Cons(t)
     return m1
+}
+
+var EmptyConjunctions = fmt.Errorf("Conjunctions list is empty")
+func (m *machine) PopConj() (Term, Machine, error) {
+    if m.conjs.IsNil() {
+        return nil, nil, EmptyConjunctions
+    }
+
+    t := m.conjs.Head().(Term)
+    m1 := m.clone()
+    m1.conjs = m.conjs.Tail()
+    return t, m1, nil
+}
+
+func (m *machine) PushDisj(cp ChoicePoint) Machine {
+    m1 := m.clone()
+    m1.disjs = m.disjs.Cons(cp)
+    return m1
+}
+
+var EmptyDisjunctions = fmt.Errorf("Disjunctions list is empty")
+func (m *machine) PopDisj() (ChoicePoint, Machine, error) {
+    if m.disjs.IsNil() {
+        return nil, nil, EmptyDisjunctions
+    }
+
+    cp := m.disjs.Head().(ChoicePoint)
+    m1 := m.clone()
+    m1.disjs = m.disjs.Tail()
+    return cp, m1, nil
+}
+
+func (m *machine) PushCutBarrier() Machine {
+    barrier := NewCutBarrier(m)
+    return m.PushDisj(barrier)
+}
+
+var NoBarriers = fmt.Errorf("There are no cut barriers")
+func (m *machine) MostRecentCutBarrier() (int64, error) {
+    ds := m.disjs
+    for {
+        if ds.IsNil() {
+            return -1, NoBarriers
+        }
+
+        id, ok := BarrierId(ds.Head().(ChoicePoint))
+        if ok {
+            return id, nil
+        }
+
+        ds = ds.Tail()
+    }
+    panic("inconceivable!")
+}
+
+func (m *machine) CutTo(want int64) Machine {
+    ds := m.disjs
+    for {
+        if ds.IsNil() {
+            msg := fmt.Sprintf("No cut barrier with ID %d", want)
+            panic(msg)
+        }
+
+        found, ok := BarrierId(ds.Head().(ChoicePoint))
+        if ok && found == want {
+            m1 := m.clone()
+            m1.disjs = ds.Tail()
+            return m1
+        }
+
+        ds = ds.Tail()
+    }
+    panic("inconceivable!")
+}
+
+func resolveCuts(id int64, t Term) Term {
+    switch t.Indicator() {
+        case "!/0":
+            return NewTerm("$cut_to", NewInt64(id))
+        case ",/2", ";/2":
+            args := t.Arguments()
+            t0 := resolveCuts(id, args[0])
+            t1 := resolveCuts(id, args[1])
+            return NewTerm( t.Functor(), t0, t1 )
+        case "->/2":
+            args := t.Arguments()
+            t0 := args[0]   // don't resolve cuts in Condition
+            t1 := resolveCuts(id, args[1])
+            return NewTerm( t.Functor(), t0, t1 )
+    }
+
+    // leave any other cuts unresolved
+    return t
 }
 
 func maybePanic(err error) {
