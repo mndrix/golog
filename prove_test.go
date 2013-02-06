@@ -66,6 +66,15 @@ func TestFacts (t *testing.T) {
     if x := solutions[2].ByName_("Name").String(); x != "gail" {
         t.Errorf("Wrong third solution: %s", x)
     }
+
+    // cut in the top level query
+    solutions = m.ProveAll(`parent(Name), !.`)
+    if len(solutions) != 1 {
+        t.Errorf("Wrong number of solutions: %d vs 1", len(solutions))
+    }
+    if x := solutions[0].ByName_("Name").String(); x != "michael" {
+        t.Errorf("Wrong first solution: %s", x)
+    }
 }
 
 func TestConjunction(t *testing.T) {

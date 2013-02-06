@@ -121,7 +121,7 @@ func NewBlankMachine() Machine {
     m.env = NewBindings()
     m.disjs = ps.NewList()
     m.conjs = ps.NewList()
-    return &m
+    return (&m).PushCutBarrier()
 }
 
 func (m *machine) clone() *machine {
