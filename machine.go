@@ -10,6 +10,8 @@ import "bytes"
 import "fmt"
 
 type Machine interface {
+    ForeignReturn
+
     // these three should be functions that take a Machine rather than methods
     CanProve(interface{}) bool
     Consult(interface{}) Machine
@@ -78,7 +80,7 @@ type Machine interface {
 
 // ForeignPredicate is the type of functions which implement Golog predicates
 // that are defined in Go
-type ForeignPredicate func(Machine, []Term) (Machine, bool)
+type ForeignPredicate func(Machine, []Term) ForeignReturn
 
 type machine struct {
     db      Database
@@ -87,6 +89,7 @@ type machine struct {
     disjs   ps.List     // of ChoicePoint
     conjs   ps.List     // of Term
 }
+func (*machine) IsaForeignReturn() {}
 
 // NewMachine creates a new Golog machine.  This machine has the standard
 // library already loaded and is typically the way one wants to obtain
@@ -230,11 +233,28 @@ func (self *machine) Step() (Machine, Bindings, error) {
     f, ok := m.(*machine).foreign.Lookup(indicator)
     if ok {     // foreign predicate
 //      fmt.Printf("  running foreign predicate %s\n", indicator)
-        mTmp, ok := f.(ForeignPredicate)(m, goal.Arguments())
-        if ok {     // success
-            return mTmp, nil, nil
-        } else {
-            // on failure, fall through to iterate disjunctions
+        ret := f.(ForeignPredicate)(m, goal.Arguments())
+        switch x := ret.(type) {
+            case *foreignTrue:
+                return m, nil, nil
+            case *foreignFail:
+                // do nothing. continue to iterate disjunctions below
+            case *machine:
+                return x, nil, nil
+            case *foreignUnify:
+                terms := []Term(*x)  // guaranteed even number of elements
+                env := m.Bindings()
+                for i := 0; i<len(terms); i+=2 {
+                    env, err = Unify(env, terms[i], terms[i+1])
+                    if err == CantUnify {
+                        env = nil
+                        break
+                    }
+                    maybePanic(err)
+                }
+                if env != nil {
+                    return m.SetBindings(env), nil, nil
+                }
         }
     } else {    // user-defined predicate, push all its disjunctions
 //      fmt.Printf("  running user-defined predicate %s\n", indicator)

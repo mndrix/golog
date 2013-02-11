@@ -8,9 +8,9 @@ import . "github.com/mndrix/golog/term"
 func TestDeterministic(t *testing.T) {
     x := 0
     m := NewMachine().RegisterForeign(map[string]ForeignPredicate{
-        "furrener/0" : func(m Machine, args []Term) (Machine,bool) {
+        "furrener/0" : func(m Machine, args []Term) ForeignReturn {
             x++
-            return m, true
+            return ForeignTrue()
         },
     })
 
