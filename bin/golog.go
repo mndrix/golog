@@ -46,6 +46,10 @@ func main () {
         }
 
         // show each answer in turn
+        if variables.Size() == 0 {
+            warnf("yes.\n")
+            continue
+        }
         for i, answer := range answers {
             lines := make([]string, 0)
             variables.ForEach( func(name string, variable ps.Any) {
