@@ -10,6 +10,10 @@ func TestUnifyConstants(t *testing.T) {
     if err != nil {
         t.Errorf("hi/0 and hi/0 don't unify")
     }
+    _, err = Unify(env, NewTerm("n"), NewCode('n'))
+    if err == nil {
+        t.Errorf("n and 0'n unified")
+    }
 
     // shallow terms
     _, err = Unify( env,

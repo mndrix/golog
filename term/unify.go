@@ -35,6 +35,11 @@ func Unify(e Bindings, a, b Term) (Bindings, error) {
     // at this point, neither term is a variable so try harder
 
     // integers and floats §7.3.2c and §6.3.1.1
+    if IsInteger(b) {   // swap argument order
+        t := a
+        a = b
+        b = t
+    }
     if IsInteger(a) {
         if IsInteger(b) {
             if a.(*Integer).Value().Cmp(b.(*Integer).Value()) == 0 {
