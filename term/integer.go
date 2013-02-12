@@ -104,6 +104,13 @@ func (self *Integer) Value() *big.Int {
     return (*big.Int)(self)
 }
 
+// treat this integer as a character code. should be a method on
+// a Code interface someday
+func (self *Integer) Code() rune {
+    i := (*big.Int)(self)
+    return rune(i.Int64())
+}
+
 func (self *Integer) String() string {
     return self.Value().String()
 }

@@ -34,6 +34,17 @@ func NewAtomFromLexeme(possiblyQuotedName string) Term {
     return NewTerm(name)
 }
 
+// NewCodeList returns a compound term consisting of the character codes
+// of the given string.
+func NewCodeList(s string) Term {
+    runes := []rune(s)
+    list := NewTerm("[]")
+    for i:=len(runes)-1; i>=0; i-- {
+        list = NewTerm(".", NewCode(runes[i]), list)
+    }
+    return list
+}
+
 // ISO calls this a "compound term" see §6.1.2(e)
 // We currently use this type to cover atoms defined in §6.1.2(b)
 type Compound struct {

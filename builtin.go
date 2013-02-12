@@ -49,6 +49,37 @@ func BuiltinUnify(m Machine, args []term.Term) ForeignReturn {
     return ForeignUnify(args[0], args[1])
 }
 
+// atom_codes/2 see §8.16.5
+func BuiltinAtomCodes2(m Machine, args []term.Term) ForeignReturn {
+    atom := args[0]
+    list := args[1]
+
+    if !term.IsVariable(atom) {
+        list = term.NewCodeList(atom.Functor())
+        return ForeignUnify(args[1], list)
+    } else if !term.IsVariable(list) {
+        runes := make([]rune, 0)
+        for {
+            switch list.Indicator() {
+                case "./2":
+                    args := list.Arguments()
+                    code := args[0].(*term.Integer)
+                    runes = append(runes, code.Code())
+                    list = args[1]
+                case "[]/0":
+                    atom = term.NewTerm(string(runes))
+                    return ForeignUnify(args[0], atom)
+                default:
+                    msg := fmt.Sprintf("unexpected code list %s", args[1])
+                    panic(msg)
+            }
+        }
+    }
+
+    msg := fmt.Sprintf("atom_codes/2: error with the arguments %s and %s", args[0], args[1])
+    panic(msg)
+}
+
 // call/*
 func BuiltinCall(m Machine, args []term.Term) ForeignReturn {
     // which goal is being called?
