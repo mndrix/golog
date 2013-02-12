@@ -3,6 +3,7 @@ package term
 import . "fmt"
 
 import "bytes"
+import "strings"
 
 // NewTerm creates a new term with the given functor and optional arguments
 func NewTerm(functor string, arguments ...Term) Term {
@@ -10,6 +11,27 @@ func NewTerm(functor string, arguments ...Term) Term {
         Func:   functor,
         Args:   arguments,
     }
+}
+
+func NewAtomFromLexeme(possiblyQuotedName string) Term {
+    if len(possiblyQuotedName) == 0 {
+        panic("Atoms must have some content")
+    }
+    name := possiblyQuotedName
+
+    // remove quote characters, if they exist
+    runes := []rune(possiblyQuotedName)
+    if runes[0] == '\'' {
+        if runes[len(runes)-1] == '\'' {
+            name = string(runes[1:len(runes)-1])
+            name = strings.Replace(name, `''`, `'`, -1)
+        } else {
+            msg := Sprintf("Atom needs closing quote: %s", possiblyQuotedName)
+            panic(msg)
+        }
+    }
+
+    return NewTerm(name)
 }
 
 // ISO calls this a "compound term" see §6.1.2(e)

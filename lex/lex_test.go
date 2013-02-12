@@ -488,6 +488,7 @@ greek(λαμβδα, 0'\n, 0'a).
 hello.% still a valid term
 append([],L,L).
 append([A|B], [A|C]).
+X = ''.
 `
 func TestAcid(t *testing.T) {
 	s := new(Scanner).Init(bytes.NewBufferString(acidTest))
@@ -589,5 +590,10 @@ func TestAcid(t *testing.T) {
     checkScanPos(t, s, 299, 13, 20, ')', ")")
     checkScanPos(t, s, 300, 13, 21, FullStop, ".")
 
-    checkScanPos(t, s, 302, 14, 1, EOF, "")
+    checkScanPos(t, s, 302, 14, 1, Variable, "X")
+    checkScanPos(t, s, 304, 14, 3, Atom, "=")
+    checkScanPos(t, s, 306, 14, 5, Atom, `''`)
+    checkScanPos(t, s, 308, 14, 7, FullStop, ".")
+
+    checkScanPos(t, s, 310, 15, 1, EOF, "")
 }

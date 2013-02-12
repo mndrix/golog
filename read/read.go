@@ -262,7 +262,7 @@ func (r *TermReader) term(p priority, i *lex.List, o **lex.List, t *term.Term) b
             *o = i.Next()
             return r.restTerm(0, p, *o, o, f, t)
         case lex.Atom:      // atom term §6.3.1.3
-            a := term.NewTerm(i.Value.Content)
+            a := term.NewAtomFromLexeme(i.Value.Content)
             *o = i.Next()
             return r.restTerm(0, p, *o, o, a, t)
         case lex.String:    // double quated string §6.3.7

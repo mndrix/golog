@@ -173,7 +173,7 @@ func Variables(t Term) ps.Map {
 // by quoting characters that require quoting
 func QuoteFunctor(name string) string {
     // cons must be quoted (to avoid confusion with full stop)
-    if name == "." {
+    if name == "." || name == "" {
         return Sprintf("'%s'", name)
     }
 

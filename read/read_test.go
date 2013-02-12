@@ -30,6 +30,8 @@ func TestBasic(t *testing.T) {
     single[`"".`] = `[]`
     single[`"hi".`] = `'.'(104, '.'(105, []))`
     single[`"✓".`] = `'.'(10003, [])`       // 0x2713 Unicode
+    single[`''.`] = `''`    // empty atom
+    single[`'hi'.`] = `hi`
     for test, wanted := range single {
         got, err := Term(test)
         maybePanic(err)
