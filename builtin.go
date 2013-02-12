@@ -124,6 +124,29 @@ func BuiltinFail(m Machine, args []term.Term) ForeignReturn {
     return ForeignFail()
 }
 
+// findall/3
+func BuiltinFindall3(m Machine, args []term.Term) ForeignReturn {
+    template := args[0]
+    goal := args[1]
+
+    // call(Goal), X=Template
+    x := term.NewVar("_")
+    call := term.NewTerm("call", goal)
+    unify := term.NewTerm("=", x, template)
+    prove := term.NewTerm(",", call, unify)
+    proofs := m.ProveAll(prove)
+
+    // build a list from the results
+    instances := make([]term.Term, 0)
+    for _, proof := range proofs {
+        t, err := proof.Resolve(x)
+        maybePanic(err)
+        instances = append(instances, t)
+    }
+
+    return ForeignUnify(args[2], term.NewTermList(instances))
+}
+
 // listing/0
 // This should be implemented in pure Prolog, but for debugging purposes,
 // I'm doing it for now as a foreign predicate.

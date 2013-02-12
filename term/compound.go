@@ -52,6 +52,15 @@ func NewCodeList(s string) Term {
     return list
 }
 
+// NewTermList returns a list term consisting of each term from the slice
+func NewTermList(terms []Term) Term {
+    list := NewAtom("[]")
+    for i:=len(terms)-1; i>=0; i-- {
+        list = NewTerm(".", terms[i], list)
+    }
+    return list
+}
+
 // ISO calls this a "compound term" see §6.1.2(e)
 // We currently use this type to cover atoms defined in §6.1.2(b)
 type Compound struct {

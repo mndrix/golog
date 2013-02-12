@@ -113,6 +113,7 @@ func NewMachine() Machine {
                 "call/6" :      BuiltinCall,
                 "downcase_atom/2":  BuiltinDowncaseAtom2,
                 "fail/0" :      BuiltinFail,
+                "findall/3" :   BuiltinFindall3,
                 "listing/0" :   BuiltinListing0,
             })
 }
