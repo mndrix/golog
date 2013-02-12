@@ -13,6 +13,13 @@ func NewTerm(functor string, arguments ...Term) Term {
     }
 }
 
+// NewAtom creates a new atom with the given name.
+// This is just a 0-arity compound term, for now.  Eventually, it should
+// have an optimized implementation.
+func NewAtom(name string) Term {
+    return NewTerm(name)
+}
+
 func NewAtomFromLexeme(possiblyQuotedName string) Term {
     if len(possiblyQuotedName) == 0 {
         panic("Atoms must have some content")

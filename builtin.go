@@ -4,6 +4,7 @@ package golog
 // are defined here.
 
 import "fmt"
+import "strings"
 import "github.com/mndrix/golog/term"
 
 // !/0
@@ -98,6 +99,24 @@ func BuiltinCall(m Machine, args []term.Term) ForeignReturn {
 
     // construct a machine that will prove this goal next
     return m.PushCutBarrier().PushConj(goal)
+}
+
+// downcase_atom(+AnyCase, -LowerCase)
+//
+// Converts the characters of AnyCase into lowercase and unifies the
+// lowercase atom with LowerCase.
+func BuiltinDowncaseAtom2(m Machine, args []term.Term) ForeignReturn {
+    anycase := args[0]
+    if term.IsVariable(anycase) {
+        panic("downcase_atom/2: instantiation_error")
+    }
+    if anycase.Arity() != 0 {
+        msg := fmt.Sprintf("downcase_atom/2: type_error(atom, %s)", anycase)
+        panic(msg)
+    }
+
+    lowercase := term.NewAtom(strings.ToLower(anycase.Functor()))
+    return ForeignUnify(args[1], lowercase)
 }
 
 // fail/0
