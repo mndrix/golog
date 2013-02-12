@@ -233,7 +233,8 @@ func (self *machine) Step() (Machine, Bindings, error) {
     f, ok := m.(*machine).foreign.Lookup(indicator)
     if ok {     // foreign predicate
 //      fmt.Printf("  running foreign predicate %s\n", indicator)
-        ret := f.(ForeignPredicate)(m, goal.Arguments())
+        args := m.(*machine).resolveAllArguments(goal)
+        ret := f.(ForeignPredicate)(m, args)
         switch x := ret.(type) {
             case *foreignTrue:
                 return m, nil, nil
@@ -296,6 +297,24 @@ func (m *machine) toGoal(thing interface{}) Term {
     }
     msg := fmt.Sprintf("Can't convert %#v to a term", thing)
     panic(msg)
+}
+
+func (m *machine) resolveAllArguments(goal Term) []Term {
+    env := m.Bindings()
+    args := goal.Arguments()
+    resolved := make([]Term, len(args))
+    for i, arg := range args {
+        if IsVariable(arg) {
+            a, err := env.Resolve(arg.(*Variable))
+            if err == nil {
+                resolved[i] = a
+                continue
+            }
+        }
+        resolved[i] = arg
+    }
+
+    return resolved
 }
 
 func (m *machine) readTerm(src interface{}) Term {
