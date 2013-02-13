@@ -330,7 +330,8 @@ func (r *TermReader) restTerm(leftP, p priority, i *lex.List, o **lex.List, left
 // consume an infix operator and indicate which one it was along with its priorities
 func (r *TermReader) infix(op *string, opP, lap, rap *priority, i *lex.List, o **lex.List) bool {
 //  fmt.Printf("seeking infix with %s\n", i.Value.Content)
-    if i.Value.Type != lex.Atom && i.Value.Type != ',' {
+    typ := i.Value.Type
+    if typ != lex.Atom && typ != lex.Functor && typ != ',' {
 //      fmt.Printf("  type mismatch: %s\n", lex.TokenString(i.Value.Type))
         return false
     }
