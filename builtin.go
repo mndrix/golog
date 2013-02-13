@@ -31,18 +31,16 @@ func BuiltinIfThen(m Machine, args []term.Term) ForeignReturn {
     cond := args[0]
     then := args[1]
 
+    // CUT_BARRIER, (cond, !, then)
     cut := term.NewTerm("!")
     goal := term.NewTerm(",", cond, term.NewTerm(",", cut, then))
-    m1 := m.PushCutBarrier().PushConj(goal)
-    return m1
+    return m.PushCutBarrier().PushConj(goal)
 }
 
 // ;/2
 func BuiltinSemicolon(m Machine, args []term.Term) ForeignReturn {
     cp := NewSimpleChoicePoint(m, args[1])
-    m = m.PushDisj(cp)
-
-    return m.PushConj(args[0])
+    return m.PushDisj(cp).PushConj(args[0])
 }
 
 // =/2
