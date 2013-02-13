@@ -206,7 +206,9 @@ func (r *TermReader) tok(c rune, in *lex.List, out **lex.List) bool {
 // error reading a term (the error is in a term.Error value).  If the stream
 // is empty, it returns false.
 func (r *TermReader) readTerm(p priority, i *lex.List, o **lex.List, t *term.Term) bool {
+//  fmt.Printf("\nreading term\n")
     if r.tok(lex.EOF, i, o) {
+//      fmt.Printf("hit EOF\n")
         return false
     }
 
@@ -230,6 +232,7 @@ func (r *TermReader) term(p priority, i *lex.List, o **lex.List, t *term.Term) b
     var op, f string
     var t0, t1 term.Term
     var opP, argP priority
+//  fmt.Printf("seeking term with %s\n", i.Value.Content)
 
     // prefix operator
     if r.prefix(&op, &opP, &argP, i, o) && opP<=p && r.term(argP, *o, o, &t0) {
@@ -249,6 +252,7 @@ func (r *TermReader) term(p priority, i *lex.List, o **lex.List, t *term.Term) b
 
     // parenthesized terms
     if r.tok('(', i, o) && r.term(1200, *o, o, &t0) && r.tok(')', *o, o) {
+//      fmt.Printf("open paren %s close paren\n", t0)
         return r.restTerm(0, p, *o, o, t0, t)
     }
 
@@ -304,7 +308,10 @@ func (r *TermReader) restTerm(leftP, p priority, i *lex.List, o **lex.List, left
     var op string
     var rightT term.Term
     var opP, lap, rap priority
+//  fmt.Printf("seeking restTerm @ %d with %s\n", p, i.Value.Content)
+
     if r.infix(&op, &opP, &lap, &rap, i, o) && p>=opP && leftP<=lap && r.term(rap, *o, o, &rightT) {
+//      fmt.Printf("  infix %s\n", op)
         t0 := term.NewTerm(op, leftT, rightT)
         return r.restTerm(opP, p, *o, o, t0, t)
     }
@@ -314,6 +321,7 @@ func (r *TermReader) restTerm(leftP, p priority, i *lex.List, o **lex.List, left
     }
 
     // ε rule can always succeed
+//  fmt.Printf("  invoking ε\n")
     *o = i
     *t = leftT
     return true
@@ -321,7 +329,9 @@ func (r *TermReader) restTerm(leftP, p priority, i *lex.List, o **lex.List, left
 
 // consume an infix operator and indicate which one it was along with its priorities
 func (r *TermReader) infix(op *string, opP, lap, rap *priority, i *lex.List, o **lex.List) bool {
+//  fmt.Printf("seeking infix with %s\n", i.Value.Content)
     if i.Value.Type != lex.Atom && i.Value.Type != ',' {
+//      fmt.Printf("  type mismatch: %s\n", lex.TokenString(i.Value.Type))
         return false
     }
 
@@ -329,6 +339,7 @@ func (r *TermReader) infix(op *string, opP, lap, rap *priority, i *lex.List, o *
     name := i.Value.Content
     priorities, ok := r.operators[name]
     if !ok {
+//      fmt.Printf("  no operator %s found\n", name)
         return false
     }
 
@@ -347,11 +358,13 @@ func (r *TermReader) infix(op *string, opP, lap, rap *priority, i *lex.List, o *
             *lap = *opP - 1
             *rap = *opP - 1
         default:    // wasn't an infix operator after all
+//          fmt.Printf("  %s wasn't infix after all", name)
             return false
     }
 
     *op = name
     *o = i.Next()
+//  fmt.Printf("  found %s %d %d %d\n", name, *lap, *opP, *rap)
     return true
 }
 
