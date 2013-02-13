@@ -39,8 +39,24 @@ func BuiltinIfThen(m Machine, args []term.Term) ForeignReturn {
 
 // ;/2
 func BuiltinSemicolon(m Machine, args []term.Term) ForeignReturn {
+    if args[0].Indicator() == "->/2" {  // §7.8.8
+        return ifThenElse(m, args)
+    }
+
     cp := NewSimpleChoicePoint(m, args[1])
     return m.PushDisj(cp).PushConj(args[0])
+}
+func ifThenElse(m Machine, args []term.Term) ForeignReturn {
+    cond := args[0].Arguments()[0]
+    then := args[0].Arguments()[1]
+    els  := args[1]
+
+    // CUT_BARRIER, (call(cond), !, then; else)
+    cut := term.NewTerm("!")
+    cond = term.NewTerm("call", cond)
+    goal := term.NewTerm(",", cond, term.NewTerm(",", cut, then))
+    goal = term.NewTerm(";", goal, els)
+    return m.PushCutBarrier().PushConj(goal)
 }
 
 // =/2
