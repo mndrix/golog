@@ -50,7 +50,7 @@ type Machine interface {
     MostRecentCutBarrier() (int64, error)
 
     // CutTo removes all disjunctions stacked on top of a specific cut barrier.
-    // It also removes the cut barrier itself.
+    // It does not remove the cut barrier itself.
     // A barrier ID is obtained from MostRecentCutBarrier.
     CutTo(int64) Machine
 
@@ -410,7 +410,7 @@ func (m *machine) CutTo(want int64) Machine {
         found, ok := BarrierId(ds.Head().(ChoicePoint))
         if ok && found == want {
             m1 := m.clone()
-            m1.disjs = ds.Tail()
+            m1.disjs = ds
             return m1
         }
 
