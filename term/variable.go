@@ -42,6 +42,11 @@ func NewVar(name string) *Variable {
     }
 }
 
+// Id returns a unique identifier for this variable
+func (self *Variable) Id() int64 {
+    return self.id
+}
+
 func (self *Variable) Functor() string {
     panic("Variables have no Functor()")
 }

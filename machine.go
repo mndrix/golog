@@ -115,6 +115,7 @@ func NewMachine() Machine {
                 "fail/0" :      BuiltinFail,
                 "findall/3" :   BuiltinFindall3,
                 "listing/0" :   BuiltinListing0,
+                "msort/2" :     BuiltinMsort2,
             })
 }
 

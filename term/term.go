@@ -42,6 +42,23 @@ type Term interface {
     Indicator() string
 }
 
+func IsCompound(t Term) bool {
+    switch t.(type) {
+        case *Compound:
+            return true
+        case *Variable:
+            return false
+        case *Integer:
+            return false
+        case *Float:
+            return false
+        case *Error:
+            return false
+    }
+    msg := Sprintf("Unexpected term type: %#v", t)
+    panic(msg)
+}
+
 func IsVariable(t Term) bool {
     switch t.(type) {
         case *Compound:
@@ -221,6 +238,100 @@ func NewCodeListFromDoubleQuotedString(s string) Term {
     }
 
     return codes
+}
+
+// Precedes returns true if the first argument 'term-precedes'
+// the second argument according to ISO §7.2
+func Precedes(a, b Term) bool {
+    aP := precedence(a)
+    bP := precedence(b)
+    if aP < bP { return true }
+    if aP > bP { return false }
+
+    // both terms have the same precedence by type, so delve deeper
+    switch x := a.(type) {
+        case *Variable:
+            y := b.(*Variable)
+            return x.Id() < y.Id()
+        case *Float:
+            y := b.(*Float)
+            return x.Value() < y.Value()
+        case *Integer:
+            y := b.(*Integer)
+            return x.Value().Cmp(y.Value()) < 0
+        case *Compound:
+            y := b.(*Compound)
+            if x.Arity() == 0 { // atoms
+                return x.Functor() < y.Functor()
+            } else {    // compound terms
+                if x.Arity() < y.Arity() { return true }
+                if x.Arity() > y.Arity() { return false }
+                if x.Functor() < y.Functor() { return true }
+                if x.Functor() > y.Functor() { return false }
+                for i:=0; i<x.Arity(); i++ {
+                    if Precedes(x.Arguments()[i], y.Arguments()[i]) {
+                        return true
+                    } else if Precedes(y.Arguments()[i], x.Arguments()[i]) {
+                        return false
+                    }
+                }
+                return false    // identical terms
+            }
+    }
+
+    msg := Sprintf("Unexpected term type %s\n", a)
+    panic(msg)
+}
+func precedence(t Term) int {
+    switch t.(type) {
+        case *Variable:
+            return 0
+        case *Float:
+            return 1
+        case *Integer:
+            return 2
+        case *Compound:
+            if t.Arity() == 0 { return 3 }
+            return 4
+    }
+    msg := Sprintf("Unexpected term type %s\n", t)
+    panic(msg)
+}
+
+// Converts a '.'/2 list terminated in []/0 into a slice of the associated
+// terms.  Panics if the argument is not a proper list.
+func ProperListToTermSlice(t Term) []Term {
+    l := make([]Term, 0)
+    if !IsCompound(t) { panic("Not a list") }
+    for {
+        switch t.Indicator() {
+            case "[]/0":
+                return l
+            case "./2":
+                l = append(l, t.Arguments()[0])
+                t = t.Arguments()[1]
+            default:
+                panic("Improper list")
+        }
+    }
+    return l
+}
+
+// Implement sort.Interface for []Term
+type TermSlice []Term
+func (self *TermSlice) Len() int {
+    ts := []Term(*self)
+    return len(ts)
+}
+func (self *TermSlice) Less(i, j int) bool {
+    ts := []Term(*self)
+    return Precedes(ts[i], ts[j]);
+}
+func (self *TermSlice) Swap(i, j int) {
+    ts := []Term(*self)
+    tmp := ts[i]
+    ts[i] = ts[j]
+    ts[j] = tmp
 }
 
 func maybePanic(err error) {

@@ -4,6 +4,7 @@ package golog
 // are defined here.
 
 import "fmt"
+import "sort"
 import "strings"
 import "github.com/mndrix/golog/term"
 
@@ -167,4 +168,15 @@ func BuiltinFindall3(m Machine, args []term.Term) ForeignReturn {
 func BuiltinListing0(m Machine, args []term.Term) ForeignReturn {
     fmt.Println(m.String())
     return ForeignTrue()
+}
+
+// msort(+Unsorted:list, -Sorted:list) is det.
+//
+// True if Sorted is a sorted version of Unsorted.  Duplicates are
+// not removed.
+func BuiltinMsort2(m Machine, args []term.Term) ForeignReturn {
+    terms := term.ProperListToTermSlice(args[0])
+    sort.Sort((*term.TermSlice)(&terms))
+    list := term.NewTermList(terms)
+    return ForeignUnify(args[1], list)
 }
