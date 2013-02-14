@@ -42,10 +42,11 @@ type Machine interface {
     // ClearConj replaces the conjunction stack with an empty one
     ClearConjs() Machine
 
-    // PushCutBarrier pushes a special marker onto the disjunction stack.
+    // DemandCutBarrier makes sure the disjunction stack has a special marker
+    // on top.  If not, one is pushed.
     // This marker can be used to locate which disjunctions came immediately
     // before the marker existed.
-    PushCutBarrier() Machine
+    DemandCutBarrier() Machine
 
     // MostRecentCutBarrier returns an opaque value which uniquely
     // identifies the most recent cut barrier in the disjunction stack.
@@ -136,7 +137,7 @@ func NewBlankMachine() Machine {
     m.env = NewBindings()
     m.disjs = ps.NewList()
     m.conjs = ps.NewList()
-    return (&m).PushCutBarrier()
+    return (&m).DemandCutBarrier()
 }
 
 func (m *machine) clone() *machine {
@@ -277,7 +278,7 @@ func (self *machine) Step() (Machine, Bindings, error) {
 //      fmt.Printf("  running user-defined predicate %s with \n", indicator, args)
         clauses, err := m.(*machine).db.Candidates(goal)
         maybePanic(err)
-        m = m.PushCutBarrier()
+        m = m.DemandCutBarrier()
         for i:=len(clauses)-1; i>=0; i-- {
             clause := clauses[i]
             cp := NewHeadBodyChoicePoint(m, goal, clause)
@@ -395,7 +396,15 @@ func (m *machine) PopDisj() (ChoicePoint, Machine, error) {
     return cp, m1, nil
 }
 
-func (m *machine) PushCutBarrier() Machine {
+func (m *machine) DemandCutBarrier() Machine {
+    // is the top choice point already a cut barrier?
+    if !m.disjs.IsNil() {
+        topCP := m.disjs.Head().(ChoicePoint)
+        _, ok := BarrierId(topCP)
+        if ok { return m }
+    }
+
+    // nope, push a new cut barrier
     barrier := NewCutBarrier(m)
     return m.PushDisj(barrier)
 }

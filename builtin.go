@@ -35,7 +35,7 @@ func BuiltinIfThen(m Machine, args []term.Term) ForeignReturn {
     // CUT_BARRIER, (cond, !, then)
     cut := term.NewTerm("!")
     goal := term.NewTerm(",", cond, term.NewTerm(",", cut, then))
-    return m.PushCutBarrier().PushConj(goal)
+    return m.DemandCutBarrier().PushConj(goal)
 }
 
 // ;/2
@@ -57,7 +57,7 @@ func ifThenElse(m Machine, args []term.Term) ForeignReturn {
     cond = term.NewTerm("call", cond)
     goal := term.NewTerm(",", cond, term.NewTerm(",", cut, then))
     goal = term.NewTerm(";", goal, els)
-    return m.PushCutBarrier().PushConj(goal)
+    return m.DemandCutBarrier().PushConj(goal)
 }
 
 // =/2
@@ -113,7 +113,7 @@ func BuiltinCall(m Machine, args []term.Term) ForeignReturn {
     goal := term.NewTerm(functor, newArgs...)
 
     // construct a machine that will prove this goal next
-    return m.PushCutBarrier().PushConj(goal)
+    return m.DemandCutBarrier().PushConj(goal)
 }
 
 // downcase_atom(+AnyCase, -LowerCase)
