@@ -6,8 +6,10 @@ import "github.com/mndrix/golog/read"
 import "github.com/mndrix/golog/prelude"
 import "github.com/mndrix/ps"
 
+import "bufio"
 import "bytes"
 import "fmt"
+import "os"
 
 type Machine interface {
     ForeignReturn
@@ -116,6 +118,9 @@ func NewMachine() Machine {
                 "findall/3" :   BuiltinFindall3,
                 "listing/0" :   BuiltinListing0,
                 "msort/2" :     BuiltinMsort2,
+                "printf/1":     BuiltinPrintf,
+                "printf/2":     BuiltinPrintf,
+                "printf/3":     BuiltinPrintf,
             })
 }
 
@@ -216,6 +221,9 @@ func (self *machine) Step() (Machine, Bindings, error) {
     var cp ChoicePoint
 
 //  fmt.Printf("stepping...\n%s\n", self)
+    if false {   // for debugging. commenting out needs import changes
+        _, _ = bufio.NewReader(os.Stdin).ReadString('\n')
+    }
 
     // find a goal other than true/0 to prove
     indicator := "true/0"
@@ -262,7 +270,8 @@ func (self *machine) Step() (Machine, Bindings, error) {
                 }
         }
     } else {    // user-defined predicate, push all its disjunctions
-//      fmt.Printf("  running user-defined predicate %s\n", indicator)
+//      args := m.(*machine).resolveAllArguments(goal)
+//      fmt.Printf("  running user-defined predicate %s with \n", indicator, args)
         clauses, err := m.(*machine).db.Candidates(goal)
         maybePanic(err)
         m = m.PushCutBarrier()

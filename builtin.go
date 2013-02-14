@@ -180,3 +180,15 @@ func BuiltinMsort2(m Machine, args []term.Term) ForeignReturn {
     list := term.NewTermList(terms)
     return ForeignUnify(args[1], list)
 }
+
+// hack for debugging
+func BuiltinPrintf(m Machine, args []term.Term) ForeignReturn {
+    template := args[0].Functor()
+    template = strings.Replace(template, "~n", "\n", -1)
+    if len(args) == 1 {
+        fmt.Printf(template)
+    } else if len(args) == 2 {
+        fmt.Printf(template, args[1])
+    }
+    return ForeignTrue()
+}
