@@ -149,7 +149,7 @@ func BuiltinFindall3(m Machine, args []term.Term) ForeignReturn {
     call := term.NewTerm("call", goal)
     unify := term.NewTerm("=", x, template)
     prove := term.NewTerm(",", call, unify)
-    proofs := m.ProveAll(prove)
+    proofs := m.ClearConjs().ProveAll(prove)
 
     // build a list from the results
     instances := make([]term.Term, 0)

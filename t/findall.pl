@@ -17,10 +17,9 @@ duplicate :-
     S = [1, 1].
 order(fails) :-
     findall(X, (X=2; X=1), [1,2]).
-% Fails because X is in template and instances list
-%variable_instances :-
-%    findall(X, (X=1; X=2), [X,Y]),
-%    X = 1, Y = 2 .
+variable_instances :-
+    findall(X, (X=1; X=2), [X,Y]),
+    X = 1, Y = 2 .
 variable_instances :-
     findall(X, (X=1; X=2), [A,B]),
     A = 1, B = 2 .

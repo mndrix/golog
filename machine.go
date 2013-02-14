@@ -39,6 +39,9 @@ type Machine interface {
     // are no more conjunctions on that stack
     PopConj() (Term, Machine, error)
 
+    // ClearConj replaces the conjunction stack with an empty one
+    ClearConjs() Machine
+
     // PushCutBarrier pushes a special marker onto the disjunction stack.
     // This marker can be used to locate which disjunctions came immediately
     // before the marker existed.
@@ -366,6 +369,12 @@ func (m *machine) PopConj() (Term, Machine, error) {
     m1 := m.clone()
     m1.conjs = m.conjs.Tail()
     return t, m1, nil
+}
+
+func (m *machine) ClearConjs() Machine {
+    m1 := m.clone()
+    m1.conjs = ps.NewList()
+    return m1
 }
 
 func (m *machine) PushDisj(cp ChoicePoint) Machine {
