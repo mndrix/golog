@@ -306,3 +306,25 @@ func BenchmarkMaplist(b *testing.B) {
         _ = m.ProveAll(`maplist(always_a, [1,2,3,4,5], As).`)
     }
 }
+
+
+// traditional, naive reverse benchmark
+// The Art of Prolog by Sterling, etal says that reversing a 30 element
+// list using this technique does 496 reductions.  From this we can
+// calculate a rough measure of Golog's LIPS.
+func BenchmarkNaiveReverse(b *testing.B) {
+    m := NewMachine().Consult(`
+        append([], A, A).
+        append([A|B], C, [A|D]) :-
+            append(B, C, D).
+
+        reverse([],[]).
+        reverse([X|Xs], Zs) :-
+            reverse(Xs, Ys),
+            append(Ys, [X], Zs).
+    `)
+
+    for i := 0; i < b.N; i++ {
+        _ = m.ProveAll(`reverse([1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30], As).`)
+    }
+}
