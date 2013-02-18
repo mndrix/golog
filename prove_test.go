@@ -1,6 +1,7 @@
 package golog
 
 import "testing"
+import "github.com/mndrix/golog/read"
 
 func TestFacts (t *testing.T) {
     m := NewMachine().Consult(`
@@ -271,8 +272,9 @@ func TestIfThenElse (t *testing.T) {
 
 func BenchmarkTrue(b *testing.B) {
     m := NewMachine()
+    g := read.Term_(`true.`)
     for i := 0; i < b.N; i++ {
-        _ = m.ProveAll(`true.`)
+        _ = m.ProveAll(g)
     }
 }
 
@@ -282,9 +284,10 @@ func BenchmarkAppend(b *testing.B) {
         append([A|B], C, [A|D]) :-
             append(B, C, D).
     `)
+    g := read.Term_(`append([a,b,c], [d,e], List).`)
 
     for i := 0; i < b.N; i++ {
-        _ = m.ProveAll(`append([a,b,c], [d,e], List).`)
+        _ = m.ProveAll(g)
     }
 }
 
@@ -301,9 +304,10 @@ func BenchmarkMaplist(b *testing.B) {
             call(A, B, C),
             maplist_(D, E, A).
     `)
+    g := read.Term_(`maplist(always_a, [1,2,3,4,5], As).`)
 
     for i := 0; i < b.N; i++ {
-        _ = m.ProveAll(`maplist(always_a, [1,2,3,4,5], As).`)
+        _ = m.ProveAll(g)
     }
 }
 
@@ -323,8 +327,15 @@ func BenchmarkNaiveReverse(b *testing.B) {
             reverse(Xs, Ys),
             append(Ys, [X], Zs).
     `)
+    g := read.Term_(`reverse([1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30], As).`)
 
     for i := 0; i < b.N; i++ {
-        _ = m.ProveAll(`reverse([1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30], As).`)
+        _ = m.ProveAll(g)
+    }
+}
+
+func BenchmarkRead(b *testing.B) {
+    for i := 0; i < b.N; i++ {
+        _ = read.Term_(`reverse([1,2,3,4,5,6,7], Xs).`)
     }
 }
