@@ -5,8 +5,12 @@ package golog
 
 import "github.com/mndrix/golog/term"
 
+// ForeignReturn represents the return type of ForeignPredicate functions.
+// Values of ForeignReturn indicate certain success or failure conditions
+// to the Golog machine.  If you're writing a foreign predicate, see
+// functions named Foreign* for possible return values.
 type ForeignReturn interface {
-    IsaForeignReturn()      // useless method to restrict acceptable classes
+    IsaForeignReturn()      // useless method to restrict implementations
 }
 
 

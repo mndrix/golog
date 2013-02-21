@@ -17,6 +17,10 @@ func BuiltinCut(m Machine, args []term.Term) ForeignReturn {
 }
 
 // $cut_to/1
+//
+// An internal system predicate which might be removed at any time
+// in the future.  It cuts all disjunctions on top of a specific cut
+// barrier.
 func BuiltinCutTo(m Machine, args []term.Term) ForeignReturn {
     barrierId := args[0].(*term.Integer).Value().Int64()
     return m.CutTo(barrierId)
@@ -39,6 +43,8 @@ func BuiltinIfThen(m Machine, args []term.Term) ForeignReturn {
 }
 
 // ;/2
+//
+// Implements disjunction and if-then-else.
 func BuiltinSemicolon(m Machine, args []term.Term) ForeignReturn {
     if args[0].Indicator() == "->/2" {  // §7.8.8
         return ifThenElse(m, args)
@@ -65,7 +71,7 @@ func BuiltinUnify(m Machine, args []term.Term) ForeignReturn {
     return ForeignUnify(args[0], args[1])
 }
 
-// atom_codes/2 see §8.16.5
+// atom_codes/2 see ISO §8.16.5
 func BuiltinAtomCodes2(m Machine, args []term.Term) ForeignReturn {
     atom := args[0]
     list := args[1]
@@ -164,7 +170,7 @@ func BuiltinFindall3(m Machine, args []term.Term) ForeignReturn {
 
 // listing/0
 // This should be implemented in pure Prolog, but for debugging purposes,
-// I'm doing it for now as a foreign predicate.
+// I'm doing it for now as a foreign predicate.  This will go away.
 func BuiltinListing0(m Machine, args []term.Term) ForeignReturn {
     fmt.Println(m.String())
     return ForeignTrue()
@@ -174,6 +180,10 @@ func BuiltinListing0(m Machine, args []term.Term) ForeignReturn {
 //
 // True if Sorted is a sorted version of Unsorted.  Duplicates are
 // not removed.
+//
+// This is currently implemented using Go's sort.Sort.
+// The exact implementation is subject to change.  I make no
+// guarantees about sort stability.
 func BuiltinMsort2(m Machine, args []term.Term) ForeignReturn {
     terms := term.ProperListToTermSlice(args[0])
     sort.Sort((*term.TermSlice)(&terms))
@@ -181,7 +191,8 @@ func BuiltinMsort2(m Machine, args []term.Term) ForeignReturn {
     return ForeignUnify(args[1], list)
 }
 
-// hack for debugging
+// A temporary hack for debugging.  This will disappear once Golog has
+// proper support for format/2
 func BuiltinPrintf(m Machine, args []term.Term) ForeignReturn {
     template := args[0].Functor()
     template = strings.Replace(template, "~n", "\n", -1)

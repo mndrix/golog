@@ -3,15 +3,25 @@ package golog
 import "fmt"
 import "github.com/mndrix/golog/term"
 
-// ChoicePoint represents a Prolog choice point which is an
-// alternative computation.  The simplest choice point is one
-// representing a goal to prove.  It might also be a Golog machine
-// running concurrently to investigate a choice point.  In that case,
-// following the choice point, just waits for the concurrent machine to
-// send itself down a channel, where we continue the computation.
+// ChoicePoint represents a place in the execution where we had a
+// choice between multiple alternatives.  Following a choice point
+// is like making one of those choices.
+//
+// The simplest choice point simply tries to prove some goal; usually
+// the body of a clause.  We can imagine more complex choice points.  Perhaps
+// when the choice point was created, we spawned a goroutine to investigate
+// that portion of the execution tree.  If that "clone" finds something
+// interesting, it can send itself down a channel.  In this case, the
+// ChoicePoint's Follow() method would just return that speculative, cloned
+// machine.  In effect it's saying, "If you want to pursue this execution
+// path, don't bother with the computation.  I've already done it"
+//
+// One can imagine a ChoicePoint implementation which clones the Golog
+// machine onto a separate server in a cluster.  Following that choice point
+// waits for the other server to finish evaluating its execution branch.
 type ChoicePoint interface {
-    // Follow produces a new machine, based on an existing one, which
-    // differs only in having begun to prove this choice point
+    // Follow produces a new machine which sets out to explore a
+    // choice point.
     Follow() (Machine, error)
 }
 
@@ -21,6 +31,10 @@ type headbodyCP struct {
     goal        term.Term
     clause      term.Term
 }
+
+// A head-body choice point is one which, when followed, unifies a
+// goal g with the head of a term t.  If unification fails, the choice point
+// fails.  If unification succeeds, the machine tries to prove t's body.
 func NewHeadBodyChoicePoint(m Machine, g, t term.Term) ChoicePoint {
     return &headbodyCP{machine: m, goal: g, clause: t}
 }
@@ -55,6 +69,11 @@ type simpleCP struct {
     machine     Machine
     goal        term.Term
 }
+
+// Following a simple choice point makes the machine start proving
+// goal g.  If g is true/0, this choice point can be used to revert
+// back to a previous version of a machine.  It can be useful for
+// building certain control constructs.
 func NewSimpleChoicePoint(m Machine, g term.Term) ChoicePoint {
     return &simpleCP{machine: m, goal: g}
 }
@@ -72,6 +91,10 @@ type barrierCP struct {
     machine     Machine
     id          int64
 }
+
+// NewCutBarrier creates a special choice point which acts as a sentinel
+// value in the Golog machine's disjunction stack.  Attempting to follow
+// a cut barrier choice point panics.
 func NewCutBarrier(m Machine) ChoicePoint {
     barrierID++
     return &barrierCP{machine: m, id: barrierID}
@@ -82,6 +105,13 @@ func (cp *barrierCP) Follow() (Machine, error) {
 func (cp *barrierCP) String() string {
     return fmt.Sprintf("cut barrier %d", cp.id)
 }
+
+// If cp is a cut barrier choice point, BarrierId returns an identifier
+// unique to this cut barrier and true.  If cp is not a cut barrier,
+// the second return value is false.  BarrierId is mostly useful for
+// those hacking on the interpreter or doing strange control constructs
+// with foreign predicates.  You probably don't need this.  Incidentally,
+// !/0 is implemented in terms of this.
 func BarrierId(cp ChoicePoint) (int64, bool) {
     switch b := cp.(type) {
         case *barrierCP:

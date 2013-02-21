@@ -8,6 +8,10 @@ import "github.com/mndrix/ps"
 
 // Database is an immutable Prolog database.  All write operations on the
 // database produce a new database without affecting the previous one.
+// A database is a mapping from predicate indicators (foo/3) to clauses.
+// The database may or may not implement indexing.  It's unusual to
+// interact with databases directly.  One usually calls methods on Machine
+// instead.
 type Database interface {
     // Asserta adds a term to the database at the start of any existing
     // terms with the same name and arity.
@@ -17,7 +21,7 @@ type Database interface {
     // terms with the same name and arity.
     Assertz(Term) Database
 
-    // Candidates() returns a list of clauses that might match a term.
+    // Candidates() returns a list of clauses that might unify with a term.
     // Returns error if no predicate with appropriate
     // name and arity has been defined.
     Candidates(Term) ([]Term, error)

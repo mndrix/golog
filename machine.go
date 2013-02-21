@@ -1,3 +1,55 @@
+// Golog aspires to be an ISO Prolog interpreter.  It currently
+// supports a small subset of the standard.  Any deviations from
+// the standard are bugs.  Typical usage looks something like this:
+//
+//      m := NewMachine().Consult(`
+//          father(john).
+//          father(jacob).
+//
+//          mother(sue).
+//
+//          parent(X) :-
+//              father(X).
+//          parent(X) :-
+//              mother(X).
+//      `)
+//      if m.CanProve(`father(john).`) {
+//          fmt.Printf("john is a father\n")
+//      }
+//
+//      solutions := m.ProveAll(`parent(X).`)
+//      for _, solution := range solutions {
+//          fmt.Printf("%s is a parent\n", solution.ByName_("X"))
+//      }
+//
+// This sample highlights a few key aspects of using Golog.  To start,
+// Golog data structures are immutable.  NewMachine() creates an empty
+// Golog machine containing just the standard library.
+// Consult() creates another new machine with some extra
+// code loaded.  The original, empty machine is untouched.
+// It's common to build a large Golog machine during init()
+// and then add extra rules to it at runtime.
+// Because Golog machines are immutable,
+// multiple goroutines can access, run and "modify" machines in parallel.
+// This design also opens possibilities for and-parallel and or-parallel
+// execution.
+//
+// Most methods, like Consult(), can accept Prolog code in several forms.
+// The example above shows Prolog as a string.  We could have used any
+// io.Reader instead.
+//
+// Error handling is one oddity.  Golog methods follow Go convention by
+// returning an error value to indicate that something went wrong.  However,
+// in many cases the caller knows that an error is highly improbable and
+// doesn't want extra code to deal with the common case.
+// For most
+// methods, Golog offers one with a trailing underscore, like ByName_(),
+// which panics on error instead of returning an error value.
+//
+// See also:
+//  * Golog's architecture: https://github.com/mndrix/golog/blob/master/doc/architecture.md
+//  * Built in and foreign predicates: See func Builtin...
+//  * Standard library: See golog/prelude package
 package golog
 
 import . "github.com/mndrix/golog/term"
@@ -11,10 +63,39 @@ import "bytes"
 import "fmt"
 import "os"
 
+// NoBarriers error is returned when trying to access a cut barrier that
+// doesn't exist.  See MostRecentCutBarrier
+var NoBarriers = fmt.Errorf("There are no cut barriers")
+
+// MachineDone error is returned when a Golog machine has been stepped
+// as far forward as it can go.  It's unusual to need this variable.
+var MachineDone = fmt.Errorf("Machine can't step any further")
+
+// EmptyDisjunctions error is returned when trying to pop a disjunction
+// off an empty disjunction stack.  This is mostly useful for those hacking
+// on the interpreter.
+var EmptyDisjunctions = fmt.Errorf("Disjunctions list is empty")
+
+// EmptyConjunctions error is returned when trying to pop a conjunction
+// off an empty conjunction stack.  This is mostly useful for those hacking
+// on the interpreter.
+var EmptyConjunctions = fmt.Errorf("Conjunctions list is empty")
+
+// Golog users interact almost exclusively with a Machine value.
+// Specifically, by calling one of the three methods Consult, CanProve and
+// ProveAll.  All others methods are for those hacking on the interpreter or
+// doing low-level operations in foreign predicates.
 type Machine interface {
+    // A Machine is an acceptable return value from a foreign predicate
+    // definition.  In other words, a foreign predicate can perform low-level
+    // manipulations on a Golog machine and return the result as the new
+    // machine on which future execution occurs.  It's unlikely that you'll
+    // need to do this.
     ForeignReturn
 
-    // these three should be functions that take a Machine rather than methods
+    // Temporary.  These will eventually become functions rather than methods.
+    // All three accept Prolog terms as strings or as io.Reader objects from
+    // which Prolog terms can be read.
     CanProve(interface{}) bool
     Consult(interface{}) Machine
     ProveAll(interface{}) []Bindings
@@ -34,7 +115,7 @@ type Machine interface {
     // on front of the conjunction stack
     PushConj(Term) Machine
 
-    // PopConj returns a machine with one fewer items on the conjunction stack
+    // PopConj returns a machine with one less item on the conjunction stack
     // along with the term removed.  Returns err = EmptyConjunctions if there
     // are no more conjunctions on that stack
     PopConj() (Term, Machine, error)
@@ -42,14 +123,14 @@ type Machine interface {
     // ClearConj replaces the conjunction stack with an empty one
     ClearConjs() Machine
 
-    // DemandCutBarrier makes sure the disjunction stack has a special marker
+    // DemandCutBarrier makes sure the disjunction stack has a cut barrier
     // on top.  If not, one is pushed.
     // This marker can be used to locate which disjunctions came immediately
     // before the marker existed.
     DemandCutBarrier() Machine
 
     // MostRecentCutBarrier returns an opaque value which uniquely
-    // identifies the most recent cut barrier in the disjunction stack.
+    // identifies the most recent cut barrier on the disjunction stack.
     // Used with CutTo to remove several disjunctions at once.
     // Returns NoBarriers if there are no cut barriers on the disjunctions
     // stack.
@@ -84,8 +165,8 @@ type Machine interface {
     Step() (Machine, Bindings, error)
 }
 
-// ForeignPredicate is the type of functions which implement Golog predicates
-// that are defined in Go
+// Golog allows Prolog predicates to be defined in Go.  The foreign predicate
+// mechanism is implemented via functions whose type is ForeignPredicate.
 type ForeignPredicate func(Machine, []Term) ForeignReturn
 
 type machine struct {
@@ -98,7 +179,7 @@ type machine struct {
 func (*machine) IsaForeignReturn() {}
 
 // NewMachine creates a new Golog machine.  This machine has the standard
-// library already loaded and is typically the way one wants to obtain
+// library already loaded and is typically the way one obtains
 // a machine.
 func NewMachine() Machine {
     return NewBlankMachine().
@@ -192,7 +273,6 @@ func (m *machine) CanProve(goal interface{}) bool {
     return len(solutions) > 0
 }
 
-var MachineDone = fmt.Errorf("Machine can't step any further")
 func (self *machine) ProveAll(goal interface{}) []Bindings {
     var answer Bindings
     var err error
@@ -360,7 +440,6 @@ func (m *machine) PushConj(t Term) Machine {
     return m1
 }
 
-var EmptyConjunctions = fmt.Errorf("Conjunctions list is empty")
 func (m *machine) PopConj() (Term, Machine, error) {
     if m.conjs.IsNil() {
         return nil, nil, EmptyConjunctions
@@ -384,7 +463,6 @@ func (m *machine) PushDisj(cp ChoicePoint) Machine {
     return m1
 }
 
-var EmptyDisjunctions = fmt.Errorf("Disjunctions list is empty")
 func (m *machine) PopDisj() (ChoicePoint, Machine, error) {
     if m.disjs.IsNil() {
         return nil, nil, EmptyDisjunctions
@@ -409,7 +487,6 @@ func (m *machine) DemandCutBarrier() Machine {
     return m.PushDisj(barrier)
 }
 
-var NoBarriers = fmt.Errorf("There are no cut barriers")
 func (m *machine) MostRecentCutBarrier() (int64, error) {
     ds := m.disjs
     for {
