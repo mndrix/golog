@@ -8,6 +8,8 @@ type Error struct {
     eme         *lex.Eme
 }
 
+// Returns an error term.  These are used internally for error handling and
+// may disappear in the future.
 func NewError(message string, eme *lex.Eme) Term {
     return &Error{
         message:    message,

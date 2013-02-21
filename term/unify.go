@@ -2,6 +2,7 @@ package term
 
 import "fmt"
 
+// Returned by Unify() if the unification fails
 var CantUnify error = fmt.Errorf("Can't unify the given terms")
 
 // Unify unifies two terms in the presence of an environment.

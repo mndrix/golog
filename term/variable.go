@@ -17,12 +17,13 @@ func init() {
     anonCounter = c
 }
 
-// See §6.1.2(a)
+// A Prolog logic variable.  See ISO §6.1.2(a)
 type Variable struct {
     Name    string
     id      int64       // uniquely identifiers this variable
 }
 
+// Creates a new logic variable with the given name.
 func NewVar(name string) *Variable {
     // sanity check the variable name's syntax
     isCapitalized, err := MatchString(`^[A-Z_]`, name)

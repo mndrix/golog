@@ -1,11 +1,14 @@
-// Defines the Prolog standard library which can be implemented
-// in Prolog itself.  Each variable in this package is a predicate
+// Defines the Prolog standard library. All prelude predicates are
+// implemented in pure Prolog.  Each variable in this package is a predicate
 // definition.  At init time, they're combined into a single string
 // in the Prelude var.
 package prelude
 
 import "strings"
 
+// After init(), Prelude contains all prelude predicates combined into
+// a single large string.  One rarely addresses this variable directly
+// because golog.NewMachine() does it for you.
 var Prelude string
 func init() {
     Prelude = strings.Join([]string{
@@ -20,4 +23,3 @@ var Phrase3 = `
 phrase(Dcg, Head, Tail) :-
     call(Dcg, Head, Tail).
 `
-

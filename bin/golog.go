@@ -1,3 +1,5 @@
+// A primitive Prolog top level for Golog.  See golog.sh in the repository
+// for recommended usage.
 package main
 
 import "bufio"

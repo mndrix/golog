@@ -14,12 +14,13 @@ func NewTerm(functor string, arguments ...Term) Term {
 }
 
 // NewAtom creates a new atom with the given name.
-// This is just a 0-arity compound term, for now.  Eventually, it should
+// This is just a 0-arity compound term, for now.  Eventually, it will
 // have an optimized implementation.
 func NewAtom(name string) Term {
     return NewTerm(name)
 }
 
+// Unlikely to be useful outside of the parser
 func NewAtomFromLexeme(possiblyQuotedName string) Term {
     if len(possiblyQuotedName) == 0 {
         panic("Atoms must have some content")
@@ -42,7 +43,8 @@ func NewAtomFromLexeme(possiblyQuotedName string) Term {
 }
 
 // NewCodeList returns a compound term consisting of the character codes
-// of the given string.
+// of the given string.  The internal representation may eventually optimize
+// for storing character codes.
 func NewCodeList(s string) Term {
     runes := []rune(s)
     list := NewTerm("[]")
@@ -52,7 +54,8 @@ func NewCodeList(s string) Term {
     return list
 }
 
-// NewTermList returns a list term consisting of each term from the slice
+// NewTermList returns a list term consisting of each term from the slice.
+// A future implementation may optimize the data structure that's returned.
 func NewTermList(terms []Term) Term {
     list := NewAtom("[]")
     for i:=len(terms)-1; i>=0; i-- {
@@ -63,6 +66,7 @@ func NewTermList(terms []Term) Term {
 
 // ISO calls this a "compound term" see §6.1.2(e)
 // We currently use this type to cover atoms defined in §6.1.2(b)
+// by treating atoms as compound terms with 0 arity.
 type Compound struct {
     Func    string
     Args    []Term

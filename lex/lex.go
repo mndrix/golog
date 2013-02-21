@@ -350,7 +350,7 @@ func digitVal(ch rune) int {
 
 func isDecimal(ch rune) bool { return '0' <= ch && ch <= '9' }
 
-// true if the rune is a graphic token char per ISO §6.4.2
+// True if the rune is a graphic token char per ISO §6.4.2
 func IsGraphic(ch rune) bool {
 	return isOneOf(ch, `#$&*+-./:<=>?@^\~`)
 }

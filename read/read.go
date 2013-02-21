@@ -1,4 +1,8 @@
-// Read Prolog terms.
+// Read Prolog terms.  Typical usage is like
+//
+//  terms, err := read.TermAll(`some(prolog,term). another(one).`)
+//
+// Functions with a trailing underscore panic on error.
 package read
 
 import "github.com/mndrix/golog/term"
@@ -8,6 +12,10 @@ import "github.com/mndrix/golog/lex"
 import "io"
 import "reflect"
 import "strings"
+
+// NoMoreTerms is returned by Next() when it can read no more terms
+// from its source.
+var NoMoreTerms = fmt.Errorf("No more terms available")
 
 // ISO operator specifiers per §6.3.4, table 4
 type specifier  int // xf, yf, xfy, etc.
@@ -99,7 +107,6 @@ func NewTermReader(src interface{}) (*TermReader, error) {
 
 // Next returns the next term available from this reader.
 // Returns error NoMoreTerms if the reader can't find any more terms.
-var NoMoreTerms = fmt.Errorf("No more terms available")
 func (r *TermReader) Next() (term.Term, error) {
     var t term.Term
     var ll *lex.List

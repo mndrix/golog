@@ -1,4 +1,9 @@
-// Represent and unify Prolog terms.
+// Represent and unify Prolog terms.  Along with golog.Machine, term.Term
+// is one of the most important data types in Golog.  It provides a Go
+// representation of Prolog terms.  Terms represent Prolog code,
+// Prolog queries and Prolog results.
+//
+// The current term API is messy and will definitely change in the future.
 package term
 
 import . "fmt"
@@ -7,8 +12,11 @@ import "strings"
 import "github.com/mndrix/golog/lex"
 import "github.com/mndrix/ps"
 
-// Term represents a single Prolog term which might be an atom, a structure,
-// a number, etc.
+// Term represents a single Prolog term which might be an atom, a
+// compound structure, an integer, etc.  Many methods on Term will
+// be replaced with functions in the future.  The Term interface is
+// also likely to be split into several smaller interfaces like Atomic,
+// Number, etc.
 type Term interface {
     // Functor returns the term's name
     Functor() string
@@ -42,6 +50,7 @@ type Term interface {
     Indicator() string
 }
 
+// Returns true if term t is a compound term.
 func IsCompound(t Term) bool {
     switch t.(type) {
         case *Compound:
@@ -59,6 +68,7 @@ func IsCompound(t Term) bool {
     panic(msg)
 }
 
+// Returns true if term t is a variable.
 func IsVariable(t Term) bool {
     switch t.(type) {
         case *Compound:
@@ -76,6 +86,7 @@ func IsVariable(t Term) bool {
     panic(msg)
 }
 
+// Returns true if term t is an error term.
 func IsError(t Term) bool {
     switch t.(type) {
         case *Compound:
@@ -93,11 +104,12 @@ func IsError(t Term) bool {
     panic(msg)
 }
 
-// Returns true if this term is a directive like :- foo.
+// Returns true if term t is a directive like `:- foo.`
 func IsDirective(t Term) bool {
     return t.Indicator() == ":-/1"
 }
 
+// Returns true if term t is an integer
 func IsInteger(t Term) bool {
     switch t.(type) {
         case *Compound:
@@ -115,6 +127,7 @@ func IsInteger(t Term) bool {
     panic(msg)
 }
 
+// Returns true if term t is an floating point number
 func IsFloat(t Term) bool {
     switch t.(type) {
         case *Compound:
@@ -132,6 +145,8 @@ func IsFloat(t Term) bool {
     panic(msg)
 }
 
+// RenameVariables returns a new term like t with all variables replaced
+// by fresh ones.
 func RenameVariables(t Term) Term {
     renamed := make(map[string]*Variable)
     return renameVariables(t, renamed)
@@ -164,7 +179,7 @@ func renameVariables(t Term, renamed map[string]*Variable) Term {
 }
 
 // Variables returns a ps.Map whose keys are human-readable variable names
-// and those values are *Variable
+// and those values are *Variable used inside term t.
 func Variables(t Term) ps.Map {
     names := ps.NewMap()
     switch x := t.(type) {
