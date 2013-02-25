@@ -31,7 +31,7 @@ An environment encapsulates variable bindings.  Unification occurs in the presen
 Disjunctions
 ------------
 
-This is a stack of choice points.  Each time Golog encounters nondeterminism, it pushes some choice points onto the disjunction stack.  Special choice points, called cut barriers, act as sentinels on this stack.  A cut removes all choice points stacked on top of one of these barriers.  Backtracking pops a choice point of this stack and follows it to produce a new machine.  That machine is typically a snapshot of the Golog machine as it existed when we first encountered the choice point.  Following the choice point replaces the current Golog machine with that one.  A side effect is discarding all other state that has accumulated since.
+This is a stack of choice points.  Each time Golog encounters nondeterminism, it pushes some choice points onto the disjunction stack.  Special choice points, called cut barriers, act as sentinels on this stack.  A cut removes all choice points stacked on top of one of these barriers.  Backtracking pops a choice point off this stack and follows it to produce a new machine.  That machine is typically a snapshot of the Golog machine as it existed when we first encountered the choice point.  Following the choice point replaces the current Golog machine with that one.  A side effect is discarding all other state that has accumulated since.
 
 This design makes backtracking very easy to understand.  We just revert back to the state of the machine as it existed before.  Go's garbage collector takes care of any state that's no longer needed.
 
@@ -40,12 +40,19 @@ The disjunction stack can be thought of as "computations we haven't tried yet." 
 Conjunctions
 ------------
 
-TODO
+This is a stack of goals yet to be proven.  It's the machine's continuation.  A new goal is pushed onto this empty stack.  Executing the top goal of this stack replaces the goal with its corresponding clause body.
+
+This design makes it easy to add call-with-current-continuation to Golog at some point.
+
+Execution
+---------
+
+Take a goal off the conjunction stack.  If the goal matches a clause head, push the clause's body onto the conjunction stack.  If the goal might match other clause heads, push those other clauses onto the disjunction stack.  If the goal fails, take a choice point off the disjunction stack and follow it to produce a new machine.  Continue execution on this new machine.
 
 
 Immutability
 ============
 
-TODO
+All data structures in a Golog machine are immutable.  Operations on a Golog machine produce a new machine, leaving the old one completely intact.  I initially chose this approach because it makes backtracking trivial.  It also makes it easy to build a Golog machine during Go's init() and then use that machine in many different web requests without affecting the original machine.
 
-  * what is Step()?
+It looks like this design might also make or-parallel and distributed execution easy to implement.  Time and experimentation will tell.
