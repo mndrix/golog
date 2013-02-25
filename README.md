@@ -5,7 +5,7 @@ ISO Prolog interpreter in Go.  See the [full package documentation](http://godoc
 
 Install with
 
-  go get github.com/mndrix/golog
+    go get github.com/mndrix/golog
 
 Status
 ------
