@@ -109,9 +109,7 @@ func (self *envMap) Value(v *Variable) (Term, error) {
     return value.(Term), nil
 }
 func (self *envMap) clone() *envMap {
-    var newEnv envMap
-    newEnv.bindings = self.bindings
-    newEnv.names = self.names
+    newEnv := *self
     return &newEnv
 }
 

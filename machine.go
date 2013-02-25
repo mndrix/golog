@@ -222,12 +222,7 @@ func NewBlankMachine() Machine {
 }
 
 func (m *machine) clone() *machine {
-    var m1 machine
-    m1.db       = m.db
-    m1.foreign  = m.foreign
-    m1.env      = m.env
-    m1.disjs    = m.disjs
-    m1.conjs    = m.conjs
+    m1 := *m
     return &m1
 }
 

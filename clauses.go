@@ -75,10 +75,6 @@ func (self *clauses) forEach(f func(term.Term)) {
 
 // returns a copy of this clause list
 func (self *clauses) clone() *clauses {
-    var cs clauses
-    cs.n = self.n
-    cs.lowestId = self.lowestId
-    cs.highestId = self.highestId
-    cs.terms = self.terms
+    cs := *self
     return &cs
 }
