@@ -60,18 +60,27 @@ type Term interface {
     Unify(Bindings, Term) (Bindings, error)
 }
 
+// Returns true if term t is an atom
+func IsAtom(t Term) bool {
+    switch t.(type) {
+        case *Atom:
+            return true
+        default:
+            return false
+    }
+    panic("Impossible")
+}
+
 // Returns true if term t is a compound term.
 func IsCompound(t Term) bool {
     switch t.(type) {
         case *Compound:
             return true
-        case *Variable:
-            return false
-        case *Integer:
-            return false
-        case *Float:
-            return false
-        case *Error:
+        case *Atom,
+             *Variable,
+             *Integer,
+             *Float,
+             *Error:
             return false
     }
     msg := Sprintf("Unexpected term type: %#v", t)
@@ -81,15 +90,13 @@ func IsCompound(t Term) bool {
 // Returns true if term t is a variable.
 func IsVariable(t Term) bool {
     switch t.(type) {
-        case *Compound:
-            return false
         case *Variable:
             return true
-        case *Integer:
-            return false
-        case *Float:
-            return false
-        case *Error:
+        case *Atom,
+             *Compound,
+             *Integer,
+             *Float,
+             *Error:
             return false
     }
     msg := Sprintf("Unexpected term type: %#v", t)
@@ -99,16 +106,14 @@ func IsVariable(t Term) bool {
 // Returns true if term t is an error term.
 func IsError(t Term) bool {
     switch t.(type) {
-        case *Compound:
-            return false
-        case *Variable:
-            return false
-        case *Integer:
-            return false
-        case *Float:
-            return false
         case *Error:
             return true
+        case *Atom,
+             *Compound,
+             *Variable,
+             *Integer,
+             *Float:
+            return false
     }
     msg := Sprintf("Unexpected term type: %#v", t)
     panic(msg)
@@ -167,6 +172,7 @@ func renameVariables(t Term, renamed map[string]*Variable) Term {
         case *Float:    return x
         case *Integer:  return x
         case *Error:    return x
+        case *Atom:     return x
         case *Compound:
             if x.Arity() == 0 { return t }  // no variables in atoms
             newArgs := make([]Term, x.Arity())
@@ -193,6 +199,7 @@ func renameVariables(t Term, renamed map[string]*Variable) Term {
 func Variables(t Term) ps.Map {
     names := ps.NewMap()
     switch x := t.(type) {
+        case *Atom:     return names
         case *Float:    return names
         case *Integer:  return names
         case *Error:    return names
@@ -256,7 +263,7 @@ func NewCodeListFromDoubleQuotedString(s string) Term {
     }
 
     // build a cons cell chain, starting at the end ([])
-    codes := NewTerm(`[]`)
+    codes := NewAtom(`[]`)
     for i := end; i > 0; i-- {
         c := NewCode(runes[i])
         codes = NewTerm(`.`, c, codes)
@@ -284,24 +291,23 @@ func Precedes(a, b Term) bool {
         case *Integer:
             y := b.(*Integer)
             return x.Value().Cmp(y.Value()) < 0
+        case *Atom:
+            y := b.(*Atom)
+            return x.Functor() < y.Functor()
         case *Compound:
             y := b.(*Compound)
-            if x.Arity() == 0 { // atoms
-                return x.Functor() < y.Functor()
-            } else {    // compound terms
-                if x.Arity() < y.Arity() { return true }
-                if x.Arity() > y.Arity() { return false }
-                if x.Functor() < y.Functor() { return true }
-                if x.Functor() > y.Functor() { return false }
-                for i:=0; i<x.Arity(); i++ {
-                    if Precedes(x.Arguments()[i], y.Arguments()[i]) {
-                        return true
-                    } else if Precedes(y.Arguments()[i], x.Arguments()[i]) {
-                        return false
-                    }
+            if x.Arity() < y.Arity() { return true }
+            if x.Arity() > y.Arity() { return false }
+            if x.Functor() < y.Functor() { return true }
+            if x.Functor() > y.Functor() { return false }
+            for i:=0; i<x.Arity(); i++ {
+                if Precedes(x.Arguments()[i], y.Arguments()[i]) {
+                    return true
+                } else if Precedes(y.Arguments()[i], x.Arguments()[i]) {
+                    return false
                 }
-                return false    // identical terms
             }
+            return false    // identical terms
     }
 
     msg := Sprintf("Unexpected term type %s\n", a)
@@ -315,8 +321,9 @@ func precedence(t Term) int {
             return 1
         case *Integer:
             return 2
+        case *Atom:
+            return 3
         case *Compound:
-            if t.Arity() == 0 { return 3 }
             return 4
     }
     msg := Sprintf("Unexpected term type %s\n", t)
@@ -327,7 +334,7 @@ func precedence(t Term) int {
 // terms.  Panics if the argument is not a proper list.
 func ProperListToTermSlice(t Term) []Term {
     l := make([]Term, 0)
-    if !IsCompound(t) { panic("Not a list") }
+    if !IsCompound(t) && !IsAtom(t) { panic("Not a list") }
     for {
         switch t.Indicator() {
             case "[]/0":

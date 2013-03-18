@@ -8,8 +8,8 @@ import "testing"
 
 func TestAsserta(t *testing.T) {
     db0 := NewDatabase()
-    db1 := db0.Asserta(NewTerm("alpha"))
-    db2 := db1.Asserta(NewTerm("beta"))
+    db1 := db0.Asserta(NewAtom("alpha"))
+    db2 := db1.Asserta(NewAtom("beta"))
 
     db3 := db2.Asserta(read.Term_(`foo(one,two) :- alpha.`))
     t.Logf(db3.String()) // helpful for debugging
@@ -29,24 +29,24 @@ func TestAsserta(t *testing.T) {
     }
 
     // is alpha/0 present where it should be?
-    if cs := db1.Candidates_(NewTerm("alpha")); len(cs) != 1 {
+    if cs := db1.Candidates_(NewAtom("alpha")); len(cs) != 1 {
         t.Errorf("db1: can't find alpha/0")
     }
-    if cs := db2.Candidates_(NewTerm("alpha")); len(cs) != 1 {
+    if cs := db2.Candidates_(NewAtom("alpha")); len(cs) != 1 {
         t.Errorf("db2: can't find alpha/0")
     }
-    if cs := db3.Candidates_(NewTerm("alpha")); len(cs) != 1 {
+    if cs := db3.Candidates_(NewAtom("alpha")); len(cs) != 1 {
         t.Errorf("db3: can't find alpha/0")
     }
 
     // is beta/0 present where it should be?
-    if _, err := db1.Candidates(NewTerm("beta")); err == nil {
+    if _, err := db1.Candidates(NewAtom("beta")); err == nil {
         t.Errorf("db1: shouldn't have found beta/0")
     }
-    if cs := db2.Candidates_(NewTerm("beta")); len(cs) != 1 {
+    if cs := db2.Candidates_(NewAtom("beta")); len(cs) != 1 {
         t.Errorf("db2: can't find beta/0")
     }
-    if cs := db3.Candidates_(NewTerm("beta")); len(cs) != 1 {
+    if cs := db3.Candidates_(NewAtom("beta")); len(cs) != 1 {
         t.Errorf("db3: can't find beta/0")
     }
 

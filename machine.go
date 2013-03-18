@@ -312,7 +312,7 @@ func (self *machine) Step() (Machine, Bindings, error) {
         if err == EmptyConjunctions {   // found an answer
             answer := m.Bindings()
 //          fmt.Printf("  emitting answer %s\n", answer)
-            m = m.PushConj(NewTerm("fail"))  // backtrack on next Step()
+            m = m.PushConj(NewAtom("fail"))  // backtrack on next Step()
             return m, answer, nil
         }
         maybePanic(err)

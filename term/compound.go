@@ -3,43 +3,16 @@ package term
 import . "fmt"
 
 import "bytes"
-import "strings"
 
 // NewTerm creates a new term with the given functor and optional arguments
 func NewTerm(functor string, arguments ...Term) Term {
+    if len(arguments) == 0 {
+        return NewAtom(functor)
+    }
     return &Compound{
         Func:   functor,
         Args:   arguments,
     }
-}
-
-// NewAtom creates a new atom with the given name.
-// This is just a 0-arity compound term, for now.  Eventually, it will
-// have an optimized implementation.
-func NewAtom(name string) Term {
-    return NewTerm(name)
-}
-
-// Unlikely to be useful outside of the parser
-func NewAtomFromLexeme(possiblyQuotedName string) Term {
-    if len(possiblyQuotedName) == 0 {
-        panic("Atoms must have some content")
-    }
-    name := possiblyQuotedName
-
-    // remove quote characters, if they exist
-    runes := []rune(possiblyQuotedName)
-    if runes[0] == '\'' {
-        if runes[len(runes)-1] == '\'' {
-            name = string(runes[1:len(runes)-1])
-            name = strings.Replace(name, `''`, `'`, -1)
-        } else {
-            msg := Sprintf("Atom needs closing quote: %s", possiblyQuotedName)
-            panic(msg)
-        }
-    }
-
-    return NewTerm(name)
 }
 
 // NewCodeList returns a compound term consisting of the character codes
@@ -47,7 +20,7 @@ func NewAtomFromLexeme(possiblyQuotedName string) Term {
 // for storing character codes.
 func NewCodeList(s string) Term {
     runes := []rune(s)
-    list := NewTerm("[]")
+    list := NewAtom("[]")
     for i:=len(runes)-1; i>=0; i-- {
         list = NewTerm(".", NewCode(runes[i]), list)
     }
@@ -90,11 +63,7 @@ func (self *Compound) IsClause() bool {
     return self.Arity() == 2 && self.Functor() == ":-"
 }
 func (self *Compound) String() string {
-    // an atom
     quotedFunctor := QuoteFunctor(self.Functor())
-    if self.Arity() == 0 {
-        return quotedFunctor
-    }
 
     var buf bytes.Buffer
     Fprintf(&buf, "%s(", quotedFunctor)
@@ -117,10 +86,6 @@ func (self *Compound) Error() error {
 
 func (self *Compound) ReplaceVariables(env Bindings) Term {
     arity := self.Arity()
-    if arity == 0 {
-        return self     // atoms have no variables to replace
-    }
-
     newArgs := make([]Term, arity)
     for i, arg := range self.Arguments() {
         newArgs[i] = arg.ReplaceVariables(env)

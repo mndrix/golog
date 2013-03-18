@@ -2,21 +2,26 @@ package term
 
 import "testing"
 
+// convenience for below
+func unify(env Bindings, a,b Term) (Bindings, error) {
+    return a.Unify(env, b)
+}
+
 func TestUnifyConstants(t *testing.T) {
     env := NewBindings()
 
     // atoms
-    _, err := Unify(env, NewTerm("hi"), NewTerm("hi"))
+    _, err := NewAtom("hi").Unify(env, NewAtom("hi"))
     if err != nil {
         t.Errorf("hi/0 and hi/0 don't unify")
     }
-    _, err = Unify(env, NewTerm("n"), NewCode('n'))
+    _, err =  NewAtom("n").Unify(env, NewCode('n'))
     if err == nil {
         t.Errorf("n and 0'n unified")
     }
 
     // shallow terms
-    _, err = Unify( env,
+    _, err = unify( env,
         NewTerm("hi", NewTerm("you")),
         NewTerm("hi", NewTerm("you")),
     )
@@ -25,7 +30,7 @@ func TestUnifyConstants(t *testing.T) {
     }
 
     // atom and deeper term don't unify
-    _, err = Unify( env,
+    _, err = unify( env,
         NewTerm("foo"),
         NewTerm("bar", NewTerm("baz")),
     )
@@ -34,27 +39,27 @@ func TestUnifyConstants(t *testing.T) {
     }
 
     // integers and floats
-    _, err = Unify( env, NewInt("1234"), NewInt("1234") )
+    _, err = unify( env, NewInt("1234"), NewInt("1234") )
     if err != nil {
         t.Errorf("1234 and 1234 don't unify")
     }
-    _, err = Unify( env, NewInt("1234"), NewInt("1235") )
+    _, err = unify( env, NewInt("1234"), NewInt("1235") )
     if err == nil {
         t.Errorf("1234 and 1235 unify")
     }
-    _, err = Unify( env, NewFloat("99.2"), NewFloat("99.2") )
+    _, err = unify( env, NewFloat("99.2"), NewFloat("99.2") )
     if err != nil {
         t.Errorf("99.2 and 99.2 don't unify")
     }
-    _, err = Unify( env, NewFloat("8.2"), NewFloat("8.1") )
+    _, err = unify( env, NewFloat("8.2"), NewFloat("8.1") )
     if err == nil {
         t.Errorf("8.2 and 8.1 unify")
     }
-    _, err = Unify( env, NewInt("6"), NewFloat("6.0") )
+    _, err = unify( env, NewInt("6"), NewFloat("6.0") )
     if err == nil {
         t.Errorf("6 and 6.0 unify")
     }
-    _, err = Unify( env, NewFloat("5.0"), NewInt("5") )
+    _, err = unify( env, NewFloat("5.0"), NewInt("5") )
     if err == nil {
         t.Errorf("5.0 and 5 unify")
     }
@@ -67,7 +72,7 @@ func nv(name string) *Variable {
 func TestUnifyAtomWithUnboundVariable(t *testing.T) {
     env0 := NewBindings()
 
-    env1, err := Unify( env0,
+    env1, err := unify( env0,
         NewTerm("x"),
         nv("X"),
     )
@@ -84,7 +89,7 @@ func TestUnifyAtomWithUnboundVariable(t *testing.T) {
 }
 
 func TestUnifyUnboundVariableWithStructure(t *testing.T) {
-    env1, err := Unify( NewBindings(),
+    env1, err := unify( NewBindings(),
         NewVar("X"),
         NewTerm("alpha", NewTerm("beta")),
     )
@@ -102,7 +107,7 @@ func TestUnifyUnboundVariableWithStructure(t *testing.T) {
 
 func TestUnifyNestedVariable(t *testing.T) {
     env0 := NewBindings()
-    env1, err := Unify( env0,
+    env1, err := unify( env0,
         NewTerm("etc", NewTerm("stuff")),
         NewTerm("etc", nv("A")),
     )
@@ -127,7 +132,7 @@ func TestUnifyNestedVariable(t *testing.T) {
 
 func TestUnifySameVariable(t *testing.T) {
     env0 := NewBindings()
-    env1, err := Unify(env0, NewVar("X"), NewVar("X"))
+    env1, err := unify(env0, NewVar("X"), NewVar("X"))
     maybePanic(err)
 
     if env0.Size() != 0 {
@@ -142,11 +147,11 @@ func TestUnifyVariableAliases(t *testing.T) {
     env0 := NewBindings()
 
     // make two variables aliases for each other
-    env1, err := Unify( env0, NewVar("X0"), NewVar("X1"))
+    env1, err := unify( env0, NewVar("X0"), NewVar("X1"))
     maybePanic(err)
 
     // unify one of the aliased variables with a term
-    env2, err := Unify( env1, NewTerm("hello"), NewVar("X0"))
+    env2, err := unify( env1, NewTerm("hello"), NewVar("X0"))
     maybePanic(err)
 
     // does X0 have the right value?
@@ -169,11 +174,11 @@ func TestUnifyVariableAliases2(t *testing.T) {
     env0 := NewBindings()
 
     // make two variables aliases for each other
-    env1, err := Unify( env0, nv("X1"), nv("X0"))
+    env1, err := unify( env0, nv("X1"), nv("X0"))
     maybePanic(err)
 
     // unify one of the aliased variables with a term
-    env2, err := Unify( env1, NewTerm("hello"), nv("X0"))
+    env2, err := unify( env1, NewTerm("hello"), nv("X0"))
     maybePanic(err)
 
     // does X0 have the right value?

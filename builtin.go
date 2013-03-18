@@ -89,7 +89,7 @@ func BuiltinAtomCodes2(m Machine, args []term.Term) ForeignReturn {
                     runes = append(runes, code.Code())
                     list = args[1]
                 case "[]/0":
-                    atom = term.NewTerm(string(runes))
+                    atom = term.NewAtom(string(runes))
                     return ForeignUnify(args[0], atom)
                 default:
                     msg := fmt.Sprintf("unexpected code list %s", args[1])

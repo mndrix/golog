@@ -194,7 +194,7 @@ func (r *TermReader) listItems(i *lex.List, o **lex.List, t *term.Term) bool {
         return true
     }
     if r.tok(']', i, o) {
-        *t = term.NewTerm("[]")
+        *t = term.NewAtom("[]")
         return true
     }
     return false
@@ -253,7 +253,7 @@ func (r *TermReader) term(p priority, i *lex.List, o **lex.List, t *term.Term) b
         return r.restTerm(0, p, *o, o, list, t)
     }
     if r.tok('[', i, o) && r.tok(']', *o, o) {
-        list := term.NewTerm("[]")
+        list := term.NewAtom("[]")
         return r.restTerm(0, p, *o, o, list, t)
     }
 
