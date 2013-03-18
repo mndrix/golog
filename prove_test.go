@@ -339,3 +339,24 @@ func BenchmarkRead(b *testing.B) {
         _ = read.Term_(`reverse([1,2,3,4,5,6,7], Xs).`)
     }
 }
+
+
+// two small benchmarks for integer and string comparison
+func BenchmarkCompareUint64(b *testing.B) {
+    var nintendo uint64 = 282429536481
+    var other uint64 = 387429489
+    for i := 0; i < b.N; i++ {
+        if nintendo == other {
+            // do nothing
+        }
+    }
+}
+func BenchmarkCompareString(b *testing.B) {
+    nintendo := "nintendo"
+    other := "other"
+    for i := 0; i < b.N; i++ {
+        if nintendo == other {
+            // do nothing
+        }
+    }
+}
