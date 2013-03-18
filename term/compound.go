@@ -127,3 +127,36 @@ func (self *Compound) ReplaceVariables(env Bindings) Term {
     }
     return NewTerm(self.Functor(), newArgs...)
 }
+
+func (a *Compound) Unify(e Bindings, b Term) (Bindings, error) {
+    if IsVariable(b) {
+        return b.Unify(e, a)
+    }
+    if !IsCompound(b) {
+        return e, CantUnify
+    }
+
+    // functor and arity must match for unification to work
+    arity := a.Arity()
+    if arity != b.Arity() {
+        return e, CantUnify
+    }
+    if a.Functor() != b.Functor() {
+        return e, CantUnify
+    }
+
+    // try unifying each subterm
+    var err error
+    env := e
+    aArgs := a.Arguments()
+    bArgs := b.Arguments()
+    for i:=0; i<arity; i++ {
+        env, err = aArgs[i].Unify(env, bArgs[i])
+        if err != nil {
+            return e, err // return original environment along with error
+        }
+    }
+
+    // unification succeeded
+    return env, nil
+}

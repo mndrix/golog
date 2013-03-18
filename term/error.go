@@ -56,3 +56,7 @@ func (self *Error) Error() error {
 func (self *Error) ReplaceVariables(env Bindings) Term {
     return self
 }
+
+func (a *Error) Unify(e Bindings, b Term) (Bindings, error) {
+    panic("Errors can't Unify()")
+}

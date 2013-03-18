@@ -84,6 +84,34 @@ func (self *Variable) Error() error {
     panic("Can't call Error() on a Variable")
 }
 
+func (a *Variable) Unify(e Bindings, b Term) (Bindings, error) {
+    var aTerm, bTerm Term
+
+    // a variable always unifies with itself
+    if IsVariable(b) {
+        if a.Indicator() == b.Indicator() {
+            return e, nil
+        }
+        bTerm = e.Resolve_(b.(*Variable))
+    } else {
+        bTerm = b
+    }
+
+    // resolve any previous bindings
+    aTerm = e.Resolve_(a)
+
+    // bind unbound variables
+    if IsVariable(aTerm) {
+        return e.Bind(aTerm.(*Variable), b)
+    }
+    if IsVariable(bTerm) {
+        return e.Bind(bTerm.(*Variable), a)
+    }
+
+    // otherwise, punt
+    return aTerm.Unify(e, bTerm)
+}
+
 func (self *Variable) ReplaceVariables(env Bindings) Term {
     return env.Resolve_(self)
 }

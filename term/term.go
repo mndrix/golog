@@ -48,6 +48,13 @@ type Term interface {
 
     // Indicator() provides a "predicate indicator" representation of a term
     Indicator() string
+
+    // Unifies the invocant and another term in the presence of an
+    // environment.
+    // On succes, returns a new environment with additional variable
+    // bindings.  On failure, returns CantUnify error along with the
+    // original environment
+    Unify(Bindings, Term) (Bindings, error)
 }
 
 // Returns true if term t is a compound term.

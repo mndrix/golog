@@ -43,6 +43,19 @@ func (self *Float) Error() error {
     panic("Can't call Error() on a Float")
 }
 
+func (a *Float) Unify(e Bindings, b Term) (Bindings, error) {
+    if IsVariable(b) {
+        return b.Unify(e, a)
+    }
+    if IsFloat(b) {
+        if a.Value() == b.(*Float).Value() {
+            return e, nil
+        }
+    }
+
+    return e, CantUnify
+}
+
 func (self *Float) ReplaceVariables(env Bindings) Term {
     return self
 }

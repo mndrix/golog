@@ -140,6 +140,19 @@ func (self *Integer) Error() error {
     panic("Can't call Error() on an Integer")
 }
 
+func (a *Integer) Unify(e Bindings, b Term) (Bindings, error) {
+    if IsVariable(b) {
+        return b.Unify(e, a)
+    }
+    if IsInteger(b) {
+        if a.Value().Cmp(b.(*Integer).Value()) == 0 {
+            return e, nil
+        }
+    }
+
+    return e, CantUnify
+}
+
 func (self *Integer) ReplaceVariables(env Bindings) Term {
     return self
 }
