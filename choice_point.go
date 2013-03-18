@@ -47,7 +47,7 @@ func (cp *headbodyCP) Follow() (Machine, error) {
     if clause.Indicator() == ":-/2" {
         head = clause.Head()
     }
-    env, err := term.Unify(cp.machine.Bindings(), cp.goal, head)
+    env, err := cp.goal.Unify(cp.machine.Bindings(), head)
     if err == term.CantUnify {
         return nil, err
     }

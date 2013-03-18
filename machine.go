@@ -337,7 +337,7 @@ func (self *machine) Step() (Machine, Bindings, error) {
                 terms := []Term(*x)  // guaranteed even number of elements
                 env := m.Bindings()
                 for i := 0; i<len(terms); i+=2 {
-                    env, err = Unify(env, terms[i], terms[i+1])
+                    env, err = terms[i].Unify(env, terms[i+1])
                     if err == CantUnify {
                         env = nil
                         break

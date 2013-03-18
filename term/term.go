@@ -12,6 +12,9 @@ import "strings"
 import "github.com/mndrix/golog/lex"
 import "github.com/mndrix/ps"
 
+// Returned by Unify() if the unification fails
+var CantUnify error = Errorf("Can't unify the given terms")
+
 // Term represents a single Prolog term which might be an atom, a
 // compound structure, an integer, etc.  Many methods on Term will
 // be replaced with functions in the future.  The Term interface is
