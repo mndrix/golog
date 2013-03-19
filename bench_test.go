@@ -2,6 +2,7 @@ package golog
 
 import "testing"
 import "github.com/mndrix/golog/read"
+import "github.com/mndrix/golog/term"
 
 func BenchmarkTrue(b *testing.B) {
     m := NewMachine()
@@ -21,6 +22,28 @@ func BenchmarkAppend(b *testing.B) {
 
     for i := 0; i < b.N; i++ {
         _ = m.ProveAll(g)
+    }
+}
+
+// unify two compounds terms with deep structure. unification succeeds
+func BenchmarkUnifyDeep(b *testing.B) {
+    x := read.Term_(`a(b(c(d(e(f(g(h(i(j))))))))).`)
+    y := read.Term_(`a(b(c(d(e(f(g(h(i(X))))))))).`)
+
+    env := term.NewBindings()
+    for i := 0; i < b.N; i++ {
+        _, _ = x.Unify(env, y)
+    }
+}
+
+// unify two compounds terms with deep structure. unificatin fails
+func BenchmarkUnifyDeepFail(b *testing.B) {
+    x := read.Term_(`a(b(c(d(e(f(g(h(i(j))))))))).`)
+    y := read.Term_(`a(b(c(d(e(f(g(h(i(x))))))))).`)
+
+    env := term.NewBindings()
+    for i := 0; i < b.N; i++ {
+        _, _ = x.Unify(env, y)
     }
 }
 
