@@ -1,5 +1,7 @@
 package golog
 
+import "fmt"
+import "strconv"
 import "testing"
 import "github.com/mndrix/golog/read"
 import "github.com/mndrix/golog/term"
@@ -36,7 +38,7 @@ func BenchmarkUnifyDeep(b *testing.B) {
     }
 }
 
-// unify two compounds terms with deep structure. unificatin fails
+// unify two compounds terms with deep structure. unification fails
 func BenchmarkUnifyDeepFail(b *testing.B) {
     x := read.Term_(`a(b(c(d(e(f(g(h(i(j))))))))).`)
     y := read.Term_(`a(b(c(d(e(f(g(h(i(x))))))))).`)
@@ -97,8 +99,12 @@ func BenchmarkRead(b *testing.B) {
 }
 
 
-// two small benchmarks for integer and string comparison
-func BenchmarkCompareUint64(b *testing.B) {
+// Low level benchmarks to test Go's implementation
+func init() {   // avoid import errors when low level benchmarks comment out
+    _ = fmt.Sprintf("")
+    _ = strconv.Itoa(1)
+}
+func BenchmarkLowLevelCompareUint64(b *testing.B) {
     var nintendo uint64 = 282429536481
     var other uint64 = 387429489
     for i := 0; i < b.N; i++ {
@@ -107,12 +113,45 @@ func BenchmarkCompareUint64(b *testing.B) {
         }
     }
 }
-func BenchmarkCompareString(b *testing.B) {
+func BenchmarkLowLevelCompareString(b *testing.B) {
     nintendo := "nintendo"
     other := "other"
     for i := 0; i < b.N; i++ {
         if nintendo == other {
             // do nothing
         }
+    }
+}
+func BenchmarkLowLevelBitwise(b *testing.B) {
+    var nintendo uint64 = 282429536481
+    var other uint64 = 387429489
+    for i := 0; i < b.N; i++ {
+        if nintendo & other == nintendo {
+            // do nothing
+        }
+    }
+}
+func BenchmarkLowLevelFloatBinaryExponent(b *testing.B) {
+	f := 3.1415
+    for i := 0; i < b.N; i++ {
+        _ = strconv.FormatFloat(f, 'b', 0, 64)
+    }
+}
+func BenchmarkLowLevelFloatDecimalExponent(b *testing.B) {
+	f := 3.1415
+    for i := 0; i < b.N; i++ {
+        _ = strconv.FormatFloat(f, 'e', 64, 64)
+    }
+}
+func BenchmarkLowLevelIntDecimal(b *testing.B) {
+	var x uint64 = 1967
+    for i := 0; i < b.N; i++ {
+        _ = fmt.Sprintf("%d", x)
+    }
+}
+func BenchmarkLowLevelIntHex(b *testing.B) {
+	var x uint64 = 1967
+    for i := 0; i < b.N; i++ {
+        _ = fmt.Sprintf("%x", x)
     }
 }
