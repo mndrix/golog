@@ -8,6 +8,9 @@ package term
 
 import . "fmt"
 import . "regexp"
+import "hash/fnv"
+import "math"
+import "strconv"
 import "strings"
 import "github.com/mndrix/golog/lex"
 import "github.com/mndrix/ps"
@@ -329,6 +332,79 @@ func precedence(t Term) int {
     msg := Sprintf("Unexpected term type %s\n", t)
     panic(msg)
 }
+
+// UnificationHash generates a special hash value representing the
+// terms in a slice.  Golog uses these hashes to optimize
+// unification.  You probably don't need to call this function directly.
+//
+// In more detail, UnificationHash generates a 64-bit hash which
+// represents the shape and content of a term.  If two terms share the same
+// hash, those terms are likely to unify, although not guaranteed.  If
+// two terms have different hashes, the two terms are guaranteed not
+// to unify.  A compound term splits its 64-bit hash into multiple, smaller
+// n-bit hashes for its functor and arguments.  Other terms occupy the entire
+// hash space themselves.
+//
+// Variables require special handling.  During "preparation" we can think of
+// 1-bits as representing what content a term "provides".  During "query" we
+// can think of 1-bits as representing what content a term "requires".
+// In the first phase, a variable hashes to all 1s since it can provide
+// whatever is needed.  In the second phase, a variable hashes to all 0s since
+// it demands nothing of the opposing term.
+func UnificationHash(terms []Term, n uint, preparation bool) uint64 {
+    var hash uint64 = 0
+    var blockSize uint = n / uint(len(terms))
+
+    // mask to select blockSize least significant bits
+    var mask uint64
+    if blockSize == 64 {
+        mask = math.MaxUint64
+    } else if blockSize == 0 {
+        // pretend that terms was a single variable
+        if preparation {
+            return (1 << n) - 1
+        } else {
+            return 0
+        }
+    } else {
+        mask = (1 << blockSize) - 1
+    }
+
+    for _, term := range terms {
+        hash = hash << blockSize
+        switch t := term.(type) {
+            case *Atom:
+                hash = hash | (hashString(t.Functor()) & mask)
+            case *Integer:
+                str := Sprintf("%x", t.Value())
+                hash = hash | (hashString(str) & mask)
+            case *Float:
+                str := strconv.FormatFloat(t.Value(), 'b', 0, 64)
+                hash = hash | (hashString(str) & mask)
+            case *Error:
+                panic("No UnificationHash for Error terms")
+            case *Compound:
+                hash = hash | UnificationHash(t.Univ(), blockSize, preparation)
+            case *Variable:
+                if preparation {
+                    hash = hash | mask
+                }
+            default:
+                msg := Sprintf("Unexpected term type %s\n", t)
+                panic(msg)
+        }
+    }
+
+    return hash
+}
+
+// hashString returns a string's hash code
+func hashString(x string) uint64 {
+    hasher := fnv.New64()
+    Fprint(hasher, x)
+    return hasher.Sum64()
+}
+
 
 // Converts a '.'/2 list terminated in []/0 into a slice of the associated
 // terms.  Panics if the argument is not a proper list.

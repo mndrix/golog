@@ -43,6 +43,10 @@ func NewTermList(terms []Term) Term {
 type Compound struct {
     Func    string
     Args    []Term
+
+    // 0 means UnificationHash hasn't been calculated yet
+    phash   uint64  // prepared hash
+    qhash   uint64  // query hash
 }
 func (self *Compound) Functor() string {
     return self.Func
@@ -124,4 +128,26 @@ func (a *Compound) Unify(e Bindings, b Term) (Bindings, error) {
 
     // unification succeeded
     return env, nil
+}
+
+// Univ is just like =../2 in ISO Prolog
+func (self *Compound) Univ() []Term {
+    ts := make([]Term, 0)
+    ts = append(ts, NewAtom(self.Functor()))
+    ts = append(ts, self.Arguments()...)
+    return ts
+}
+
+// Returns true if a and b might unify.  This is an optimization
+// for times when a and b are frequently unified with other
+// compound terms.  For example, goals and clause heads.
+func (a *Compound) MightUnify(b *Compound) bool {
+    if a.qhash == 0 {
+        a.qhash = UnificationHash(a.Univ(), 64, false)
+    }
+    if b.phash == 0 {
+        b.phash = UnificationHash(b.Univ(), 64, true)
+    }
+
+    return (a.qhash & b.phash) == a.qhash
 }

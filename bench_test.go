@@ -49,6 +49,13 @@ func BenchmarkUnifyDeepFail(b *testing.B) {
     }
 }
 
+func BenchmarkUnificationHash(b *testing.B) {
+    x := read.Term_(`a(b(c(d(e(f(g(h(i(j))))))))).`)
+    for i := 0; i < b.N; i++ {
+        _ = term.UnificationHash([]term.Term{x}, 64, true)
+    }
+}
+
 // test performance of a standard maplist implementation
 func BenchmarkMaplist(b *testing.B) {
     m := NewMachine().Consult(`
