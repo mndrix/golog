@@ -51,7 +51,7 @@ func TestAsserta(t *testing.T) {
     }
 
     // is foo/2 present where it should be?
-    term := read.Term_(`foo(a,b).`)
+    term := read.Term_(`foo(one,two).`)
     if _, err := db1.Candidates(term); err == nil {
         t.Errorf("db1: shouldn't have found foo/2")
     }
