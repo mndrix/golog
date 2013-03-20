@@ -98,7 +98,22 @@ func (self *mapDb) Candidates(t Term) ([]Term, error) {
         return nil, Errorf("Undefined predicate: %s", indicator)
     }
 
-    return cs.(*clauses).all(), nil
+    // quick return for an atom term
+    if !IsCompound(t) {
+        return cs.(*clauses).all(), nil
+    }
+
+    // ignore clauses that can't possibly unify with our term
+    candidates := make([]Term, 0)
+    cs.(*clauses).forEach( func(clause Term) {
+        if !IsCompound(clause) { return }
+        head := clause
+        if clause.IsClause() { head = clause.Head() }
+        if t.(*Compound).MightUnify(head.(*Compound)) {
+            candidates = append(candidates, clause)
+        }
+    })
+    return candidates, nil
 }
 
 func (self *mapDb) ClauseCount() int {
