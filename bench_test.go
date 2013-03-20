@@ -163,4 +163,84 @@ func BenchmarkLowLevelIntHex(b *testing.B) {
         _ = fmt.Sprintf("%x", x)
     }
 }
+
+
+// benchmarks to compare performance on interface-related code
+type AnInterface interface {
+    AMethod() int
+}
+type ImplementationOne int
+func (*ImplementationOne) AMethod() int { return 1 }
+type ImplementationTwo int
+func (*ImplementationTwo) AMethod() int { return 2 }
+
+func NotAMethod(x AnInterface) int {
+    switch x.(type) {
+        case *ImplementationOne:
+            return 1
+        case *ImplementationTwo:
+            return 2
+    }
+    panic("impossible")
+}
+
+// how expensive is it to call a method?
+func BenchmarkInterfaceMethod(b *testing.B) {
+    var x AnInterface
+    num := 100
+    x = (*ImplementationOne)(&num)
+
+    for i := 0; i < b.N; i++ {
+        _ = x.AMethod()
+    }
+}
+
+// how expensive is it to call a function that acts like a method?
+func BenchmarkInterfaceFunction(b *testing.B) {
+    var x AnInterface
+    num := 100
+    x = (*ImplementationOne)(&num)
+
+    for i := 0; i < b.N; i++ {
+        _ = NotAMethod(x)
+    }
+}
+
+// how expensive is it to inline a type switch that acts like a method?
+func BenchmarkInterfaceInlineTypeSwitch(b *testing.B) {
+    var x AnInterface
+    num := 100
+    x = (*ImplementationOne)(&num)
+
+    for i := 0; i < b.N; i++ {
+        var y int
+        switch x.(type) {
+            case *ImplementationOne:
+                y = 1
+            case *ImplementationTwo:
+                y = 2
+        }
+        _ = y
+    }
+}
+
+// how expensive is it a manually-implemented type switch?
+func BenchmarkInterfaceManualTypeSwitch(b *testing.B) {
+    var x AnInterface
+    num := 100
+    x = (*ImplementationOne)(&num)
+
+    for i := 0; i < b.N; i++ {
+        var y int
+        kind := x.AMethod()
+        switch kind {
+            case 1:
+                y = 1
+            case 2:
+                y = 2
+        }
+        _ = y
+    }
+}
+
 */
