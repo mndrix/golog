@@ -177,7 +177,6 @@ func renameVariables(t Term, renamed map[string]*Variable) Term {
         case *Error:    return x
         case *Atom:     return x
         case *Compound:
-            if x.Arity() == 0 { return t }  // no variables in atoms
             newArgs := make([]Term, x.Arity())
             for i, arg := range x.Arguments() {
                 newArgs[i] = renameVariables(arg, renamed)
