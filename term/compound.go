@@ -92,12 +92,34 @@ func (self *Compound) Error() error {
 }
 
 func (self *Compound) ReplaceVariables(env Bindings) Term {
-    arity := self.Arity()
-    newArgs := make([]Term, arity)
-    for i, arg := range self.Arguments() {
-        newArgs[i] = arg.ReplaceVariables(env)
+    args := self.Arguments()
+    for i, arg := range args {
+        newArg := arg.ReplaceVariables(env)
+        if arg != newArg {  // argument changed. build a new compound term
+            unificationHashPreserved := true
+            newArgs := make([]Term, self.Arity())
+            for j, arg := range args {
+                if j < i {
+                    newArgs[j] = arg
+                } else if j == i {
+                    newArgs[j] = newArg
+                } else {
+                    newArgs[j] = arg.ReplaceVariables(env)
+                    if IsVariable(arg) && !IsVariable(newArgs[j]) {
+                        unificationHashPreserved = false
+                    }
+                }
+            }
+            newTerm := NewTerm(self.Functor(), newArgs...)
+            if unificationHashPreserved {
+                newTerm.(*Compound).ucache = self.ucache
+            }
+            return newTerm
+        }
     }
-    return NewTerm(self.Functor(), newArgs...)
+
+    // no variables were replaced.  reuse the same compound term
+    return self
 }
 
 func (a *Compound) Unify(e Bindings, b Term) (Bindings, error) {
