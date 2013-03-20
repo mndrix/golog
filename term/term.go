@@ -181,7 +181,9 @@ func renameVariables(t Term, renamed map[string]*Variable) Term {
             for i, arg := range x.Arguments() {
                 newArgs[i] = renameVariables(arg, renamed)
             }
-            return NewTerm(x.Functor(), newArgs...)
+            newTerm := NewTerm(x.Functor(), newArgs...)
+            newTerm.(*Compound).ucache = x.ucache
+            return newTerm
         case *Variable:
             name := x.Name
             v, ok := renamed[name]
