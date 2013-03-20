@@ -12,6 +12,7 @@ func NewTerm(functor string, arguments ...Term) Term {
     return &Compound{
         Func:   functor,
         Args:   arguments,
+        ucache: &unificationCache{},
     }
 }
 
@@ -43,7 +44,9 @@ func NewTermList(terms []Term) Term {
 type Compound struct {
     Func    string
     Args    []Term
-
+    ucache  *unificationCache
+}
+type unificationCache struct {
     // 0 means UnificationHash hasn't been calculated yet
     phash   uint64  // prepared hash
     qhash   uint64  // query hash
@@ -142,12 +145,12 @@ func (self *Compound) Univ() []Term {
 // for times when a and b are frequently unified with other
 // compound terms.  For example, goals and clause heads.
 func (a *Compound) MightUnify(b *Compound) bool {
-    if a.qhash == 0 {
-        a.qhash = UnificationHash(a.Univ(), 64, false)
+    if a.ucache.qhash == 0 {
+        a.ucache.qhash = UnificationHash(a.Univ(), 64, false)
     }
-    if b.phash == 0 {
-        b.phash = UnificationHash(b.Univ(), 64, true)
+    if b.ucache.phash == 0 {
+        b.ucache.phash = UnificationHash(b.Univ(), 64, true)
     }
 
-    return (a.qhash & b.phash) == a.qhash
+    return (a.ucache.qhash & b.ucache.phash) == a.ucache.qhash
 }
