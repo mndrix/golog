@@ -99,6 +99,31 @@ func BenchmarkNaiveReverse(b *testing.B) {
     }
 }
 
+func BenchmarkDCGish(b *testing.B) {
+    m := NewMachine().Consult(`
+        name([alice   |X], X).
+        name([bob     |X], X).
+        name([charles |X], X).
+        name([david   |X], X).
+        name([eric    |X], X).
+        name([francis |X], X).
+        name([george  |X], X).
+        name([harry   |X], X).
+        name([ignatius|X], X).
+        name([john    |X], X).
+        name([katie   |X], X).
+        name([larry   |X], X).
+        name([michael |X], X).
+        name([nancy   |X], X).
+        name([oliver  |X], X).
+    `)
+    g := read.Term_(`name([george,the,third], Rest).`)
+
+    for i := 0; i < b.N; i++ {
+        _ = m.ProveAll(g)
+    }
+}
+
 func BenchmarkRead(b *testing.B) {
     for i := 0; i < b.N; i++ {
         _ = read.Term_(`reverse([1,2,3,4,5,6,7], Xs).`)
