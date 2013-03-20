@@ -1,3 +1,3 @@
 #!/bin/sh
 go test -c
-./golog.test -test.run=none -test.bench=. -test.cpuprofile=cpu.profile -test.memprofile=mem.profile
+./golog.test -test.run=none -test.bench=$2 -test.$1profile=$1.profile
