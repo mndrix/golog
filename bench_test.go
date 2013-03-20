@@ -111,6 +111,7 @@ func init() {   // avoid import errors when low level benchmarks comment out
     _ = fmt.Sprintf("")
     _ = strconv.Itoa(1)
 }
+/*
 func BenchmarkLowLevelCompareUint64(b *testing.B) {
     var nintendo uint64 = 282429536481
     var other uint64 = 387429489
@@ -162,3 +163,4 @@ func BenchmarkLowLevelIntHex(b *testing.B) {
         _ = fmt.Sprintf("%x", x)
     }
 }
+*/
