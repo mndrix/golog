@@ -101,10 +101,12 @@ func (self *Compound) ReplaceVariables(env Bindings) Term {
             for j, arg := range args {
                 if j < i {
                     newArgs[j] = arg
-                } else if j == i {
-                    newArgs[j] = newArg
                 } else {
-                    newArgs[j] = arg.ReplaceVariables(env)
+                    if j == i {
+                        newArgs[j] = newArg
+                    } else {
+                        newArgs[j] = arg.ReplaceVariables(env)
+                    }
                     if IsVariable(arg) && !IsVariable(newArgs[j]) {
                         unificationHashPreserved = false
                     }
