@@ -8,7 +8,6 @@ package term
 
 import . "fmt"
 import . "regexp"
-import "hash/fnv"
 import "math"
 import "strconv"
 import "strings"
@@ -399,11 +398,20 @@ func UnificationHash(terms []Term, n uint, preparation bool) uint64 {
     return hash
 }
 
-// hashString returns a string's hash code
+// constants for FNV-1a hash algorithm
+const (
+    offset64 uint64 = 14695981039346656037
+    prime64  uint64 = 1099511628211
+)
+// hashString returns a hash code for a given string
 func hashString(x string) uint64 {
-    hasher := fnv.New64()
-    Fprint(hasher, x)
-    return hasher.Sum64()
+    bytes := []byte(x)
+    hash := offset64
+    for _, byte := range bytes {
+        hash ^= uint64(byte)
+        hash *= prime64
+    }
+    return hash
 }
 
 
