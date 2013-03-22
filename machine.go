@@ -62,6 +62,8 @@ import "bufio"
 import "bytes"
 import "fmt"
 import "os"
+import "strconv"
+import "strings"
 
 // NoBarriers error is returned when trying to access a cut barrier that
 // doesn't exist.  See MostRecentCutBarrier
@@ -169,12 +171,15 @@ type Machine interface {
 // mechanism is implemented via functions whose type is ForeignPredicate.
 type ForeignPredicate func(Machine, []Term) ForeignReturn
 
+const smallThreshold = 4
 type machine struct {
     db      Database
-    foreign ps.Map      // predicate indicator => ForeignPredicate
     env     Bindings
     disjs   ps.List     // of ChoicePoint
     conjs   ps.List     // of Term
+
+    smallForeign  [smallThreshold]ps.Map // arity => functor => ForeignPredicate
+    largeForeign  ps.Map // predicate indicator => ForeignPredicate
 }
 func (*machine) IsaForeignReturn() {}
 
@@ -214,10 +219,14 @@ func NewMachine() Machine {
 func NewBlankMachine() Machine {
     var m machine
     m.db = NewDatabase()
-    m.foreign = ps.NewMap()
     m.env = NewBindings()
     m.disjs = ps.NewList()
     m.conjs = ps.NewList()
+
+    for i:=0; i<smallThreshold; i++ {
+        m.smallForeign[i] = ps.NewMap()
+    }
+    m.largeForeign = ps.NewMap()
     return (&m).DemandCutBarrier()
 }
 
@@ -242,7 +251,16 @@ func (m *machine) Consult(text interface{}) Machine {
 func (m *machine) RegisterForeign(fs map[string]ForeignPredicate) Machine {
     m1 := m.clone()
     for indicator, f := range fs {
-        m1.foreign = m1.foreign.Set(indicator, f)
+        parts := strings.SplitN(indicator, "/", 2)
+        functor := parts[0]
+        arity, err := strconv.Atoi(parts[1])
+        maybePanic(err)
+
+        if arity < smallThreshold {
+            m1.smallForeign[arity] = m1.smallForeign[arity].Set(functor, f)
+        } else {
+            m1.largeForeign = m1.largeForeign.Set(indicator, f)
+        }
     }
     return m1
 }
@@ -318,15 +336,16 @@ func (self *machine) Step() (Machine, Bindings, error) {
         }
         maybePanic(err)
         m = mTmp
-        indicator = goal.Indicator()
+        arity = goal.Arity()
+        functor = goal.Functor()
     }
 
     // are we proving a foreign predicate?
-    f, ok := m.(*machine).foreign.Lookup(indicator)
+    f, ok := m.(*machine).lookupForeign(goal)
     if ok {     // foreign predicate
 //      fmt.Printf("  running foreign predicate %s\n", indicator)
         args := m.(*machine).resolveAllArguments(goal)
-        ret := f.(ForeignPredicate)(m, args)
+        ret := f(m, args)
         switch x := ret.(type) {
             case *foreignTrue:
                 return m, nil, nil
@@ -380,6 +399,23 @@ func (self *machine) Step() (Machine, Bindings, error) {
     }
 
     panic("Stepped a machine past the end")
+}
+
+func (m *machine) lookupForeign(goal Term) (ForeignPredicate, bool) {
+    var f   ps.Any
+    var ok  bool
+
+    arity := goal.Arity()
+    if arity < smallThreshold {
+        f, ok = m.smallForeign[arity].Lookup(goal.Functor())
+    } else {
+        f, ok = m.largeForeign.Lookup(goal.Indicator())
+    }
+
+    if ok {
+        return f.(ForeignPredicate), ok
+    }
+    return nil, ok
 }
 
 func (m *machine) toGoal(thing interface{}) Term {
