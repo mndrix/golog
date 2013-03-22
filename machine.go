@@ -521,25 +521,30 @@ func (m *machine) CutTo(want int64) Machine {
 }
 
 func resolveCuts(id int64, t Term) Term {
-    switch t.Indicator() {
-        case "!/0":
-            return NewTerm("$cut_to", NewInt64(id))
-        case ",/2", ";/2":
-            args := t.Arguments()
-            t0 := resolveCuts(id, args[0])
-            t1 := resolveCuts(id, args[1])
-            if t0 == args[0] && t1 == args[1] {
-                return t
+    switch t.Arity() {
+        case 0:
+            if t.Functor() == "!" {
+                return NewTerm("$cut_to", NewInt64(id))
             }
-            return NewTerm( t.Functor(), t0, t1 )
-        case "->/2":
-            args := t.Arguments()
-            t0 := args[0]   // don't resolve cuts in Condition
-            t1 := resolveCuts(id, args[1])
-            if t1 == args[1] {  // no changes. don't create a new term
-                return t
+        case 2:
+            switch t.Functor() {
+                case ",", ";":
+                    args := t.Arguments()
+                    t0 := resolveCuts(id, args[0])
+                    t1 := resolveCuts(id, args[1])
+                    if t0 == args[0] && t1 == args[1] {
+                        return t
+                    }
+                    return NewTerm( t.Functor(), t0, t1 )
+                case "->":
+                    args := t.Arguments()
+                    t0 := args[0]   // don't resolve cuts in Condition
+                    t1 := resolveCuts(id, args[1])
+                    if t1 == args[1] {  // no changes. don't create a new term
+                        return t
+                    }
+                    return NewTerm( t.Functor(), t0, t1 )
             }
-            return NewTerm( t.Functor(), t0, t1 )
     }
 
     // leave any other cuts unresolved
