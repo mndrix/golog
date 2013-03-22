@@ -528,11 +528,17 @@ func resolveCuts(id int64, t Term) Term {
             args := t.Arguments()
             t0 := resolveCuts(id, args[0])
             t1 := resolveCuts(id, args[1])
+            if t0 == args[0] && t1 == args[1] {
+                return t
+            }
             return NewTerm( t.Functor(), t0, t1 )
         case "->/2":
             args := t.Arguments()
             t0 := args[0]   // don't resolve cuts in Condition
             t1 := resolveCuts(id, args[1])
+            if t1 == args[1] {  // no changes. don't create a new term
+                return t
+            }
             return NewTerm( t.Functor(), t0, t1 )
     }
 
