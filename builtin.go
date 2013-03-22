@@ -46,7 +46,9 @@ func BuiltinIfThen(m Machine, args []term.Term) ForeignReturn {
 //
 // Implements disjunction and if-then-else.
 func BuiltinSemicolon(m Machine, args []term.Term) ForeignReturn {
-    if args[0].Indicator() == "->/2" {  // §7.8.8
+    arity := args[0].Arity()
+    functor := args[0].Functor()
+    if arity == 2 && functor == "->" {  // §7.8.8
         return ifThenElse(m, args)
     }
 
@@ -82,15 +84,19 @@ func BuiltinAtomCodes2(m Machine, args []term.Term) ForeignReturn {
     } else if !term.IsVariable(list) {
         runes := make([]rune, 0)
         for {
-            switch list.Indicator() {
-                case "./2":
-                    args := list.Arguments()
-                    code := args[0].(*term.Integer)
-                    runes = append(runes, code.Code())
-                    list = args[1]
-                case "[]/0":
-                    atom = term.NewAtom(string(runes))
-                    return ForeignUnify(args[0], atom)
+            switch list.Arity() {
+                case 2:
+                    if list.Functor() == "." {
+                        args := list.Arguments()
+                        code := args[0].(*term.Integer)
+                        runes = append(runes, code.Code())
+                        list = args[1]
+                    }
+                case 0:
+                    if list.Functor() == "[]" {
+                        atom = term.NewAtom(string(runes))
+                        return ForeignUnify(args[0], atom)
+                    }
                 default:
                     msg := fmt.Sprintf("unexpected code list %s", args[1])
                     panic(msg)

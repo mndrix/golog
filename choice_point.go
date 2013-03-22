@@ -44,7 +44,7 @@ func (cp *headbodyCP) Follow() (Machine, error) {
 
     // does the machine's current goal unify with our head?
     head := clause
-    if clause.Indicator() == ":-/2" {
+    if clause.Arity() == 2 && clause.Functor() == ":-" {
         head = clause.Head()
     }
     env, err := cp.goal.Unify(cp.machine.Bindings(), head)
@@ -54,7 +54,7 @@ func (cp *headbodyCP) Follow() (Machine, error) {
     maybePanic(err)
 
     // yup, update the environment and top goal
-    if clause.Indicator() == ":-/2" {
+    if clause.Arity() == 2 && clause.Functor() == ":-" {
         return cp.machine.SetBindings(env).PushConj(clause.Body()), nil
     }
     return cp.machine.SetBindings(env), nil  // don't need to push "true"

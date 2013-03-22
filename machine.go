@@ -305,8 +305,9 @@ func (self *machine) Step() (Machine, Bindings, error) {
     }
 
     // find a goal other than true/0 to prove
-    indicator := "true/0"
-    for indicator == "true/0" {
+    arity := 0
+    functor := "true"
+    for arity == 0 && functor == "true" {
         var mTmp Machine
         goal, mTmp, err = m.PopConj()
         if err == EmptyConjunctions {   // found an answer
