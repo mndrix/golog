@@ -443,10 +443,9 @@ const (
 )
 // hashString returns a hash code for a given string
 func hashString(x string) uint64 {
-    bytes := []byte(x)
     hash := offset64
-    for _, byte := range bytes {
-        hash ^= uint64(byte)
+    for _, codepoint := range x {
+        hash ^= uint64(codepoint)
         hash *= prime64
     }
     return hash
