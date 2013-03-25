@@ -397,23 +397,32 @@ func UnificationHash(terms []Term, n uint, preparation bool) uint64 {
             case *Error:
                 panic("No UnificationHash for Error terms")
             case *Compound:
-                // how many bits allocated to functor vs arguments?
+                var termHash uint64
                 arity := uint(t.Arity())
-                functorBits := blockSize / (arity+1)
-                if functorBits > 12 { functorBits = 12 }
-                argumentBits := (blockSize-functorBits) / arity
+                if arity == 2 && t.Functor() == "." {   // don't hash pair's functor
+                    rightSize := blockSize / 2
+                    leftSize := blockSize - rightSize
+                    termHash = UnificationHash(t.Args[0:1], leftSize, preparation)
+                    termHash = termHash << rightSize
+                    termHash |= UnificationHash(t.Args[1:2], rightSize, preparation)
+                } else {
+                    // how many bits allocated to functor vs arguments?
+                    functorBits := blockSize / (arity+1)
+                    if functorBits > 12 { functorBits = 12 }
+                    argumentBits := (blockSize-functorBits) / arity
 
-                // give extra bits from rounding back to the functor
-                functorBits = blockSize - argumentBits*arity
+                    // give extra bits (from rounding) back to the functor
+                    functorBits = blockSize - argumentBits*arity
 
-                // generate the hash
-                var functorMask uint64 = (1<<functorBits) - 1
-                termHash := hashString(t.Functor()) & functorMask
-                for _, arg := range t.Arguments() {
-                    termHash = termHash << argumentBits
-                    termHash = termHash | UnificationHash([]Term{arg}, argumentBits, preparation)
+                    // generate the hash
+                    var functorMask uint64 = (1<<functorBits) - 1
+                    termHash = hashString(t.Functor()) & functorMask
+                    for _, arg := range t.Arguments() {
+                        termHash = termHash << argumentBits
+                        termHash = termHash | UnificationHash([]Term{arg}, argumentBits, preparation)
+                    }
                 }
-                hash = hash | (termHash & mask)
+                hash |= (termHash & mask)
             case *Variable:
                 if preparation {
                     hash = hash | mask
