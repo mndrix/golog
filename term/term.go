@@ -130,6 +130,8 @@ func IsDirective(t Term) bool {
 // Returns true if term t is an integer
 func IsInteger(t Term) bool {
     switch t.(type) {
+        case *Atom:
+            return false
         case *Compound:
             return false
         case *Variable:
@@ -148,6 +150,8 @@ func IsInteger(t Term) bool {
 // Returns true if term t is an floating point number
 func IsFloat(t Term) bool {
     switch t.(type) {
+        case *Atom:
+            return false
         case *Compound:
             return false
         case *Variable:
