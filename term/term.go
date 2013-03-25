@@ -384,7 +384,23 @@ func UnificationHash(terms []Term, n uint, preparation bool) uint64 {
             case *Error:
                 panic("No UnificationHash for Error terms")
             case *Compound:
-                hash = hash | UnificationHash(t.Univ(), blockSize, preparation)
+                // how many bits allocated to functor vs arguments?
+                arity := uint(t.Arity())
+                functorBits := blockSize / (arity+1)
+                if functorBits > 12 { functorBits = 12 }
+                argumentBits := (blockSize-functorBits) / arity
+
+                // give extra bits from rounding back to the functor
+                functorBits = blockSize - argumentBits*arity
+
+                // generate the hash
+                var functorMask uint64 = (1<<functorBits) - 1
+                termHash := hashString(t.Functor()) & functorMask
+                for _, arg := range t.Arguments() {
+                    termHash = termHash << argumentBits
+                    termHash = termHash | UnificationHash([]Term{arg}, argumentBits, preparation)
+                }
+                hash = hash | (termHash & mask)
             case *Variable:
                 if preparation {
                     hash = hash | mask
