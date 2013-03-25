@@ -8,6 +8,7 @@ package term
 
 import . "fmt"
 import . "regexp"
+import "math/big"
 import "math"
 import "strconv"
 import "strings"
@@ -351,6 +352,10 @@ func precedence(t Term) int {
 // In the first phase, a variable hashes to all 1s since it can provide
 // whatever is needed.  In the second phase, a variable hashes to all 0s since
 // it demands nothing of the opposing term.
+var bigMaxInt64 *big.Int
+func init() {
+    bigMaxInt64 = big.NewInt(math.MaxInt64)
+}
 func UnificationHash(terms []Term, n uint, preparation bool) uint64 {
     var hash uint64 = 0
     var blockSize uint = n / uint(len(terms))
@@ -376,8 +381,12 @@ func UnificationHash(terms []Term, n uint, preparation bool) uint64 {
             case *Atom:
                 hash = hash | (hashString(t.Functor()) & mask)
             case *Integer:
-                str := Sprintf("%x", t.Value())
-                hash = hash | (hashString(str) & mask)
+                if t.Value().Sign() < 0 || t.Value().Cmp(bigMaxInt64) > 0 {
+                    str := Sprintf("%x", t.Value())
+                    hash = hash | (hashString(str) & mask)
+                } else {
+                    hash = hash | (uint64(t.Value().Int64()) & mask)
+                }
             case *Float:
                 str := strconv.FormatFloat(t.Value(), 'b', 0, 64)
                 hash = hash | (hashString(str) & mask)
