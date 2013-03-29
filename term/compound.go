@@ -170,10 +170,10 @@ func (self *Compound) Univ() []Term {
 // compound terms.  For example, goals and clause heads.
 func (a *Compound) MightUnify(b *Compound) bool {
     if a.ucache.qhash == 0 {
-        a.ucache.qhash = UnificationHash(a.Univ(), 64, false)
+        a.ucache.qhash = UnificationHash([]Term{a}, 64, false)
     }
     if b.ucache.phash == 0 {
-        b.ucache.phash = UnificationHash(b.Univ(), 64, true)
+        b.ucache.phash = UnificationHash([]Term{b}, 64, true)
     }
 
     return (a.ucache.qhash & b.ucache.phash) == a.ucache.qhash
