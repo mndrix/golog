@@ -268,3 +268,16 @@ func TestIfThenElse (t *testing.T) {
         t.Errorf("Wrong number of answers: %d vs 0", len(proofs))
     }
 }
+
+// make sure the effect of !/0 are localized to (\+)/1
+func TestNotWithCut (t *testing.T) {
+    m := NewMachine()
+
+    proofs := m.ProveAll(`\+(!); X=ok.`)
+    if len(proofs) != 1 {
+        t.Errorf("Wrong number of answers: %d vs 1", len(proofs))
+    }
+    if x := proofs[0].ByName_("X").String(); x != "ok" {
+        t.Errorf("Wrong solution: %s vs ok", x)
+    }
+}

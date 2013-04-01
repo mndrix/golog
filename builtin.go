@@ -73,6 +73,25 @@ func BuiltinUnify(m Machine, args []term.Term) ForeignReturn {
     return ForeignUnify(args[0], args[1])
 }
 
+// (\+)/1
+func BuiltinNot(m Machine, args []term.Term) ForeignReturn {
+    var answer term.Bindings
+    var err error
+    m = m.ClearConjs().PushConj(args[0])
+
+    for {
+        m, answer, err = m.Step()
+        if err == MachineDone {
+            return ForeignTrue()
+        }
+        maybePanic(err)
+        if answer != nil {
+            return ForeignFail()
+        }
+    }
+    panic("impossible")
+}
+
 // atom_codes/2 see ISO §8.16.5
 func BuiltinAtomCodes2(m Machine, args []term.Term) ForeignReturn {
     atom := args[0]
