@@ -2,8 +2,6 @@ package term
 
 import . "fmt"
 
-import "strings"
-
 type Atom string
 
 // NewAtom creates a new atom with the given name.
@@ -24,8 +22,20 @@ func NewAtomFromLexeme(possiblyQuotedName string) Term {
     runes := []rune(possiblyQuotedName)
     if runes[0] == '\'' {
         if runes[len(runes)-1] == '\'' {
-            name = string(runes[1:len(runes)-1])
-            name = strings.Replace(name, `''`, `'`, -1)
+            raw := runes[1:len(runes)-1]
+            unescaped := make([]rune, len(raw))
+            var i, j int
+            for i < len(raw) {
+                if raw[i] == '\\' && i < len(raw)-1 && raw[i+1] == '\'' {
+                    unescaped[j] = '\''
+                    i += 2
+                } else {
+                    unescaped[j] = raw[i]
+                    i++
+                }
+                j++
+            }
+            name = string(unescaped[0:j])
         } else {
             msg := Sprintf("Atom needs closing quote: %s", possiblyQuotedName)
             panic(msg)

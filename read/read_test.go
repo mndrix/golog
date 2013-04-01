@@ -31,7 +31,9 @@ func TestBasic(t *testing.T) {
     single[`"hi".`] = `'.'(104, '.'(105, []))`
     single[`"✓".`] = `'.'(10003, [])`       // 0x2713 Unicode
     single[`''.`] = `''`    // empty atom
+    single[`'\''.`] = `'\''`    // single quote (escaped)
     single[`'hi'.`] = `hi`
+    single[`'collector\'s'.`] = `'collector\'s'`
     single[`(true->true).`] = `->(true, true)`
     single[`(true->(true)).`] = `->(true, true)`
     single[`(if->then;else).`] = `;(->(if, then), else)`
