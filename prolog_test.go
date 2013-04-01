@@ -19,6 +19,9 @@ func TestPureProlog (t *testing.T) {
 
     // run tests found in each file
     for _, name := range names {
+        if name[0] == '.' {
+            continue    // skip hidden files
+        }
         openTest := func () *os.File {
             f, err := os.Open("t/" + name)
             maybePanic(err)
