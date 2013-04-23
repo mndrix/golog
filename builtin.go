@@ -127,6 +127,32 @@ func BuiltinAtomCodes2(m Machine, args []term.Term) ForeignReturn {
     panic(msg)
 }
 
+// atom_number/2 as defined in SWI-Prolog
+func BuiltinAtomNumber2(m Machine, args []term.Term) (ret ForeignReturn) {
+    atom   := args[0]
+    number := args[1]
+
+    if !term.IsVariable(atom) {
+        defer func () {     // convert parsing panics into fail
+            if x := recover(); x != nil {
+                ret = ForeignFail()
+            }
+        }()
+        if strings.Contains(atom.Functor(), ".") {
+            number = term.NewFloat(atom.Functor())
+        } else {
+            number = term.NewInt(atom.Functor())
+        }
+        return ForeignUnify(args[1], number)
+    } else if !term.IsVariable(number) {
+        atom = term.NewAtom(number.String())
+        return ForeignUnify(args[0], atom)
+    }
+
+    msg := fmt.Sprintf("atom_number/2: Arguments are not sufficiently instantiated: %s and %s", args[0], args[1])
+    panic(msg)
+}
+
 // call/*
 func BuiltinCall(m Machine, args []term.Term) ForeignReturn {
     // which goal is being called?

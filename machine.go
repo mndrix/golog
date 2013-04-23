@@ -198,6 +198,7 @@ func NewMachine() Machine {
                 "=/2" :         BuiltinUnify,
                 `\+/1` :        BuiltinNot,
                 "atom_codes/2": BuiltinAtomCodes2,
+                "atom_number/2":BuiltinAtomNumber2,
                 "call/1" :      BuiltinCall,
                 "call/2" :      BuiltinCall,
                 "call/3" :      BuiltinCall,
