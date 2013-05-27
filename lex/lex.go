@@ -148,6 +148,8 @@ type Scanner struct {
 	// One character look-ahead
 	ch rune // character before current srcPos
 
+	extraTok rune	// an extra token accidentally read early
+
 	// Error is called for each error encountered. If no Error
 	// function is set, the error is reported to os.Stderr.
 	Error func(s *Scanner, msg string)
@@ -189,6 +191,9 @@ func (s *Scanner) Init(src io.Reader) *Scanner {
 	// initialize one character look-ahead
 	s.ch = -1 // no char read yet
 
+	// initialize extra token
+	s.extraTok = 0
+
 	// initialize public fields
 	s.Error = nil
 	s.ErrorCount = 0
@@ -202,6 +207,13 @@ func (s *Scanner) Init(src io.Reader) *Scanner {
 // case (one test to check for both ASCII and end-of-buffer, and one test
 // to check for newlines).
 func (s *Scanner) next() rune {
+	// if there's an extra token, return it instead of scanning a new one
+	if s.extraTok != 0 {
+		ch := s.extraTok
+		s.extraTok = 0
+		return ch
+	}
+
 	ch, width := rune(s.srcBuf[s.srcPos]), 1
 
 	if ch >= utf8.RuneSelf {
@@ -404,7 +416,7 @@ func (s *Scanner) scanExponent(ch rune) rune {
 	return ch
 }
 
-func (s *Scanner) scanNumber(ch rune) (rune, rune) {
+func (s *Scanner) scanNumber(ch rune) (rune, rune, rune) {
 	// isDecimal(ch)
 	if ch == '0' {
 		// int or float
@@ -441,24 +453,31 @@ func (s *Scanner) scanNumber(ch rune) (rune, rune) {
 				// float
 				ch = s.scanFraction(ch)
 				ch = s.scanExponent(ch)
-				return Float, ch
+				return Float, ch, 0
 			}
 			// octal int
 			if has8or9 {
 				s.error("illegal octal number")
 			}
 		}
-		return Int, ch
+		return Int, ch, 0
 	}
 	// decimal int or float
 	ch = s.scanMantissa(ch)
-	if ch == '.' || ch == 'e' || ch == 'E' {
-		// float
-		ch = s.scanFraction(ch)
+	if ch == 'e' || ch == 'E' { 		// float
 		ch = s.scanExponent(ch)
-		return Float, ch
+		return Float, ch, 0
 	}
-	return Int, ch
+	if ch == '.' {
+		ch = s.next()
+		if isDecimal(ch) {
+			ch = s.scanMantissa(ch)
+			ch = s.scanExponent(ch)
+			return Float, ch, 0
+		}
+		return Int, ch, FullStop
+	}
+	return Int, ch, 0
 }
 
 func (s *Scanner) scanDigits(ch rune, base, n int) rune {
@@ -612,7 +631,11 @@ func (s *Scanner) Scan() rune {
 		ch = s.next()
 		ch = s.scanAlphanumeric(ch)  // variables look like atoms after the start
 	case isDecimal(ch):
-		tok, ch = s.scanNumber(ch)
+		var extraTok rune
+		tok, ch, extraTok = s.scanNumber(ch)
+		if extraTok != 0 {
+			s.extraTok = extraTok
+		}
 	default:
 		switch ch {
 		case '"':

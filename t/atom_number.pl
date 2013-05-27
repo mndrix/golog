@@ -9,7 +9,7 @@ nil(fails) :-
 
 atom_to_int :-
     atom_number('13', N),
-    13 = N.
+    N = 13.
 int_to_atom :-
     atom_number(A, 7),
     A = '7'.

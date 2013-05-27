@@ -146,7 +146,6 @@ var tokenList = []token{
 	{Int, "0X" + f100},
 
 	{Comment, "% floats"},
-	{Float, "01234567890."},
 	{Float, "0.0"},
 	{Float, "1.0"},
 	{Float, "42.0"},

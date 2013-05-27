@@ -37,6 +37,7 @@ func TestBasic(t *testing.T) {
     single[`(true->true).`] = `->(true, true)`
     single[`(true->(true)).`] = `->(true, true)`
     single[`(if->then;else).`] = `;(->(if, then), else)`
+    single[`A = 3.`] = `=(A, 3)`
     for test, wanted := range single {
         got, err := Term(test)
         maybePanic(err)
