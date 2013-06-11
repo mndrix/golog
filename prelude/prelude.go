@@ -12,6 +12,7 @@ import "strings"
 var Prelude string
 func init() {
     Prelude = strings.Join([]string{
+        Phrase2,
         Phrase3,
     }, "\n\n")
 }
@@ -22,4 +23,12 @@ func init() {
 var Phrase3 = `
 phrase(Dcg, Head, Tail) :-
     call(Dcg, Head, Tail).
+`
+
+// phrase(:DCGBody, ?List) is nondet.
+//
+// Like phrase(DCG,List,[]).
+var Phrase2 = `
+phrase(Dcg, List) :-
+    call(Dcg, List, []).
 `
