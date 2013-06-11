@@ -208,6 +208,7 @@ func NewMachine() Machine {
                 "downcase_atom/2":  BuiltinDowncaseAtom2,
                 "fail/0" :      BuiltinFail,
                 "findall/3" :   BuiltinFindall3,
+                "ground/1" :    BuiltinGround,
                 "listing/0" :   BuiltinListing0,
                 "msort/2" :     BuiltinMsort2,
                 "printf/1":     BuiltinPrintf,
