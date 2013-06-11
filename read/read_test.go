@@ -23,6 +23,7 @@ func TestBasic(t *testing.T) {
     single[`succ(0,1) :- true.`] = `:-(succ(0, 1), true)`
     single[`pi(3.14159).`] = `pi(3.14159)`
     single[`etc(_,_).`] = `etc(_, _)`
+    single[`'one two'(three) :- four.`] = `:-('one two'(three), four)`
     single[`[].`] = `[]`                    // based on examples in §6.3.5.1
     single[`[a].`] = `'.'(a, [])`
     single[`[a,b].`] = `'.'(a, '.'(b, []))`

@@ -488,6 +488,7 @@ hello.% still a valid term
 append([],L,L).
 append([A|B], [A|C]).
 X = ''.
+'one two'(three) :- four.
 `
 func TestAcid(t *testing.T) {
 	s := new(Scanner).Init(bytes.NewBufferString(acidTest))
@@ -594,5 +595,14 @@ func TestAcid(t *testing.T) {
     checkScanPos(t, s, 306, 14, 5, Atom, `''`)
     checkScanPos(t, s, 308, 14, 7, FullStop, ".")
 
-    checkScanPos(t, s, 310, 15, 1, EOF, "")
+    // 'one two'(three) :- four.
+    checkScanPos(t, s, 310, 15, 1, Functor, "'one two'")
+    checkScanPos(t, s, 319, 15, 10, '(', "(")
+    checkScanPos(t, s, 320, 15, 11, Atom, "three")
+    checkScanPos(t, s, 325, 15, 16, ')', ")")
+    checkScanPos(t, s, 327, 15, 18, Atom, ":-")
+    checkScanPos(t, s, 330, 15, 21, Atom, "four")
+    checkScanPos(t, s, 334, 15, 25, FullStop, ".")
+
+    checkScanPos(t, s, 336, 16, 1, EOF, "")
 }

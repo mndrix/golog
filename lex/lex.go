@@ -646,6 +646,7 @@ func (s *Scanner) Scan() rune {
 			s.scanString('\'')
 			tok = Atom
 			ch = s.next()
+			if ch == '(' { tok = Functor }
 		case '%':
 			ch = s.scanComment(ch)
 			tok = Comment

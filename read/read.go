@@ -303,7 +303,7 @@ func (r *TermReader) term(p priority, i *lex.List, o **lex.List, t *term.Term) b
             if r.tok(',', *o, o) { continue }
             panic("Unexpected content inside compound term arguments")
         }
-        f := term.NewTerm(f, args...)
+        f := term.NewTermFromLexeme(f, args...)
         return r.restTerm(0, p, *o, o, f, t)
     }
 

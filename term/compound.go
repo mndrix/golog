@@ -16,6 +16,12 @@ func NewTerm(functor string, arguments ...Term) Term {
     }
 }
 
+// Unlikely to be useful outside of the parser
+func NewTermFromLexeme(possiblyQuotedName string, arguments ...Term) Term {
+    a := NewAtomFromLexeme(possiblyQuotedName)
+    return NewTerm(a.Functor(), arguments...)
+}
+
 // NewCodeList returns a compound term consisting of the character codes
 // of the given string.  The internal representation may eventually optimize
 // for storing character codes.
