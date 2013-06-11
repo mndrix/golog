@@ -12,10 +12,17 @@ import "strings"
 var Prelude string
 func init() {
     Prelude = strings.Join([]string{
+        Memberchk2,
         Phrase2,
         Phrase3,
     }, "\n\n")
 }
+
+var Memberchk2 = `
+memberchk(X,[X|_]) :- !.
+memberchk(X,[_|T]) :-
+    memberchk(X,T).
+`
 
 // phrase(:DCGBody, ?List, ?Rest) is nondet.
 //
