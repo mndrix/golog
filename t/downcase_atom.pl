@@ -3,6 +3,7 @@
 % downcase_atom/2 is an SWI-Prolog extension for converting an
 % atom to lowercase.  Other Prolog systems have similar
 % predicates, but the semantics seem less useful or more confusing.
+:- use_module(library(tap)).
 
 already_lowercase :-
     downcase_atom(foo, foo),

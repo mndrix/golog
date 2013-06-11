@@ -41,7 +41,7 @@ func TestPureProlog (t *testing.T) {
         m := NewMachine().Consult(openTest())
         for _, test := range tests {
             canProve := m.CanProve(test)
-            if test.Arity() > 0 && test.Arguments()[0].String() == "fails" {
+            if test.Arity() > 0 && test.Arguments()[0].String() == "fail" {
                 if canProve {
                     t.Errorf("%s: %s should fail", name, test)
                 }

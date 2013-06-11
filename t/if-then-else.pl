@@ -1,15 +1,16 @@
 % Tests for ;/2 (if-then-else)
 %
 % ;/2 is defined in ISO §7.8.8
+:- use_module(library(tap)).
 
 % Tests derived from examples in ISO §7.8.8.4
 true_true_fail :-
     (true -> true; fail).
 fail_true_true :-
     (fail -> true; true).
-true_fail_fail(fails) :-
+true_fail_fail(fail) :-
     (true -> fail; fail).
-fail_true_fail(fails) :-
+fail_true_fail(fail) :-
     (fail -> true; fail).
 then :-
     findall(X, (true -> X=1; X=2), Xs),

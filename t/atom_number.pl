@@ -1,10 +1,11 @@
 % Tests for atom_number/2
 %
 % atom_number/2 is an SWI-Prolog extension.  We follow its semantics.
+:- use_module(library(tap)).
 
-empty_atom(fails) :-
+empty_atom(fail) :-
     atom_number('', _).
-nil(fails) :-
+nil(fail) :-
     atom_number([], _).
 
 atom_to_int :-

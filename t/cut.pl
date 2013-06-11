@@ -1,4 +1,4 @@
-
+:- use_module(library(tap)).
 
 % Tests that caught me at least once
 multiple_cuts :-

@@ -1,6 +1,7 @@
 % Tests for atom_codes/2
 %
 % atom_codes/2 is defined in ISO §8.6.5
+:- use_module(library(tap)).
 
 % Tests derived from examples in ISO §8.6.5.4
 empty_atom :-
@@ -21,7 +22,7 @@ sop :-
 partial_list :-
     atom_codes('North', [0'N | X]), % ' for syntax
     X = [0'o, 0'r, 0't, 0'h].
-missing_a_code(fails) :-
+missing_a_code(fail) :-
     atom_codes(soap, [0's, 0'o, 0'p]). % ' for syntax
 %all_variables(throws(instantiation_error)) :-
 %    atom_codes(_,_).

@@ -1,18 +1,19 @@
 % Tests for ->/2
 %
 % ->/2 is defined in ISO §7.8.7
+:- use_module(library(tap)).
 
 % Tests derived from examples in ISO §7.8.7.4
 true_true :-
     (true -> true).
-true_fail(fails) :-
+true_fail(fail) :-
     (true -> fail).
-fail_true(fails) :-
+fail_true(fail) :-
     (fail -> true).
 true_bind :-
     (true -> X=1),
     1 = X.
-true_bind_before_fail(fails) :-
+true_bind_before_fail(fail) :-
     (true -> X=1),
     1 = X,
     fail.
@@ -27,5 +28,5 @@ dont_cut_then_clause :-
     [1,2] = Xs.
 
 % Tests derived from Prolog: The Standard p. 107
-failing_if_clause(fails) :-
+failing_if_clause(fail) :-
     (fail -> (true;true)).

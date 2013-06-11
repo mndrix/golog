@@ -1,6 +1,7 @@
 % Tests for findall/3
 %
 % findall/3 is defined in ISO §8.10.1
+:- use_module(library(tap)).
 
 % Tests derived from examples in ISO §8.10.1.4
 disj :-
@@ -15,14 +16,17 @@ empty :-
 duplicate :-
     findall(X, (X=1;X=1), S),
     S = [1, 1].
-order(fails) :-
+order(fail) :-
     findall(X, (X=2; X=1), [1,2]).
-variable_instances :-
+
+'variable instances (same names)' :-
     findall(X, (X=1; X=2), [X,Y]),
     X = 1, Y = 2 .
-variable_instances :-
+
+'variables instances (different names)' :-
     findall(X, (X=1; X=2), [A,B]),
     A = 1, B = 2 .
+
 %all_variables(throws(instantiation_error)) :-
 %    findall(X, Goal, S).
 %type_error(throws(type_error(callable, 4)) :-
