@@ -1,9 +1,9 @@
 package golog
 
 // This file runs Go tests for Prolog test files under a 't' directory.
-// This gives us any easy way to write many Prolog tests without the
-// overhead of direct method calls on a testing.T object.  These Prolog
-// tests can also be reused by other test implementations.
+// This gives us an easy way to write many Prolog tests without writing
+// a bunch of manual Go tests.  Because the tests are written in Prolog
+// they can be reused by other Prolog implementations.
 
 import "os"
 import "testing"
