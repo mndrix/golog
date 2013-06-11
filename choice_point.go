@@ -20,54 +20,53 @@ import "github.com/mndrix/golog/term"
 // machine onto a separate server in a cluster.  Following that choice point
 // waits for the other server to finish evaluating its execution branch.
 type ChoicePoint interface {
-    // Follow produces a new machine which sets out to explore a
-    // choice point.
-    Follow() (Machine, error)
+	// Follow produces a new machine which sets out to explore a
+	// choice point.
+	Follow() (Machine, error)
 }
 
 // a choice point which follows Head :- Body clauses
 type headbodyCP struct {
-    machine     Machine
-    goal        term.Term
-    clause      term.Term
+	machine Machine
+	goal    term.Term
+	clause  term.Term
 }
 
 // A head-body choice point is one which, when followed, unifies a
 // goal g with the head of a term t.  If unification fails, the choice point
 // fails.  If unification succeeds, the machine tries to prove t's body.
 func NewHeadBodyChoicePoint(m Machine, g, t term.Term) ChoicePoint {
-    return &headbodyCP{machine: m, goal: g, clause: t}
+	return &headbodyCP{machine: m, goal: g, clause: t}
 }
 func (cp *headbodyCP) Follow() (Machine, error) {
-    // rename variables so recursive clauses work
-    clause := term.RenameVariables(cp.clause)
+	// rename variables so recursive clauses work
+	clause := term.RenameVariables(cp.clause)
 
-    // does the machine's current goal unify with our head?
-    head := clause
-    if clause.Arity() == 2 && clause.Functor() == ":-" {
-        head = clause.Head()
-    }
-    env, err := cp.goal.Unify(cp.machine.Bindings(), head)
-    if err == term.CantUnify {
-        return nil, err
-    }
-    maybePanic(err)
+	// does the machine's current goal unify with our head?
+	head := clause
+	if clause.Arity() == 2 && clause.Functor() == ":-" {
+		head = clause.Head()
+	}
+	env, err := cp.goal.Unify(cp.machine.Bindings(), head)
+	if err == term.CantUnify {
+		return nil, err
+	}
+	maybePanic(err)
 
-    // yup, update the environment and top goal
-    if clause.Arity() == 2 && clause.Functor() == ":-" {
-        return cp.machine.SetBindings(env).PushConj(clause.Body()), nil
-    }
-    return cp.machine.SetBindings(env), nil  // don't need to push "true"
+	// yup, update the environment and top goal
+	if clause.Arity() == 2 && clause.Functor() == ":-" {
+		return cp.machine.SetBindings(env).PushConj(clause.Body()), nil
+	}
+	return cp.machine.SetBindings(env), nil // don't need to push "true"
 }
 func (cp *headbodyCP) String() string {
-    return fmt.Sprintf("prove goal `%s` against rule `%s`", cp.goal, cp.clause)
+	return fmt.Sprintf("prove goal `%s` against rule `%s`", cp.goal, cp.clause)
 }
-
 
 // a choice point that just pushes a term onto conjunctions
 type simpleCP struct {
-    machine     Machine
-    goal        term.Term
+	machine Machine
+	goal    term.Term
 }
 
 // Following a simple choice point makes the machine start proving
@@ -75,35 +74,34 @@ type simpleCP struct {
 // back to a previous version of a machine.  It can be useful for
 // building certain control constructs.
 func NewSimpleChoicePoint(m Machine, g term.Term) ChoicePoint {
-    return &simpleCP{machine: m, goal: g}
+	return &simpleCP{machine: m, goal: g}
 }
 func (cp *simpleCP) Follow() (Machine, error) {
-    return cp.machine.PushConj(cp.goal), nil
+	return cp.machine.PushConj(cp.goal), nil
 }
 func (cp *simpleCP) String() string {
-    return fmt.Sprintf("push conj %s", cp.goal)
+	return fmt.Sprintf("push conj %s", cp.goal)
 }
 
-
 // a noop choice point that represents a cut barrier
-var barrierID int64 = 0  // thread unsafe counter variable. fix when needed
+var barrierID int64 = 0 // thread unsafe counter variable. fix when needed
 type barrierCP struct {
-    machine     Machine
-    id          int64
+	machine Machine
+	id      int64
 }
 
 // NewCutBarrier creates a special choice point which acts as a sentinel
 // value in the Golog machine's disjunction stack.  Attempting to follow
 // a cut barrier choice point panics.
 func NewCutBarrier(m Machine) ChoicePoint {
-    barrierID++
-    return &barrierCP{machine: m, id: barrierID}
+	barrierID++
+	return &barrierCP{machine: m, id: barrierID}
 }
 func (cp *barrierCP) Follow() (Machine, error) {
-    return nil, fmt.Errorf("Cut barriers never suceed")
+	return nil, fmt.Errorf("Cut barriers never suceed")
 }
 func (cp *barrierCP) String() string {
-    return fmt.Sprintf("cut barrier %d", cp.id)
+	return fmt.Sprintf("cut barrier %d", cp.id)
 }
 
 // If cp is a cut barrier choice point, BarrierId returns an identifier
@@ -113,9 +111,9 @@ func (cp *barrierCP) String() string {
 // with foreign predicates.  You probably don't need this.  Incidentally,
 // !/0 is implemented in terms of this.
 func BarrierId(cp ChoicePoint) (int64, bool) {
-    switch b := cp.(type) {
-        case *barrierCP:
-            return b.id, true
-    }
-    return -1, false
+	switch b := cp.(type) {
+	case *barrierCP:
+		return b.id, true
+	}
+	return -1, false
 }
