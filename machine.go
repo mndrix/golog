@@ -375,11 +375,8 @@ func (self *machine) Step() (Machine, Bindings, error) {
 			}
 		}
 	} else { // user-defined predicate, push all its disjunctions
-		if Debugging() {
-			args := m.(*machine).resolveAllArguments(goal)
-			Debugf("  running user-defined predicate %s with %s\n", goal, args)
-		}
 		goal = goal.ReplaceVariables(m.Bindings())
+		Debugf("  running user-defined predicate %s\n", goal)
 		clauses, err := m.(*machine).db.Candidates(goal)
 		MaybePanic(err)
 		m = m.DemandCutBarrier()
