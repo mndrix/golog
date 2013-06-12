@@ -16,6 +16,7 @@ func init() {
 		Memberchk2,
 		Phrase2,
 		Phrase3,
+		Sort2,
 	}, "\n\n")
 }
 
@@ -39,4 +40,24 @@ phrase(Dcg, Head, Tail) :-
 var Phrase2 = `
 phrase(Dcg, List) :-
     call(Dcg, List, []).
+`
+
+// sort(+List, -Sorted) is det.
+//
+// Like msort/2 but removes duplicates.
+var Sort2 = `
+sort(List, Sorted) :-
+	msort(List, Duplicates),
+	'$consolidate'(Duplicates, Sorted).
+
+% helper predicate that removes adjacent duplicates from a list
+'$consolidate'([], []).
+'$consolidate'([X], [X]).
+'$consolidate'([X,Y|Rest], Result) :-
+	( X = Y ->
+		'$consolidate'([Y|Rest], Result)
+	; % otherwise ->
+		'$consolidate'([Y|Rest], Tail),
+		Result = [X|Tail]
+	).
 `

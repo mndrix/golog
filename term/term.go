@@ -310,7 +310,7 @@ func Precedes(a, b Term) bool {
 	case *Variable:
 		y := b.(*Variable)
 		return x.Id() < y.Id()
-	case *Float:	// See Note_1
+	case *Float: // See Note_1
 		if IsFloat(b) {
 			y := b.(*Float)
 			return x.Value() < y.Value()
@@ -318,7 +318,7 @@ func Precedes(a, b Term) bool {
 			y := float64(b.(*Integer).Value().Int64())
 			return x.Value() < y
 		}
-	case *Integer:	// See Note_1
+	case *Integer: // See Note_1
 		if IsInteger(b) {
 			y := b.(*Integer)
 			return x.Value().Cmp(y.Value()) < 0
@@ -361,7 +361,7 @@ func precedence(t Term) int {
 	case *Variable:
 		return 0
 	case *Float:
-		return 2 		// See Note_1
+		return 2 // See Note_1
 	case *Integer:
 		return 2
 	case *Atom:
