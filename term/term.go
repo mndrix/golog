@@ -190,6 +190,9 @@ func renameVariables(t Term, renamed map[string]*Variable) Term {
             return newTerm
         case *Variable:
             name := x.Name
+			if name == "_" {
+				name = x.Indicator()
+			}
             v, ok := renamed[name]
             if ok {
                 return v
