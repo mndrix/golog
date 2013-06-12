@@ -9,11 +9,12 @@ import "os"
 import "testing"
 import "github.com/mndrix/golog/read"
 import "github.com/mndrix/golog/term"
+import . "github.com/mndrix/golog/util"
 
 func TestPureProlog(t *testing.T) {
 	// find all t/*.pl files
 	file, err := os.Open("t")
-	maybePanic(err)
+	MaybePanic(err)
 	names, err := file.Readdirnames(-1)
 
 	// run tests found in each file
@@ -23,7 +24,7 @@ func TestPureProlog(t *testing.T) {
 		}
 		openTest := func() *os.File {
 			f, err := os.Open("t/" + name)
-			maybePanic(err)
+			MaybePanic(err)
 			return f
 		}
 

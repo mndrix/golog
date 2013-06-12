@@ -2,6 +2,7 @@ package term
 
 import . "fmt"
 import . "regexp"
+import . "github.com/mndrix/golog/util"
 
 var anonCounter <-chan int64
 func init() {
@@ -73,7 +74,7 @@ func (self *Variable) IsClause() bool {
 }
 
 func (self *Variable) String() string {
-	if self.Name == "_" {
+	if Debugging() && self.Name == "_" {
 		return self.Indicator()
 	}
     return self.Name

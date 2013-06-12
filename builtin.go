@@ -7,6 +7,7 @@ import "fmt"
 import "sort"
 import "strings"
 import "github.com/mndrix/golog/term"
+import . "github.com/mndrix/golog/util"
 
 // !/0
 func BuiltinCut(m Machine, args []term.Term) ForeignReturn {
@@ -109,7 +110,7 @@ func BuiltinNot(m Machine, args []term.Term) ForeignReturn {
 		if err == MachineDone {
 			return ForeignTrue()
 		}
-		maybePanic(err)
+		MaybePanic(err)
 		if answer != nil {
 			return ForeignFail()
 		}
@@ -237,7 +238,7 @@ func BuiltinFindall3(m Machine, args []term.Term) ForeignReturn {
 	instances := make([]term.Term, 0)
 	for _, proof := range proofs {
 		t, err := proof.Resolve(x)
-		maybePanic(err)
+		MaybePanic(err)
 		instances = append(instances, t)
 	}
 

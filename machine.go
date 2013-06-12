@@ -53,6 +53,7 @@
 package golog
 
 import . "github.com/mndrix/golog/term"
+import . "github.com/mndrix/golog/util"
 
 import "github.com/mndrix/golog/read"
 import "github.com/mndrix/golog/prelude"
@@ -259,7 +260,7 @@ func (m *machine) RegisterForeign(fs map[string]ForeignPredicate) Machine {
 		parts := strings.SplitN(indicator, "/", 2)
 		functor := parts[0]
 		arity, err := strconv.Atoi(parts[1])
-		maybePanic(err)
+		MaybePanic(err)
 
 		if arity < smallThreshold {
 			m1.smallForeign[arity] = m1.smallForeign[arity].Set(functor, f)
@@ -304,7 +305,7 @@ func (self *machine) ProveAll(goal interface{}) []Bindings {
 		if err == MachineDone {
 			break
 		}
-		maybePanic(err)
+		MaybePanic(err)
 		if answer != nil {
 			answers = append(answers, answer.WithNames(vars))
 		}
@@ -322,7 +323,7 @@ func (self *machine) Step() (Machine, Bindings, error) {
 	var err error
 	var cp ChoicePoint
 
-	//debugf("stepping...\n%s\n", self)
+	//Debugf("stepping...\n%s\n", self)
 	if false { // for debugging. commenting out needs import changes
 		_, _ = bufio.NewReader(os.Stdin).ReadString('\n')
 	}
@@ -335,11 +336,11 @@ func (self *machine) Step() (Machine, Bindings, error) {
 		goal, mTmp, err = m.PopConj()
 		if err == EmptyConjunctions { // found an answer
 			answer := m.Bindings()
-			debugf("  emitting answer %s\n", answer)
+			Debugf("  emitting answer %s\n", answer)
 			m = m.PushConj(NewAtom("fail")) // backtrack on next Step()
 			return m, answer, nil
 		}
-		maybePanic(err)
+		MaybePanic(err)
 		m = mTmp
 		arity = goal.Arity()
 		functor = goal.Functor()
@@ -349,7 +350,7 @@ func (self *machine) Step() (Machine, Bindings, error) {
 	f, ok := m.(*machine).lookupForeign(goal)
 	if ok { // foreign predicate
 		args := m.(*machine).resolveAllArguments(goal)
-		debugf("  running foreign predicate %s with %s\n", goal, args)
+		Debugf("  running foreign predicate %s with %s\n", goal, args)
 		ret := f(m, args)
 		switch x := ret.(type) {
 		case *foreignTrue:
@@ -367,20 +368,20 @@ func (self *machine) Step() (Machine, Bindings, error) {
 					env = nil
 					break
 				}
-				maybePanic(err)
+				MaybePanic(err)
 			}
 			if env != nil {
 				return m.SetBindings(env), nil, nil
 			}
 		}
 	} else { // user-defined predicate, push all its disjunctions
-		if debugging() {
+		if Debugging() {
 			args := m.(*machine).resolveAllArguments(goal)
-			debugf("  running user-defined predicate %s with %s\n", goal, args)
+			Debugf("  running user-defined predicate %s with %s\n", goal, args)
 		}
 		goal = goal.ReplaceVariables(m.Bindings())
 		clauses, err := m.(*machine).db.Candidates(goal)
-		maybePanic(err)
+		MaybePanic(err)
 		m = m.DemandCutBarrier()
 		for i := len(clauses) - 1; i >= 0; i-- {
 			clause := clauses[i]
@@ -393,26 +394,26 @@ func (self *machine) Step() (Machine, Bindings, error) {
 	for {
 		cp, m, err = m.PopDisj()
 		if err == EmptyDisjunctions { // nothing left to do
-			debugf("Stopping because of EmptyDisjunctions\n")
+			Debugf("Stopping because of EmptyDisjunctions\n")
 			return nil, nil, MachineDone
 		}
-		maybePanic(err)
+		MaybePanic(err)
 
 		// follow the next choice point
-		debugf("  trying to follow CP %s\n", cp)
+		Debugf("  trying to follow CP %s\n", cp)
 		mTmp, err := cp.Follow()
 		switch err {
 			case nil:
-				debugf("  ... followed\n")
+				Debugf("  ... followed\n")
 				return mTmp, nil, nil
 			case CantUnify:
-				debugf("  ... couldn't unify\n")
+				Debugf("  ... couldn't unify\n")
 				continue
 			case CutBarrierFails:
-				debugf("  ... skipping over cut barrier\n")
+				Debugf("  ... skipping over cut barrier\n")
 				continue
 		}
-		maybePanic(err)
+		MaybePanic(err)
 	}
 
 	panic("Stepped a machine past the end")
@@ -605,20 +606,4 @@ func resolveCuts(id int64, t Term) Term {
 
 	// leave any other cuts unresolved
 	return t
-}
-
-func maybePanic(err error) {
-	if err != nil {
-		panic(err)
-	}
-}
-
-func debugging() bool {
-	return os.Getenv("GOLOG_DEBUG") != ""
-}
-
-func debugf(format string, args... interface{}) {
-	if debugging() {
-		fmt.Printf(format, args...)
-	}
 }

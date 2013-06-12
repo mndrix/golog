@@ -2,6 +2,7 @@ package golog
 
 import . "fmt"
 import . "github.com/mndrix/golog/term"
+import . "github.com/mndrix/golog/util"
 
 import "bytes"
 import "github.com/mndrix/ps"
@@ -109,7 +110,7 @@ func (self *mapDb) Candidates(t Term) ([]Term, error) {
 	candidates := make([]Term, 0)
 	cs.(*clauses).forEach(func(clause Term) {
 		if !IsCompound(clause) {
-			debugf("    ... discarding. Not compound term\n")
+			Debugf("    ... discarding. Not compound term\n")
 			return
 		}
 		head := clause
@@ -117,11 +118,11 @@ func (self *mapDb) Candidates(t Term) ([]Term, error) {
 			head = clause.Head()
 		}
 		if t.(*Compound).MightUnify(head.(*Compound)) {
-			debugf("    ... adding to candidates: %s\n", clause)
+			Debugf("    ... adding to candidates: %s\n", clause)
 			candidates = append(candidates, clause)
 		}
 	})
-	debugf("  final candidates = %s\n", candidates)
+	Debugf("  final candidates = %s\n", candidates)
 	return candidates, nil
 }
 

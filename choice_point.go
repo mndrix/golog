@@ -2,6 +2,7 @@ package golog
 
 import "fmt"
 import "github.com/mndrix/golog/term"
+import . "github.com/mndrix/golog/util"
 
 // ChoicePoint represents a place in the execution where we had a
 // choice between multiple alternatives.  Following a choice point
@@ -51,7 +52,7 @@ func (cp *headbodyCP) Follow() (Machine, error) {
 	if err == term.CantUnify {
 		return nil, err
 	}
-	maybePanic(err)
+	MaybePanic(err)
 
 	// yup, update the environment and top goal
 	if clause.Arity() == 2 && clause.Functor() == ":-" {
