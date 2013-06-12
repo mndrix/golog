@@ -13,7 +13,7 @@ func Debugging() bool {
 	return os.Getenv("GOLOG_DEBUG") != ""
 }
 
-func Debugf(format string, args... interface{}) {
+func Debugf(format string, args ...interface{}) {
 	if Debugging() {
 		fmt.Printf(format, args...)
 	}

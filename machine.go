@@ -403,15 +403,15 @@ func (self *machine) Step() (Machine, Bindings, error) {
 		Debugf("  trying to follow CP %s\n", cp)
 		mTmp, err := cp.Follow()
 		switch err {
-			case nil:
-				Debugf("  ... followed\n")
-				return mTmp, nil, nil
-			case CantUnify:
-				Debugf("  ... couldn't unify\n")
-				continue
-			case CutBarrierFails:
-				Debugf("  ... skipping over cut barrier\n")
-				continue
+		case nil:
+			Debugf("  ... followed\n")
+			return mTmp, nil, nil
+		case CantUnify:
+			Debugf("  ... couldn't unify\n")
+			continue
+		case CutBarrierFails:
+			Debugf("  ... skipping over cut barrier\n")
+			continue
 		}
 		MaybePanic(err)
 	}

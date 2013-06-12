@@ -10,12 +10,13 @@ import "strings"
 // a single large string.  One rarely addresses this variable directly
 // because golog.NewMachine() does it for you.
 var Prelude string
+
 func init() {
-    Prelude = strings.Join([]string{
-        Memberchk2,
-        Phrase2,
-        Phrase3,
-    }, "\n\n")
+	Prelude = strings.Join([]string{
+		Memberchk2,
+		Phrase2,
+		Phrase3,
+	}, "\n\n")
 }
 
 var Memberchk2 = `

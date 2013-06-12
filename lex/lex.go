@@ -29,24 +29,24 @@ import (
 
 // A lex.Eme encapsulating its type and content
 type Eme struct {
-	Type	rune	// EOF, Atom, Comment, etc.
-	Content	string
-	Pos		*Position
+	Type    rune // EOF, Atom, Comment, etc.
+	Content string
+	Pos     *Position
 }
 
 // Scan tokenizes src in a separate goroutine sending lexemes down a
 // channel as they become available.  The channel is closed on EOF.
 func Scan(src io.Reader) <-chan *Eme {
 	ch := make(chan *Eme)
-	go func () {
+	go func() {
 		s := new(Scanner).Init(src)
 		p := s.Pos()
 		tok := s.Scan()
 		for tok != EOF {
 			l := &Eme{
-				Type:		tok,
-				Content:	s.TokenText(),
-				Pos:		&p,
+				Type:    tok,
+				Content: s.TokenText(),
+				Pos:     &p,
 			}
 			ch <- l
 			p = s.Pos()
@@ -85,29 +85,29 @@ func (pos Position) String() string {
 
 // The result of Scan is one of these tokens or a Unicode character.
 const (
-	EOF = -(iota + 1)  // reached end of source
-	Atom               // a Prolog atom, possibly quoted
-	Comment            // a comment
-	Float              // a floating point number
-	Functor            // an atom used as a predicate functor
-	FullStop           // "." ending a term
-	Int                // an integer
-	String             // a double-quoted string
-	Variable           // a Prolog variable
-	Void               // the special "_" variable
+	EOF      = -(iota + 1) // reached end of source
+	Atom                   // a Prolog atom, possibly quoted
+	Comment                // a comment
+	Float                  // a floating point number
+	Functor                // an atom used as a predicate functor
+	FullStop               // "." ending a term
+	Int                    // an integer
+	String                 // a double-quoted string
+	Variable               // a Prolog variable
+	Void                   // the special "_" variable
 )
 
 var tokenString = map[rune]string{
-	EOF:       "EOF",
-	Atom:      "Atom",
-	Comment:   "Comment",
-	Float:     "Float",
-	Functor:   "Functor",
-	FullStop:  "FullStop",
-	Int:       "Int",
-	String:    "String",
-	Variable:  "Variable",
-	Void:      "Void",
+	EOF:      "EOF",
+	Atom:     "Atom",
+	Comment:  "Comment",
+	Float:    "Float",
+	Functor:  "Functor",
+	FullStop: "FullStop",
+	Int:      "Int",
+	String:   "String",
+	Variable: "Variable",
+	Void:     "Void",
 }
 
 // TokenString returns a printable string for a token or Unicode character.
@@ -148,7 +148,7 @@ type Scanner struct {
 	// One character look-ahead
 	ch rune // character before current srcPos
 
-	extraTok rune	// an extra token accidentally read early
+	extraTok rune // an extra token accidentally read early
 
 	// Error is called for each error encountered. If no Error
 	// function is set, the error is reported to os.Stderr.
@@ -464,7 +464,7 @@ func (s *Scanner) scanNumber(ch rune) (rune, rune, rune) {
 	}
 	// decimal int or float
 	ch = s.scanMantissa(ch)
-	if ch == 'e' || ch == 'E' { 		// float
+	if ch == 'e' || ch == 'E' { // float
 		ch = s.scanExponent(ch)
 		return Float, ch, 0
 	}
@@ -559,6 +559,7 @@ func (s *Scanner) scanComment(ch rune) rune {
 	}
 	return ch
 }
+
 // Note1: Nested comments are prohibited by ISO Prolog §6.4.1.  To wit,
 // "The comment text of a bracketed comment shall not contain the comment
 // close sequence."  However, nested comments are ridiculously practical
@@ -603,7 +604,7 @@ func (s *Scanner) Scan() rune {
 	// determine token value
 	tok := ch
 	switch {
-	case ch == '/':		// '/' can start a comment or an atom
+	case ch == '/': // '/' can start a comment or an atom
 		ch = s.next()
 		if ch == '*' {
 			ch = s.scanComment(ch)
@@ -611,25 +612,31 @@ func (s *Scanner) Scan() rune {
 		} else {
 			tok = Atom
 			ch = s.scanGraphic(ch)
-			if ch == '(' { tok = Functor }
+			if ch == '(' {
+				tok = Functor
+			}
 		}
 	case IsGraphic(ch):
 		ch = s.next()
 		tok = Atom
 		ch = s.scanGraphic(ch)
-		if ch == '(' { tok = Functor }
+		if ch == '(' {
+			tok = Functor
+		}
 	case isSolo(ch):
 		tok = Atom
 		ch = s.next()
-	case unicode.IsLower(ch):  // name by "letter digit token" rule §6.4.2 w/ Unicode
+	case unicode.IsLower(ch): // name by "letter digit token" rule §6.4.2 w/ Unicode
 		tok = Atom
 		ch = s.next()
 		ch = s.scanAlphanumeric(ch)
-		if ch == '(' { tok = Functor }
+		if ch == '(' {
+			tok = Functor
+		}
 	case isVariableStart(ch):
 		tok = Variable
 		ch = s.next()
-		ch = s.scanAlphanumeric(ch)  // variables look like atoms after the start
+		ch = s.scanAlphanumeric(ch) // variables look like atoms after the start
 	case isDecimal(ch):
 		var extraTok rune
 		tok, ch, extraTok = s.scanNumber(ch)
@@ -646,7 +653,9 @@ func (s *Scanner) Scan() rune {
 			s.scanString('\'')
 			tok = Atom
 			ch = s.next()
-			if ch == '(' { tok = Functor }
+			if ch == '(' {
+				tok = Functor
+			}
 		case '%':
 			ch = s.scanComment(ch)
 			tok = Comment
@@ -662,14 +671,16 @@ func (s *Scanner) Scan() rune {
 
 	// last minute specializations
 	switch tok {
-		case Atom:
-			switch s.TokenText() {
-				case ".": return FullStop
-			}
-		case Variable:
-			switch s.TokenText() {
-				case "_": return Void
-			}
+	case Atom:
+		switch s.TokenText() {
+		case ".":
+			return FullStop
+		}
+	case Variable:
+		switch s.TokenText() {
+		case "_":
+			return Void
+		}
 	}
 	return tok
 }

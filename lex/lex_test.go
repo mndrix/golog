@@ -97,7 +97,7 @@ var tokenList = []token{
 	{Atom, "'hello world'"},
 	{Atom, "abc123_"},
 	{Atom, "äöü"},
-//	{Atom, "本"},  // "unicode" package doesn't have IsIdStart()
+	//	{Atom, "本"},  // "unicode" package doesn't have IsIdStart()
 	{Atom, "a۰۱۸"},
 	{Atom, "foo६४"},
 	{Atom, "bar９８７６"},
@@ -109,7 +109,7 @@ var tokenList = []token{
 
 	{Comment, "% variables"},
 	{Variable, "LGTM"},
-	{Variable, "ΛΔΡ"},  // starts with uppercase lambda
+	{Variable, "ΛΔΡ"}, // starts with uppercase lambda
 	{Variable, "List0"},
 	{Variable, "_abc123"},
 	{Variable, "_abc_123_"},
@@ -168,7 +168,7 @@ var tokenList = []token{
 	{Float, "01234567890E-10"},
 
 	{Comment, "% character ints"},
-	{Int, `0'\s`},  // space character
+	{Int, `0'\s`}, // space character
 	{Int, `0'a`},
 	{Int, `0'本`},
 	{Int, `0'\a`},
@@ -307,7 +307,7 @@ func TestScanNext(t *testing.T) {
 	checkTok(t, s, 0, s.Next(), ' ', "")
 	checkTok(t, s, 0, s.Next(), 'b', "")
 	checkTok(t, s, 1, s.Scan(), Atom, "cd")
-	checkTok(t, s, 1, s.Scan(), Comment, "/* com" + BOMs + "ment */")
+	checkTok(t, s, 1, s.Scan(), Comment, "/* com"+BOMs+"ment */")
 	checkTok(t, s, 1, s.Scan(), '{', "{")
 	checkTok(t, s, 2, s.Scan(), Atom, "a")
 	checkTok(t, s, 2, s.Scan(), Atom, "+=")
@@ -436,13 +436,17 @@ func TestPos(t *testing.T) {
 	// positions after calling Next
 	s = new(Scanner).Init(bytes.NewBufferString("  foo६४  \n\n本語\n"))
 	s.Peek() // peek doesn't affect the position
-	s.Next(); s.Next()
+	s.Next()
+	s.Next()
 	checkNextPos(t, s, 3, 1, 4, 'f')
 	checkNextPos(t, s, 4, 1, 5, 'o')
 	checkNextPos(t, s, 5, 1, 6, 'o')
 	checkNextPos(t, s, 8, 1, 7, '६')
 	checkNextPos(t, s, 11, 1, 8, '४')
-	s.Next(); s.Next(); s.Next(); s.Next()
+	s.Next()
+	s.Next()
+	s.Next()
+	s.Next()
 	checkNextPos(t, s, 18, 3, 2, '本')
 	checkNextPos(t, s, 21, 3, 3, '語')
 	// after EOF position doesn't change
@@ -460,7 +464,8 @@ func TestPos(t *testing.T) {
 	s.Peek() // peek doesn't affect the position
 	s.Next()
 	checkScanPos(t, s, 4, 2, 1, Atom, "λα")
-	s.Next(); s.Next()
+	s.Next()
+	s.Next()
 	checkScanPos(t, s, 10, 4, 1, Atom, "x")
 	// after EOF position doesn't change
 	for i := 10; i > 0; i-- {
@@ -473,8 +478,7 @@ func TestPos(t *testing.T) {
 
 // similar in spirit to the Acid Tests by the web standards project.
 // in a single sample, try to include everything that might be hard to lex
-const acidTest =
-`/* multiline
+const acidTest = `/* multiline
 and /* embedded */
 comment */
 thing(A) :- foo(A, bar, "baz"), !.
@@ -490,6 +494,7 @@ append([A|B], [A|C]).
 X = ''.
 'one two'(three) :- four.
 `
+
 func TestAcid(t *testing.T) {
 	s := new(Scanner).Init(bytes.NewBufferString(acidTest))
 	checkScanPos(t, s, 0, 1, 1, Comment, "/* multiline\nand /* embedded */\ncomment */")
@@ -563,46 +568,46 @@ func TestAcid(t *testing.T) {
 	checkScanPos(t, s, 242, 11, 6, FullStop, ".")
 	checkScanPos(t, s, 243, 11, 7, Comment, "% still a valid term")
 
-    checkScanPos(t, s, 264, 12, 1, Functor, "append")
-    checkScanPos(t, s, 270, 12, 7, '(', "(")
-    checkScanPos(t, s, 271, 12, 8, '[', "[")
-    checkScanPos(t, s, 272, 12, 9, ']', "]")
-    checkScanPos(t, s, 273, 12, 10, ',', ",")
-    checkScanPos(t, s, 274, 12, 11, Variable, "L")
-    checkScanPos(t, s, 275, 12, 12, ',', ",")
-    checkScanPos(t, s, 276, 12, 13, Variable, "L")
-    checkScanPos(t, s, 277, 12, 14, ')', ")")
+	checkScanPos(t, s, 264, 12, 1, Functor, "append")
+	checkScanPos(t, s, 270, 12, 7, '(', "(")
+	checkScanPos(t, s, 271, 12, 8, '[', "[")
+	checkScanPos(t, s, 272, 12, 9, ']', "]")
+	checkScanPos(t, s, 273, 12, 10, ',', ",")
+	checkScanPos(t, s, 274, 12, 11, Variable, "L")
+	checkScanPos(t, s, 275, 12, 12, ',', ",")
+	checkScanPos(t, s, 276, 12, 13, Variable, "L")
+	checkScanPos(t, s, 277, 12, 14, ')', ")")
 	checkScanPos(t, s, 278, 12, 15, FullStop, ".")
 
-    checkScanPos(t, s, 280, 13, 1, Functor, "append")
-    checkScanPos(t, s, 286, 13, 7, '(', "(")
-    checkScanPos(t, s, 287, 13, 8, '[', "[")
-    checkScanPos(t, s, 288, 13, 9, Variable, "A")
-    checkScanPos(t, s, 289, 13, 10, '|', "|")
-    checkScanPos(t, s, 290, 13, 11, Variable, "B")
-    checkScanPos(t, s, 291, 13, 12, ']', "]")
-    checkScanPos(t, s, 292, 13, 13, ',', ",")
-    checkScanPos(t, s, 294, 13, 15, '[', "[")
-    checkScanPos(t, s, 295, 13, 16, Variable, "A")
-    checkScanPos(t, s, 296, 13, 17, '|', "|")
-    checkScanPos(t, s, 297, 13, 18, Variable, "C")
-    checkScanPos(t, s, 298, 13, 19, ']', "]")
-    checkScanPos(t, s, 299, 13, 20, ')', ")")
-    checkScanPos(t, s, 300, 13, 21, FullStop, ".")
+	checkScanPos(t, s, 280, 13, 1, Functor, "append")
+	checkScanPos(t, s, 286, 13, 7, '(', "(")
+	checkScanPos(t, s, 287, 13, 8, '[', "[")
+	checkScanPos(t, s, 288, 13, 9, Variable, "A")
+	checkScanPos(t, s, 289, 13, 10, '|', "|")
+	checkScanPos(t, s, 290, 13, 11, Variable, "B")
+	checkScanPos(t, s, 291, 13, 12, ']', "]")
+	checkScanPos(t, s, 292, 13, 13, ',', ",")
+	checkScanPos(t, s, 294, 13, 15, '[', "[")
+	checkScanPos(t, s, 295, 13, 16, Variable, "A")
+	checkScanPos(t, s, 296, 13, 17, '|', "|")
+	checkScanPos(t, s, 297, 13, 18, Variable, "C")
+	checkScanPos(t, s, 298, 13, 19, ']', "]")
+	checkScanPos(t, s, 299, 13, 20, ')', ")")
+	checkScanPos(t, s, 300, 13, 21, FullStop, ".")
 
-    checkScanPos(t, s, 302, 14, 1, Variable, "X")
-    checkScanPos(t, s, 304, 14, 3, Atom, "=")
-    checkScanPos(t, s, 306, 14, 5, Atom, `''`)
-    checkScanPos(t, s, 308, 14, 7, FullStop, ".")
+	checkScanPos(t, s, 302, 14, 1, Variable, "X")
+	checkScanPos(t, s, 304, 14, 3, Atom, "=")
+	checkScanPos(t, s, 306, 14, 5, Atom, `''`)
+	checkScanPos(t, s, 308, 14, 7, FullStop, ".")
 
-    // 'one two'(three) :- four.
-    checkScanPos(t, s, 310, 15, 1, Functor, "'one two'")
-    checkScanPos(t, s, 319, 15, 10, '(', "(")
-    checkScanPos(t, s, 320, 15, 11, Atom, "three")
-    checkScanPos(t, s, 325, 15, 16, ')', ")")
-    checkScanPos(t, s, 327, 15, 18, Atom, ":-")
-    checkScanPos(t, s, 330, 15, 21, Atom, "four")
-    checkScanPos(t, s, 334, 15, 25, FullStop, ".")
+	// 'one two'(three) :- four.
+	checkScanPos(t, s, 310, 15, 1, Functor, "'one two'")
+	checkScanPos(t, s, 319, 15, 10, '(', "(")
+	checkScanPos(t, s, 320, 15, 11, Atom, "three")
+	checkScanPos(t, s, 325, 15, 16, ')', ")")
+	checkScanPos(t, s, 327, 15, 18, Atom, ":-")
+	checkScanPos(t, s, 330, 15, 21, Atom, "four")
+	checkScanPos(t, s, 334, 15, 25, FullStop, ".")
 
-    checkScanPos(t, s, 336, 16, 1, EOF, "")
+	checkScanPos(t, s, 336, 16, 1, EOF, "")
 }

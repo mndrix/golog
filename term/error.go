@@ -4,59 +4,59 @@ import . "fmt"
 import "github.com/mndrix/golog/lex"
 
 type Error struct {
-    message     string
-    eme         *lex.Eme
+	message string
+	eme     *lex.Eme
 }
 
 // Returns an error term.  These are used internally for error handling and
 // may disappear in the future.
 func NewError(message string, eme *lex.Eme) Term {
-    return &Error{
-        message:    message,
-        eme:        eme,
-    }
+	return &Error{
+		message: message,
+		eme:     eme,
+	}
 }
 
 func (self *Error) Functor() string {
-    panic("Errors have no Functor()")
+	panic("Errors have no Functor()")
 }
 
 func (self *Error) Arity() int {
-    panic("Errors have no Arity()")
+	panic("Errors have no Arity()")
 }
 
 func (self *Error) Arguments() []Term {
-    panic("Errors have no Arguments()")
+	panic("Errors have no Arguments()")
 }
 
 func (self *Error) Body() Term {
-    panic("Errors have no Body()")
+	panic("Errors have no Body()")
 }
 
 func (self *Error) Head() Term {
-    panic("Errors have no Head()")
+	panic("Errors have no Head()")
 }
 
 func (self *Error) IsClause() bool {
-    return false
+	return false
 }
 
 func (self *Error) String() string {
-    return Sprintf("%s at %s", self.message, self.eme.Pos)
+	return Sprintf("%s at %s", self.message, self.eme.Pos)
 }
 
 func (self *Error) Indicator() string {
-    panic("Errors have no Indicator()")
+	panic("Errors have no Indicator()")
 }
 
 func (self *Error) Error() error {
-    return Errorf("%s", self.String())
+	return Errorf("%s", self.String())
 }
 
 func (self *Error) ReplaceVariables(env Bindings) Term {
-    return self
+	return self
 }
 
 func (a *Error) Unify(e Bindings, b Term) (Bindings, error) {
-    panic("Errors can't Unify()")
+	panic("Errors can't Unify()")
 }
