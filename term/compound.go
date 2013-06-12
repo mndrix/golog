@@ -103,7 +103,6 @@ func (self *Compound) ReplaceVariables(env Bindings) Term {
 	for i, arg := range args {
 		newArg := arg.ReplaceVariables(env)
 		if arg != newArg { // argument changed. build a new compound term
-			unificationHashPreserved := true
 			newArgs := make([]Term, self.Arity())
 			for j, arg := range args {
 				if j < i {
@@ -114,15 +113,9 @@ func (self *Compound) ReplaceVariables(env Bindings) Term {
 					} else {
 						newArgs[j] = arg.ReplaceVariables(env)
 					}
-					if IsVariable(arg) && !IsVariable(newArgs[j]) {
-						unificationHashPreserved = false
-					}
 				}
 			}
 			newTerm := NewTerm(self.Functor(), newArgs...)
-			if unificationHashPreserved {
-				newTerm.(*Compound).ucache = self.ucache
-			}
 			return newTerm
 		}
 	}
