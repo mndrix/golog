@@ -310,12 +310,22 @@ func Precedes(a, b Term) bool {
 	case *Variable:
 		y := b.(*Variable)
 		return x.Id() < y.Id()
-	case *Float:
-		y := b.(*Float)
-		return x.Value() < y.Value()
-	case *Integer:
-		y := b.(*Integer)
-		return x.Value().Cmp(y.Value()) < 0
+	case *Float:	// See Note_1
+		if IsFloat(b) {
+			y := b.(*Float)
+			return x.Value() < y.Value()
+		} else {
+			y := float64(b.(*Integer).Value().Int64())
+			return x.Value() < y
+		}
+	case *Integer:	// See Note_1
+		if IsInteger(b) {
+			y := b.(*Integer)
+			return x.Value().Cmp(y.Value()) < 0
+		} else {
+			y := float64(x.Value().Int64())
+			return b.(*Float).Value() < y
+		}
 	case *Atom:
 		y := b.(*Atom)
 		return x.Functor() < y.Functor()
@@ -351,7 +361,7 @@ func precedence(t Term) int {
 	case *Variable:
 		return 0
 	case *Float:
-		return 1
+		return 2 		// See Note_1
 	case *Integer:
 		return 2
 	case *Atom:
@@ -362,6 +372,14 @@ func precedence(t Term) int {
 	msg := Sprintf("Unexpected term type %s\n", t)
 	panic(msg)
 }
+
+// Note_1:
+//
+// I've chosen to willfully violate the ISO standard in §7.2 because it
+// mandates that floats precede all integers.  That means
+// `42.3 @< 9` which isn't helpful.  I don't deviate lightly, but strongly
+// believe it's the right way.
+// Incidentally, SWI-Prolog behaves this way by default.
 
 // UnificationHash generates a special hash value representing the
 // terms in a slice.  Golog uses these hashes to optimize
