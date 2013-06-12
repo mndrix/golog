@@ -322,7 +322,7 @@ func (self *machine) Step() (Machine, Bindings, error) {
 	var err error
 	var cp ChoicePoint
 
-	//  fmt.Printf("stepping...\n%s\n", self)
+	//debugf("stepping...\n%s\n", self)
 	if false { // for debugging. commenting out needs import changes
 		_, _ = bufio.NewReader(os.Stdin).ReadString('\n')
 	}
@@ -335,7 +335,7 @@ func (self *machine) Step() (Machine, Bindings, error) {
 		goal, mTmp, err = m.PopConj()
 		if err == EmptyConjunctions { // found an answer
 			answer := m.Bindings()
-			//          fmt.Printf("  emitting answer %s\n", answer)
+			debugf("  emitting answer %s\n", answer)
 			m = m.PushConj(NewAtom("fail")) // backtrack on next Step()
 			return m, answer, nil
 		}
@@ -348,8 +348,8 @@ func (self *machine) Step() (Machine, Bindings, error) {
 	// are we proving a foreign predicate?
 	f, ok := m.(*machine).lookupForeign(goal)
 	if ok { // foreign predicate
-		//      fmt.Printf("  running foreign predicate %s\n", indicator)
 		args := m.(*machine).resolveAllArguments(goal)
+		debugf("  running foreign predicate %s with %s\n", goal, args)
 		ret := f(m, args)
 		switch x := ret.(type) {
 		case *foreignTrue:
@@ -374,8 +374,10 @@ func (self *machine) Step() (Machine, Bindings, error) {
 			}
 		}
 	} else { // user-defined predicate, push all its disjunctions
-		//      args := m.(*machine).resolveAllArguments(goal)
-		//      fmt.Printf("  running user-defined predicate %s with \n", indicator, args)
+		if debugging() {
+			args := m.(*machine).resolveAllArguments(goal)
+			debugf("  running user-defined predicate %s with %s\n", goal, args)
+		}
 		goal = goal.ReplaceVariables(m.Bindings())
 		clauses, err := m.(*machine).db.Candidates(goal)
 		maybePanic(err)
@@ -391,11 +393,13 @@ func (self *machine) Step() (Machine, Bindings, error) {
 	for {
 		cp, m, err = m.PopDisj()
 		if err == EmptyDisjunctions { // nothing left to do
+			debugf("Stopping because of EmptyDisjunctions\n")
 			return nil, nil, MachineDone
 		}
 		maybePanic(err)
 
 		// follow the next choice point
+		debugf("  trying to follow CP %s\n", cp)
 		mTmp, err := cp.Follow()
 		switch err {
 			case nil:
