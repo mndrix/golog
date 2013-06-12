@@ -2,8 +2,18 @@
 <!-- Komodo Project File - DO NOT EDIT -->
 <project id="3f2188c1-3c98-904e-a847-1449c8b6b555" kpf_version="5" name="golog.komodoproject">
 <preference-set idref="3f2188c1-3c98-904e-a847-1449c8b6b555">
+  <boolean id="dedentOnColon">0</boolean>
+  <string id="editAutoIndentStyle">smart</string>
+  <boolean id="editBackspaceDedents">1</boolean>
+  <boolean id="editElectricBrace">1</boolean>
   <string relative="path" id="import_dirname"></string>
   <string id="import_exclude_matches">*.*~;*.bak;*.tmp;CVS;.#*;*.pyo;*.pyc;.svn;.git;.hg;.bzr;*%25*;tmp*.html;.DS_Store;*.swp;*.kpf;*.komodoproject;.komodotools;__pycache__;blib;_darcs;golog</string>
   <string id="import_include_matches"></string>
+  <boolean id="indentStringsAfterParens">0</boolean>
+  <long id="indentWidth">4</long>
+  <boolean id="showIndentationGuides">1</boolean>
+  <long id="tabWidth">4</long>
+  <boolean id="useSmartTabs">0</boolean>
+  <boolean id="useTabs">1</boolean>
 </preference-set>
 </project>
