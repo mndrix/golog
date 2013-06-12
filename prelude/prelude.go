@@ -13,12 +13,24 @@ var Prelude string
 
 func init() {
 	Prelude = strings.Join([]string{
+		Length2,
 		Memberchk2,
 		Phrase2,
 		Phrase3,
 		Sort2,
 	}, "\n\n")
 }
+
+var Length2 = `
+length(Xs, N) :-
+	length(Xs, 0, N).
+
+length([], N, N) :- !.
+length([_|T], N0, N) :-
+	% N0 \= N
+	succ(N0, N1),
+	length(T, N1, N).
+`
 
 var Memberchk2 = `
 memberchk(X,[X|_]) :- !.

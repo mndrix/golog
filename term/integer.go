@@ -36,6 +36,11 @@ func NewInt64(i int64) *Integer {
 	return (*Integer)(big.NewInt(i))
 }
 
+// helper for when a big.Int is already available
+func NewBigInt(val *big.Int) *Integer {
+	return (*Integer)(val)
+}
+
 // NewCode returns an integer whose value is the character code if
 // the given rune.
 func NewCode(c rune) *Integer {

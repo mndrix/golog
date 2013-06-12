@@ -217,6 +217,7 @@ func NewMachine() Machine {
 		"printf/1":        BuiltinPrintf,
 		"printf/2":        BuiltinPrintf,
 		"printf/3":        BuiltinPrintf,
+		"succ/2":          BuiltinSucc2,
 	})
 }
 

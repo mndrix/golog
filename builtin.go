@@ -4,6 +4,7 @@ package golog
 // are defined here.
 
 import "fmt"
+import "math/big"
 import "sort"
 import "strings"
 import "github.com/mndrix/golog/term"
@@ -279,4 +280,31 @@ func BuiltinPrintf(m Machine, args []term.Term) ForeignReturn {
 		fmt.Printf(template, args[1])
 	}
 	return ForeignTrue()
+}
+
+// succ(?A:integer, ?B:integer) is det.
+//
+// True if B is one greater than A and A >= 0.
+func BuiltinSucc2(m Machine, args []term.Term) ForeignReturn {
+	x := args[0]
+	y := args[1]
+	zero := big.NewInt(0)
+
+	if term.IsInteger(x) {
+		a := x.(*term.Integer)
+		if a.Value().Cmp(zero) < 0 {
+			panic("succ/2: first argument must be 0 or greater")
+		}
+		result := new(big.Int).Add(a.Value(), big.NewInt(1))
+		return ForeignUnify(y, term.NewBigInt(result))
+	} else if term.IsInteger(y) {
+		b := y.(*term.Integer)
+		result := new(big.Int).Add(b.Value(), big.NewInt(-1))
+		if result.Cmp(zero) < 0 {
+			panic("succ/2: first argument must be 0 or greater")
+		}
+		return ForeignUnify(x, term.NewBigInt(result))
+	}
+
+	panic("succ/2: one argument must be an integer")
 }
