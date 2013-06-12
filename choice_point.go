@@ -97,8 +97,9 @@ func NewCutBarrier(m Machine) ChoicePoint {
 	barrierID++
 	return &barrierCP{machine: m, id: barrierID}
 }
+var CutBarrierFails error = fmt.Errorf("Cut barriers never succeed")
 func (cp *barrierCP) Follow() (Machine, error) {
-	return nil, fmt.Errorf("Cut barriers never suceed")
+	return nil, CutBarrierFails
 }
 func (cp *barrierCP) String() string {
 	return fmt.Sprintf("cut barrier %d", cp.id)

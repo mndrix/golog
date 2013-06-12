@@ -397,10 +397,18 @@ func (self *machine) Step() (Machine, Bindings, error) {
 
 		// follow the next choice point
 		mTmp, err := cp.Follow()
-		if err == nil {
-			//          fmt.Printf("  followed CP %s\n", cp)
-			return mTmp, nil, nil
+		switch err {
+			case nil:
+				debugf("  ... followed\n")
+				return mTmp, nil, nil
+			case CantUnify:
+				debugf("  ... couldn't unify\n")
+				continue
+			case CutBarrierFails:
+				debugf("  ... skipping over cut barrier\n")
+				continue
 		}
+		maybePanic(err)
 	}
 
 	panic("Stepped a machine past the end")
@@ -598,5 +606,15 @@ func resolveCuts(id int64, t Term) Term {
 func maybePanic(err error) {
 	if err != nil {
 		panic(err)
+	}
+}
+
+func debugging() bool {
+	return os.Getenv("GOLOG_DEBUG") != ""
+}
+
+func debugf(format string, args... interface{}) {
+	if debugging() {
+		fmt.Printf(format, args...)
 	}
 }
