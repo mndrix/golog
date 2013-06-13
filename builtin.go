@@ -182,12 +182,6 @@ func BuiltinAtomNumber2(m Machine, args []term.Term) (ret ForeignReturn) {
 
 // call/*
 func BuiltinCall(m Machine, args []term.Term) ForeignReturn {
-	// which goal is being called?
-	bodyTerm := args[0]
-	if term.IsVariable(bodyTerm) {
-		bindings := m.Bindings()
-		bodyTerm = bindings.Resolve_(bodyTerm.(*term.Variable))
-	}
 
 	// build a new goal with extra arguments attached
 	functor := bodyTerm.Functor()
