@@ -24,12 +24,6 @@ func (self *Float) Arity() int {
 func (self *Float) Arguments() []Term {
 	panic("Floats have no Arguments()")
 }
-func (self *Float) Body() Term {
-	panic("Floats have no Body()")
-}
-func (self *Float) Head() Term {
-	panic("Floats have no Head()")
-}
 func (self *Float) IsClause() bool {
 	return false
 }

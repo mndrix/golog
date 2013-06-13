@@ -66,7 +66,7 @@ func (self *mapDb) assert(side rune, term Term) Database {
 	indicator := term.Indicator()
 	if term.IsClause() {
 		// ':-' uses the indicator of its head term
-		indicator = term.Head().Indicator()
+		indicator = Head(term).Indicator()
 	}
 
 	oldClauses, ok := self.predicates.Lookup(indicator)
@@ -115,7 +115,7 @@ func (self *mapDb) Candidates(t Term) ([]Term, error) {
 		}
 		head := clause
 		if clause.IsClause() {
-			head = clause.Head()
+			head = Head(clause)
 		}
 		if t.(*Compound).MightUnify(head.(*Compound)) {
 			Debugf("    ... adding to candidates: %s\n", clause)

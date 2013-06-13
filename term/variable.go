@@ -62,14 +62,6 @@ func (self *Variable) Arguments() []Term {
 	panic("Variables have no Arguments()")
 }
 
-func (self *Variable) Body() Term {
-	panic("Variables have no Body()")
-}
-
-func (self *Variable) Head() Term {
-	panic("Variables have no Head()")
-}
-
 func (self *Variable) IsClause() bool {
 	return false
 }

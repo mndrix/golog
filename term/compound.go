@@ -67,12 +67,6 @@ func (self *Compound) Arity() int {
 func (self *Compound) Arguments() []Term {
 	return self.Args
 }
-func (self *Compound) Body() Term {
-	return self.Args[1]
-}
-func (self *Compound) Head() Term {
-	return self.Args[0]
-}
 func (self *Compound) IsClause() bool {
 	return self.Arity() == 2 && self.Functor() == ":-"
 }

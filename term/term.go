@@ -33,12 +33,6 @@ type Term interface {
 	// Arguments returns a slice of this term's arguments, if any
 	Arguments() []Term
 
-	// Body returns a term's second argument; otherwise, panics
-	Body() Term
-
-	// Head returns a term's first argument; otherwise, panics
-	Head() Term
-
 	// Error returns an error value if this is an error term
 	Error() error
 
@@ -165,6 +159,16 @@ func IsFloat(t Term) bool {
 	}
 	msg := Sprintf("Unexpected term type: %#v", t)
 	panic(msg)
+}
+
+// Head returns a term's first argument. Panics if there isn't one
+func Head(t Term) Term {
+	return t.Arguments()[0]
+}
+
+// Body returns a term's second argument. Panics if there isn't one
+func Body(t Term) Term {
+	return t.Arguments()[1]
 }
 
 // RenameVariables returns a new term like t with all variables replaced

@@ -54,12 +54,6 @@ func (self *Atom) Arity() int {
 func (self *Atom) Arguments() []Term {
 	return make([]Term, 0)
 }
-func (self *Atom) Body() Term {
-	panic("Atoms have no Body()")
-}
-func (self *Atom) Head() Term {
-	panic("Atoms have no Head()")
-}
 func (self *Atom) IsClause() bool {
 	return false
 }

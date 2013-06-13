@@ -29,14 +29,6 @@ func (self *Error) Arguments() []Term {
 	panic("Errors have no Arguments()")
 }
 
-func (self *Error) Body() Term {
-	panic("Errors have no Body()")
-}
-
-func (self *Error) Head() Term {
-	panic("Errors have no Head()")
-}
-
 func (self *Error) IsClause() bool {
 	return false
 }

@@ -141,12 +141,6 @@ func (self *Integer) Arity() int {
 func (self *Integer) Arguments() []Term {
 	panic("Integers have no Arguments()")
 }
-func (self *Integer) Body() Term {
-	panic("Integers have no Body()")
-}
-func (self *Integer) Head() Term {
-	panic("Integers have no Head()")
-}
 func (self *Integer) IsClause() bool {
 	return false
 }
