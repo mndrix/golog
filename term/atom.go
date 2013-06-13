@@ -63,9 +63,6 @@ func (self *Atom) String() string {
 func (self *Atom) Indicator() string {
 	return Sprintf("%s/0", self.Functor())
 }
-func (self *Atom) Error() error {
-	panic("Can't call Error() on an Atom")
-}
 
 func (self *Atom) ReplaceVariables(env Bindings) Term {
 	return self

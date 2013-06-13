@@ -77,10 +77,6 @@ func (self *Variable) Indicator() string {
 	return Sprintf("_V%d", self.id)
 }
 
-func (self *Variable) Error() error {
-	panic("Can't call Error() on a Variable")
-}
-
 func (a *Variable) Unify(e Bindings, b Term) (Bindings, error) {
 	var aTerm, bTerm Term
 

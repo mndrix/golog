@@ -147,9 +147,6 @@ func (self *Integer) IsClause() bool {
 func (self *Integer) Indicator() string {
 	return self.String()
 }
-func (self *Integer) Error() error {
-	panic("Can't call Error() on an Integer")
-}
 
 func (a *Integer) Unify(e Bindings, b Term) (Bindings, error) {
 	if IsVariable(b) {

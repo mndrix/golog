@@ -33,9 +33,6 @@ type Term interface {
 	// Arguments returns a slice of this term's arguments, if any
 	Arguments() []Term
 
-	// Error returns an error value if this is an error term
-	Error() error
-
 	// IsClause returns true if the term is like 'Head :- Body'
 	IsClause() bool
 

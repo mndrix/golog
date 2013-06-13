@@ -112,7 +112,7 @@ func (r *TermReader) Next() (term.Term, error) {
 	var ll *lex.List
 	if r.readTerm(1200, r.ll, &ll, &t) {
 		if term.IsError(t) {
-			return nil, t.Error()
+			return nil, fmt.Errorf("%s", t.String())
 		}
 		r.ll = ll
 		return term.RenameVariables(t), nil

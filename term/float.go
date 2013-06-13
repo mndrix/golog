@@ -33,9 +33,6 @@ func (self *Float) String() string {
 func (self *Float) Indicator() string {
 	return self.String()
 }
-func (self *Float) Error() error {
-	panic("Can't call Error() on a Float")
-}
 
 func (a *Float) Unify(e Bindings, b Term) (Bindings, error) {
 	if IsVariable(b) {

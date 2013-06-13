@@ -41,10 +41,6 @@ func (self *Error) Indicator() string {
 	panic("Errors have no Indicator()")
 }
 
-func (self *Error) Error() error {
-	return Errorf("%s", self.String())
-}
-
 func (self *Error) ReplaceVariables(env Bindings) Term {
 	return self
 }

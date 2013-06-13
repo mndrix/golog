@@ -88,9 +88,6 @@ func (self *Compound) String() string {
 func (self *Compound) Indicator() string {
 	return Sprintf("%s/%d", self.Functor(), self.Arity())
 }
-func (self *Compound) Error() error {
-	panic("Can't call Error() on a Structure")
-}
 
 func (self *Compound) ReplaceVariables(env Bindings) Term {
 	args := self.Arguments()
