@@ -4,8 +4,9 @@ import . "fmt"
 
 import "bytes"
 
-// NewTerm creates a new term with the given functor and optional arguments
-func NewTerm(functor string, arguments ...Term) Term {
+// NewCallable creates a new term (or atom) with the given functor and
+// optional arguments
+func NewCallable(functor string, arguments ...Term) Callable {
 	if len(arguments) == 0 {
 		return NewAtom(functor)
 	}
@@ -17,9 +18,9 @@ func NewTerm(functor string, arguments ...Term) Term {
 }
 
 // Unlikely to be useful outside of the parser
-func NewTermFromLexeme(possiblyQuotedName string, arguments ...Term) Term {
+func NewTermFromLexeme(possiblyQuotedName string, arguments ...Term) Callable {
 	a := NewAtomFromLexeme(possiblyQuotedName)
-	return NewTerm(a.Functor(), arguments...)
+	return NewCallable(a.Name(), arguments...)
 }
 
 // NewCodeList returns a compound term consisting of the character codes
@@ -29,7 +30,7 @@ func NewCodeList(s string) Term {
 	runes := []rune(s)
 	list := NewAtom("[]")
 	for i := len(runes) - 1; i >= 0; i-- {
-		list = NewTerm(".", NewCode(runes[i]), list)
+		list = NewCallable(".", NewCode(runes[i]), list)
 	}
 	return list
 }
@@ -39,7 +40,7 @@ func NewCodeList(s string) Term {
 func NewTermList(terms []Term) Term {
 	list := NewAtom("[]")
 	for i := len(terms) - 1; i >= 0; i-- {
-		list = NewTerm(".", terms[i], list)
+		list = NewCallable(".", terms[i], list)
 	}
 	return list
 }
@@ -58,7 +59,7 @@ type unificationCache struct {
 	qhash uint64 // query hash
 }
 
-func (self *Compound) Functor() string {
+func (self *Compound) Name() string {
 	return self.Func
 }
 func (self *Compound) Arity() int {
@@ -68,7 +69,7 @@ func (self *Compound) Arguments() []Term {
 	return self.Args
 }
 func (self *Compound) String() string {
-	quotedFunctor := QuoteFunctor(self.Functor())
+	quotedFunctor := QuoteFunctor(self.Name())
 
 	var buf bytes.Buffer
 	Fprintf(&buf, "%s(", quotedFunctor)
@@ -88,7 +89,7 @@ func (self *Compound) Type() int {
 }
 
 func (self *Compound) Indicator() string {
-	return Sprintf("%s/%d", self.Functor(), self.Arity())
+	return Sprintf("%s/%d", self.Name(), self.Arity())
 }
 
 func (self *Compound) ReplaceVariables(env Bindings) Term {
@@ -108,7 +109,7 @@ func (self *Compound) ReplaceVariables(env Bindings) Term {
 					}
 				}
 			}
-			newTerm := NewTerm(self.Functor(), newArgs...)
+			newTerm := NewCallable(self.Name(), newArgs...)
 			return newTerm
 		}
 	}
@@ -117,20 +118,21 @@ func (self *Compound) ReplaceVariables(env Bindings) Term {
 	return self
 }
 
-func (a *Compound) Unify(e Bindings, b Term) (Bindings, error) {
-	if IsVariable(b) {
-		return b.Unify(e, a)
+func (a *Compound) Unify(e Bindings, x Term) (Bindings, error) {
+	if IsVariable(x) {
+		return x.Unify(e, a)
 	}
-	if !IsCompound(b) {
+	if !IsCompound(x) {
 		return e, CantUnify
 	}
+	b := x.(*Compound)
 
 	// functor and arity must match for unification to work
 	arity := a.Arity()
 	if arity != b.Arity() {
 		return e, CantUnify
 	}
-	if a.Functor() != b.Functor() {
+	if a.Name() != b.Name() {
 		return e, CantUnify
 	}
 
@@ -153,7 +155,7 @@ func (a *Compound) Unify(e Bindings, b Term) (Bindings, error) {
 // Univ is just like =../2 in ISO Prolog
 func (self *Compound) Univ() []Term {
 	ts := make([]Term, 0)
-	ts = append(ts, NewAtom(self.Functor()))
+	ts = append(ts, NewAtom(self.Name()))
 	ts = append(ts, self.Arguments()...)
 	return ts
 }

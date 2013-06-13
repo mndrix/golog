@@ -36,15 +36,6 @@ const (
 // also likely to be split into several smaller interfaces like Atomic,
 // Number, etc.
 type Term interface {
-	// Functor returns the term's name
-	Functor() string
-
-	// Arity returns the number of arguments a term has. An atom has 0 arity.
-	Arity() int
-
-	// Arguments returns a slice of this term's arguments, if any
-	Arguments() []Term
-
 	// ReplaceVariables replaces any internal variables with the values
 	// to which they're bound.  Unbound variables are left as they are
 	ReplaceVariables(Bindings) Term
@@ -68,6 +59,23 @@ type Term interface {
 	Unify(Bindings, Term) (Bindings, error)
 }
 
+// Callable represents either an atom or a compound term.  This is the
+// terminology used by callable/1 in many Prologs.
+type Callable interface {
+	Term
+
+	// Name returns the term's name.  Some people might call this the term's
+	// functor, but there's ambiguity surrounding that word in the Prolog
+	// community (some use it for Name/Arity pairs).
+	Name() string
+
+	// Arity returns the number of arguments a term has. An atom has 0 arity.
+	Arity() int
+
+	// Arguments returns a slice of this term's arguments, if any
+	Arguments() []Term
+}
+
 // Returns true if term t is an atom
 func IsAtom(t Term) bool {
 	return t.Type() == AtomType
@@ -77,7 +85,8 @@ func IsAtom(t Term) bool {
 func IsClause(t Term) bool {
 	switch t.Type() {
 	case CompoundType:
-		return t.Arity() == 2 && t.Functor() == ":-"
+		x := t.(*Compound)
+		return x.Arity() == 2 && x.Name() == ":-"
 	case AtomType,
 		VariableType,
 		IntegerType,
@@ -120,13 +129,13 @@ func IsFloat(t Term) bool {
 }
 
 // Head returns a term's first argument. Panics if there isn't one
-func Head(t Term) Term {
-	return t.Arguments()[0]
+func Head(t Term) Callable {
+	return t.(*Compound).Arguments()[0].(Callable)
 }
 
 // Body returns a term's second argument. Panics if there isn't one
-func Body(t Term) Term {
-	return t.Arguments()[1]
+func Body(t Term) Callable {
+	return t.(*Compound).Arguments()[1].(Callable)
 }
 
 // RenameVariables returns a new term like t with all variables replaced
@@ -149,7 +158,7 @@ func renameVariables(t Term, renamed map[string]*Variable) Term {
 		for i, arg := range x.Arguments() {
 			newArgs[i] = renameVariables(arg, renamed)
 		}
-		newTerm := NewTerm(x.Functor(), newArgs...)
+		newTerm := NewCallable(x.Name(), newArgs...)
 		newTerm.(*Compound).ucache = x.ucache
 		return newTerm
 	case VariableType:
@@ -247,7 +256,7 @@ func NewCodeListFromDoubleQuotedString(s string) Term {
 	codes := NewAtom(`[]`)
 	for i := end; i > 0; i-- {
 		c := NewCode(runes[i])
-		codes = NewTerm(`.`, c, codes)
+		codes = NewCallable(".", c, codes)
 	}
 
 	return codes
@@ -292,7 +301,7 @@ func Precedes(a, b Term) bool {
 	case AtomType:
 		x := a.(*Atom)
 		y := b.(*Atom)
-		return x.Functor() < y.Functor()
+		return x.Name() < y.Name()
 	case CompoundType:
 		x := a.(*Compound)
 		y := b.(*Compound)
@@ -302,10 +311,10 @@ func Precedes(a, b Term) bool {
 		if x.Arity() > y.Arity() {
 			return false
 		}
-		if x.Functor() < y.Functor() {
+		if x.Name() < y.Name() {
 			return true
 		}
-		if x.Functor() > y.Functor() {
+		if x.Name() > y.Name() {
 			return false
 		}
 		for i := 0; i < x.Arity(); i++ {
@@ -383,7 +392,7 @@ func UnificationHash(terms []Term, n uint, preparation bool) uint64 {
 		hash = hash << blockSize
 		switch t := term.(type) {
 		case *Atom:
-			hash = hash | (hashString(t.Functor()) & mask)
+			hash = hash | (hashString(t.Name()) & mask)
 		case *Integer:
 			if t.Value().Sign() < 0 || t.Value().Cmp(bigMaxInt64) > 0 {
 				str := Sprintf("%x", t.Value())
@@ -399,7 +408,7 @@ func UnificationHash(terms []Term, n uint, preparation bool) uint64 {
 		case *Compound:
 			var termHash uint64
 			arity := uint(t.Arity())
-			if arity == 2 && t.Functor() == "." { // don't hash pair's functor
+			if arity == 2 && t.Name() == "." { // don't hash pair's functor
 				rightSize := blockSize / 2
 				leftSize := blockSize - rightSize
 				termHash = UnificationHash(t.Args[0:1], leftSize, preparation)
@@ -418,7 +427,7 @@ func UnificationHash(terms []Term, n uint, preparation bool) uint64 {
 
 				// generate the hash
 				var functorMask uint64 = (1 << functorBits) - 1
-				termHash = hashString(t.Functor()) & functorMask
+				termHash = hashString(t.Name()) & functorMask
 				for _, arg := range t.Arguments() {
 					termHash = termHash << argumentBits
 					termHash = termHash | UnificationHash([]Term{arg}, argumentBits, preparation)
@@ -456,18 +465,16 @@ func hashString(x string) uint64 {
 
 // Converts a '.'/2 list terminated in []/0 into a slice of the associated
 // terms.  Panics if the argument is not a proper list.
-func ProperListToTermSlice(t Term) []Term {
+func ProperListToTermSlice(x Term) []Term {
 	l := make([]Term, 0)
-	if !IsCompound(t) && !IsAtom(t) {
-		panic("Not a list")
-	}
+	t := x.(Callable)
 	for {
 		switch t.Indicator() {
 		case "[]/0":
 			return l
 		case "./2":
 			l = append(l, t.Arguments()[0])
-			t = t.Arguments()[1]
+			t = t.Arguments()[1].(Callable)
 		default:
 			panic("Improper list")
 		}

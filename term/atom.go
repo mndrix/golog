@@ -7,12 +7,12 @@ type Atom string
 // NewAtom creates a new atom with the given name.
 // This is just a 0-arity compound term, for now.  Eventually, it will
 // have an optimized implementation.
-func NewAtom(name string) Term {
+func NewAtom(name string) Callable {
 	return (*Atom)(&name)
 }
 
 // Unlikely to be useful outside of the parser
-func NewAtomFromLexeme(possiblyQuotedName string) Term {
+func NewAtomFromLexeme(possiblyQuotedName string) Callable {
 	if len(possiblyQuotedName) == 0 {
 		panic("Atoms must have some content")
 	}
@@ -45,7 +45,7 @@ func NewAtomFromLexeme(possiblyQuotedName string) Term {
 	return NewAtom(name)
 }
 
-func (self *Atom) Functor() string {
+func (self *Atom) Name() string {
 	return string(*self)
 }
 func (self *Atom) Arity() int {
@@ -55,13 +55,13 @@ func (self *Atom) Arguments() []Term {
 	return make([]Term, 0)
 }
 func (self *Atom) String() string {
-	return QuoteFunctor(self.Functor())
+	return QuoteFunctor(self.Name())
 }
 func (self *Atom) Type() int {
 	return AtomType
 }
 func (self *Atom) Indicator() string {
-	return Sprintf("%s/0", self.Functor())
+	return Sprintf("%s/0", self.Name())
 }
 
 func (self *Atom) ReplaceVariables(env Bindings) Term {

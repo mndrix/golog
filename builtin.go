@@ -30,7 +30,7 @@ func BuiltinCutTo(m Machine, args []term.Term) ForeignReturn {
 
 // ,/2
 func BuiltinComma(m Machine, args []term.Term) ForeignReturn {
-	return m.PushConj(args[1]).PushConj(args[0])
+	return m.PushConj(args[1].(term.Callable)).PushConj(args[0].(term.Callable))
 }
 
 // ground/1
@@ -64,8 +64,8 @@ func BuiltinIfThen(m Machine, args []term.Term) ForeignReturn {
 	then := args[1]
 
 	// CUT_BARRIER, (cond, !, then)
-	cut := term.NewTerm("!")
-	goal := term.NewTerm(",", cond, term.NewTerm(",", cut, then))
+	cut := term.NewCallable("!")
+	goal := term.NewCallable(",", cond, term.NewCallable(",", cut, then))
 	return m.DemandCutBarrier().PushConj(goal)
 }
 
@@ -73,25 +73,27 @@ func BuiltinIfThen(m Machine, args []term.Term) ForeignReturn {
 //
 // Implements disjunction and if-then-else.
 func BuiltinSemicolon(m Machine, args []term.Term) ForeignReturn {
-	arity := args[0].Arity()
-	functor := args[0].Functor()
-	if arity == 2 && functor == "->" { // §7.8.8
-		return ifThenElse(m, args)
+	if term.IsCompound(args[0]) {
+		ct := args[0].(*term.Compound)
+		if ct.Arity() == 2 && ct.Name() == "->" { // §7.8.8
+			return ifThenElse(m, args)
+		}
 	}
 
 	cp := NewSimpleChoicePoint(m, args[1])
-	return m.PushDisj(cp).PushConj(args[0])
+	return m.PushDisj(cp).PushConj(args[0].(term.Callable))
 }
 func ifThenElse(m Machine, args []term.Term) ForeignReturn {
-	cond := args[0].Arguments()[0]
-	then := args[0].Arguments()[1]
+	semicolon := args[0].(*term.Compound)
+	cond := semicolon.Arguments()[0]
+	then := semicolon.Arguments()[1]
 	els := args[1]
 
 	// CUT_BARRIER, (call(cond), !, then; else)
-	cut := term.NewTerm("!")
-	cond = term.NewTerm("call", cond)
-	goal := term.NewTerm(",", cond, term.NewTerm(",", cut, then))
-	goal = term.NewTerm(";", goal, els)
+	cut := term.NewCallable("!")
+	cond = term.NewCallable("call", cond)
+	goal := term.NewCallable(",", cond, term.NewCallable(",", cut, then))
+	goal = term.NewCallable(";", goal, els)
 	return m.DemandCutBarrier().PushConj(goal)
 }
 
@@ -104,7 +106,7 @@ func BuiltinUnify(m Machine, args []term.Term) ForeignReturn {
 func BuiltinNot(m Machine, args []term.Term) ForeignReturn {
 	var answer term.Bindings
 	var err error
-	m = m.ClearConjs().PushConj(args[0])
+	m = m.ClearConjs().PushConj(args[0].(term.Callable))
 
 	for {
 		m, answer, err = m.Step()
@@ -121,26 +123,26 @@ func BuiltinNot(m Machine, args []term.Term) ForeignReturn {
 
 // atom_codes/2 see ISO §8.16.5
 func BuiltinAtomCodes2(m Machine, args []term.Term) ForeignReturn {
-	atom := args[0]
-	list := args[1]
 
-	if !term.IsVariable(atom) {
-		list = term.NewCodeList(atom.Functor())
+	if !term.IsVariable(args[0]) {
+		atom := args[0].(*term.Atom)
+		list := term.NewCodeList(atom.Name())
 		return ForeignUnify(args[1], list)
-	} else if !term.IsVariable(list) {
+	} else if !term.IsVariable(args[1]) {
 		runes := make([]rune, 0)
+		list := args[1].(term.Callable)
 		for {
 			switch list.Arity() {
 			case 2:
-				if list.Functor() == "." {
+				if list.Name() == "." {
 					args := list.Arguments()
 					code := args[0].(*term.Integer)
 					runes = append(runes, code.Code())
-					list = args[1]
+					list = args[1].(term.Callable)
 				}
 			case 0:
-				if list.Functor() == "[]" {
-					atom = term.NewAtom(string(runes))
+				if list.Name() == "[]" {
+					atom := term.NewAtom(string(runes))
 					return ForeignUnify(args[0], atom)
 				}
 			default:
@@ -156,23 +158,23 @@ func BuiltinAtomCodes2(m Machine, args []term.Term) ForeignReturn {
 
 // atom_number/2 as defined in SWI-Prolog
 func BuiltinAtomNumber2(m Machine, args []term.Term) (ret ForeignReturn) {
-	atom := args[0]
 	number := args[1]
 
-	if !term.IsVariable(atom) {
+	if !term.IsVariable(args[0]) {
+		atom := args[0].(term.Callable)
 		defer func() { // convert parsing panics into fail
 			if x := recover(); x != nil {
 				ret = ForeignFail()
 			}
 		}()
-		if strings.Contains(atom.Functor(), ".") {
-			number = term.NewFloat(atom.Functor())
+		if strings.Contains(atom.Name(), ".") {
+			number = term.NewFloat(atom.Name())
 		} else {
-			number = term.NewInt(atom.Functor())
+			number = term.NewInt(atom.Name())
 		}
 		return ForeignUnify(args[1], number)
 	} else if !term.IsVariable(number) {
-		atom = term.NewAtom(number.String())
+		atom := term.NewAtom(number.String())
 		return ForeignUnify(args[0], atom)
 	}
 
@@ -184,11 +186,12 @@ func BuiltinAtomNumber2(m Machine, args []term.Term) (ret ForeignReturn) {
 func BuiltinCall(m Machine, args []term.Term) ForeignReturn {
 
 	// build a new goal with extra arguments attached
-	functor := bodyTerm.Functor()
+	bodyTerm := args[0].(term.Callable)
+	functor := bodyTerm.Name()
 	newArgs := make([]term.Term, 0)
 	newArgs = append(newArgs, bodyTerm.Arguments()...)
 	newArgs = append(newArgs, args[1:]...)
-	goal := term.NewTerm(functor, newArgs...)
+	goal := term.NewCallable(functor, newArgs...)
 
 	// construct a machine that will prove this goal next
 	return m.DemandCutBarrier().PushConj(goal)
@@ -199,16 +202,16 @@ func BuiltinCall(m Machine, args []term.Term) ForeignReturn {
 // Converts the characters of AnyCase into lowercase and unifies the
 // lowercase atom with LowerCase.
 func BuiltinDowncaseAtom2(m Machine, args []term.Term) ForeignReturn {
-	anycase := args[0]
-	if term.IsVariable(anycase) {
+	if term.IsVariable(args[0]) {
 		panic("downcase_atom/2: instantiation_error")
 	}
+	anycase := args[0].(term.Callable)
 	if anycase.Arity() != 0 {
 		msg := fmt.Sprintf("downcase_atom/2: type_error(atom, %s)", anycase)
 		panic(msg)
 	}
 
-	lowercase := term.NewAtom(strings.ToLower(anycase.Functor()))
+	lowercase := term.NewAtom(strings.ToLower(anycase.Name()))
 	return ForeignUnify(args[1], lowercase)
 }
 
@@ -224,9 +227,9 @@ func BuiltinFindall3(m Machine, args []term.Term) ForeignReturn {
 
 	// call(Goal), X=Template
 	x := term.NewVar("_")
-	call := term.NewTerm("call", goal)
-	unify := term.NewTerm("=", x, template)
-	prove := term.NewTerm(",", call, unify)
+	call := term.NewCallable("call", goal)
+	unify := term.NewCallable("=", x, template)
+	prove := term.NewCallable(",", call, unify)
 	proofs := m.ClearConjs().ProveAll(prove)
 
 	// build a list from the results
@@ -266,7 +269,7 @@ func BuiltinMsort2(m Machine, args []term.Term) ForeignReturn {
 // A temporary hack for debugging.  This will disappear once Golog has
 // proper support for format/2
 func BuiltinPrintf(m Machine, args []term.Term) ForeignReturn {
-	template := args[0].Functor()
+	template := args[0].(*term.Atom).Name()
 	template = strings.Replace(template, "~n", "\n", -1)
 	if len(args) == 1 {
 		fmt.Printf(template)

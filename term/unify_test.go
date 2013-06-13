@@ -22,8 +22,8 @@ func TestUnifyConstants(t *testing.T) {
 
 	// shallow terms
 	_, err = unify(env,
-		NewTerm("hi", NewTerm("you")),
-		NewTerm("hi", NewTerm("you")),
+		NewCallable("hi", NewCallable("you")),
+		NewCallable("hi", NewCallable("you")),
 	)
 	if err != nil {
 		t.Errorf("hi(you) and hi(you) don't unify")
@@ -31,8 +31,8 @@ func TestUnifyConstants(t *testing.T) {
 
 	// atom and deeper term don't unify
 	_, err = unify(env,
-		NewTerm("foo"),
-		NewTerm("bar", NewTerm("baz")),
+		NewCallable("foo"),
+		NewCallable("bar", NewCallable("baz")),
 	)
 	if err == nil {
 		t.Errorf("foo and bar(baz) should not unify")
@@ -73,7 +73,7 @@ func TestUnifyAtomWithUnboundVariable(t *testing.T) {
 	env0 := NewBindings()
 
 	env1, err := unify(env0,
-		NewTerm("x"),
+		NewCallable("x"),
 		nv("X"),
 	)
 	if err != nil {
@@ -91,7 +91,7 @@ func TestUnifyAtomWithUnboundVariable(t *testing.T) {
 func TestUnifyUnboundVariableWithStructure(t *testing.T) {
 	env1, err := unify(NewBindings(),
 		NewVar("X"),
-		NewTerm("alpha", NewTerm("beta")),
+		NewCallable("alpha", NewCallable("beta")),
 	)
 	if err != nil {
 		t.Errorf("Couldn't unify `X=alpha(beta)`")
@@ -108,8 +108,8 @@ func TestUnifyUnboundVariableWithStructure(t *testing.T) {
 func TestUnifyNestedVariable(t *testing.T) {
 	env0 := NewBindings()
 	env1, err := unify(env0,
-		NewTerm("etc", NewTerm("stuff")),
-		NewTerm("etc", nv("A")),
+		NewCallable("etc", NewCallable("stuff")),
+		NewCallable("etc", nv("A")),
 	)
 	if err != nil {
 		t.Errorf("Couldn't unify `etc(stuff)=etc(A)`")
@@ -150,7 +150,7 @@ func TestUnifyVariableAliases(t *testing.T) {
 	maybePanic(err)
 
 	// unify one of the aliased variables with a term
-	env2, err := unify(env1, NewTerm("hello"), NewVar("X0"))
+	env2, err := unify(env1, NewCallable("hello"), NewVar("X0"))
 	maybePanic(err)
 
 	// does X0 have the right value?
@@ -176,7 +176,7 @@ func TestUnifyVariableAliases2(t *testing.T) {
 	maybePanic(err)
 
 	// unify one of the aliased variables with a term
-	env2, err := unify(env1, NewTerm("hello"), nv("X0"))
+	env2, err := unify(env1, NewCallable("hello"), nv("X0"))
 	maybePanic(err)
 
 	// does X0 have the right value?

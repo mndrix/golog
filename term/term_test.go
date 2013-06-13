@@ -5,13 +5,13 @@ import "testing"
 import "math/big"
 
 func TestAtom(t *testing.T) {
-	atom := NewTerm("prolog")
+	atom := NewAtom("prolog")
 	if atom.Arity() != 0 {
 		t.Errorf("atom's arity wasn't 0 it was %d", atom.Arity())
 	}
 
-	if atom.Functor() != "prolog" {
-		t.Errorf("atom's has the wrong functor: %s", atom.Functor())
+	if atom.Name() != "prolog" {
+		t.Errorf("atom's has the wrong functor: %s", atom.Name())
 	}
 
 	if atom.Indicator() != "prolog/0" {
@@ -51,14 +51,14 @@ func TestVariable(t *testing.T) {
 }
 
 func TestShallowTerm(t *testing.T) {
-	shallow := NewTerm("prolog", NewTerm("in"), NewTerm("go"))
+	shallow := NewCallable("prolog", NewAtom("in"), NewAtom("go"))
 
 	if shallow.Arity() != 2 {
 		t.Errorf("wrong arity: %d", shallow.Arity())
 	}
 
-	if shallow.Functor() != "prolog" {
-		t.Errorf("wrong functor: %s", shallow.Functor())
+	if shallow.Name() != "prolog" {
+		t.Errorf("wrong functor: %s", shallow.Name())
 	}
 
 	if shallow.Indicator() != "prolog/2" {
@@ -72,47 +72,47 @@ func TestShallowTerm(t *testing.T) {
 
 func TestQuoting(t *testing.T) {
 	// functors entirely out of punctuation don't need quotes
-	x := NewTerm(":-", NewTerm("foo"), NewTerm("bar"))
+	x := NewCallable(":-", NewCallable("foo"), NewCallable("bar"))
 	if x.String() != ":-(foo, bar)" {
 		t.Errorf("Clause has wrong quoting: %s", x.String())
 	}
 
 	// functors with punctuation and letters need quoting
-	x = NewTerm("/a", NewTerm("foo"), NewTerm("bar"))
+	x = NewCallable("/a", NewCallable("foo"), NewCallable("bar"))
 	if x.String() != "'/a'(foo, bar)" {
 		t.Errorf("Clause has wrong quoting: %s", x.String())
 	}
 
 	// initial capital letters must be quoted
-	x = NewTerm("Caps")
+	x = NewCallable("Caps")
 	if x.String() != "'Caps'" {
 		t.Errorf("Capitalized atom has wrong quoting: %s", x.String())
 	}
 
 	// all lowercase atoms don't need quotes
-	x = NewTerm("lower")
+	x = NewCallable("lower")
 	if x.String() != "lower" {
 		t.Errorf("Atom shouldn't be quoted: %s", x.String())
 	}
 
 	// initial lowercase atoms don't need quotes
-	x = NewTerm("lower_Then_Caps")
+	x = NewCallable("lower_Then_Caps")
 	if x.String() != "lower_Then_Caps" {
 		t.Errorf("Mixed case atom shouldn't be quoted: %s", x.String())
 	}
 
 	// empty list atom doesn't need quoting, but cons does
-	x = NewTerm("[]")
+	x = NewCallable("[]")
 	if x.String() != "[]" {
 		t.Errorf("empty list atom shouldn't be quoted: %s", x.String())
 	}
-	x = NewTerm(".")
+	x = NewCallable(".")
 	if x.String() != "'.'" {
 		t.Errorf("cons must be quoted: %s", x.String())
 	}
 
 	// cut doesn't need quoting
-	x = NewTerm("!")
+	x = NewCallable("!")
 	if x.String() != "!" {
 		t.Errorf("cut shouldn't be quoted: %s", x.String())
 	}

@@ -32,16 +32,18 @@ func TestPureProlog(t *testing.T) {
 		tests := make([]term.Term, 0)
 		terms := read.TermAll_(openTest())
 		for _, t := range terms {
-			if t.Indicator() == ":-/2" {
-				tests = append(tests, t.Arguments()[0])
+			x := t.(term.Callable)
+			if x.Indicator() == ":-/2" {
+				tests = append(tests, x.Arguments()[0])
 			}
 		}
 
 		// run each test in this file
 		m := NewMachine().Consult(openTest())
 		for _, test := range tests {
+			x := test.(term.Callable)
 			canProve := m.CanProve(test)
-			if test.Arity() > 0 && test.Arguments()[0].String() == "fail" {
+			if x.Arity() > 0 && x.Arguments()[0].String() == "fail" {
 				if canProve {
 					t.Errorf("%s: %s should fail", name, test)
 				}

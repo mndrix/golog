@@ -187,7 +187,7 @@ func (r *TermReader) functor(in *lex.List, out **lex.List, f *string) bool {
 func (r *TermReader) listItems(i *lex.List, o **lex.List, t *term.Term) bool {
 	var arg, rest term.Term
 	if r.tok(',', i, o) && r.term(999, *o, o, &arg) && r.listItems(*o, o, &rest) {
-		*t = term.NewTerm(".", arg, rest)
+		*t = term.NewCallable(".", arg, rest)
 		return true
 	}
 	if r.tok('|', i, o) && r.term(999, *o, o, &arg) && r.tok(']', *o, o) {
@@ -244,13 +244,13 @@ func (r *TermReader) term(p priority, i *lex.List, o **lex.List, t *term.Term) b
 
 	// prefix operator
 	if r.prefix(&op, &opP, &argP, i, o) && opP <= p && r.term(argP, *o, o, &t0) {
-		opT := term.NewTerm(op, t0)
+		opT := term.NewCallable(op, t0)
 		return r.restTerm(opP, p, *o, o, opT, t)
 	}
 
 	// list notation for compound terms §6.3.5
 	if r.tok('[', i, o) && r.term(999, *o, o, &t0) && r.listItems(*o, o, &t1) {
-		list := term.NewTerm(".", t0, t1)
+		list := term.NewCallable(".", t0, t1)
 		return r.restTerm(0, p, *o, o, list, t)
 	}
 	if r.tok('[', i, o) && r.tok(']', *o, o) {
@@ -324,11 +324,11 @@ func (r *TermReader) restTerm(leftP, p priority, i *lex.List, o **lex.List, left
 
 	if r.infix(&op, &opP, &lap, &rap, i, o) && p >= opP && leftP <= lap && r.term(rap, *o, o, &rightT) {
 		//      fmt.Printf("  infix %s\n", op)
-		t0 := term.NewTerm(op, leftT, rightT)
+		t0 := term.NewCallable(op, leftT, rightT)
 		return r.restTerm(opP, p, *o, o, t0, t)
 	}
 	if r.postfix(&op, &opP, &lap, i, o) && opP <= p && leftP <= lap {
-		opT := term.NewTerm(op, leftT)
+		opT := term.NewCallable(op, leftT)
 		return r.restTerm(opP, p, *o, o, opT, t)
 	}
 

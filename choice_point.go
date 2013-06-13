@@ -29,23 +29,23 @@ type ChoicePoint interface {
 // a choice point which follows Head :- Body clauses
 type headbodyCP struct {
 	machine Machine
-	goal    term.Term
-	clause  term.Term
+	goal    term.Callable
+	clause  term.Callable
 }
 
 // A head-body choice point is one which, when followed, unifies a
 // goal g with the head of a term t.  If unification fails, the choice point
 // fails.  If unification succeeds, the machine tries to prove t's body.
 func NewHeadBodyChoicePoint(m Machine, g, t term.Term) ChoicePoint {
-	return &headbodyCP{machine: m, goal: g, clause: t}
+	return &headbodyCP{machine: m, goal: g.(term.Callable), clause: t.(term.Callable)}
 }
 func (cp *headbodyCP) Follow() (Machine, error) {
 	// rename variables so recursive clauses work
-	clause := term.RenameVariables(cp.clause)
+	clause := term.RenameVariables(cp.clause).(term.Callable)
 
 	// does the machine's current goal unify with our head?
 	head := clause
-	if clause.Arity() == 2 && clause.Functor() == ":-" {
+	if clause.Arity() == 2 && clause.Name() == ":-" {
 		head = term.Head(clause)
 	}
 	env, err := cp.goal.Unify(cp.machine.Bindings(), head)
@@ -55,7 +55,7 @@ func (cp *headbodyCP) Follow() (Machine, error) {
 	MaybePanic(err)
 
 	// yup, update the environment and top goal
-	if clause.Arity() == 2 && clause.Functor() == ":-" {
+	if clause.Arity() == 2 && clause.Name() == ":-" {
 		return cp.machine.SetBindings(env).PushConj(term.Body(clause)), nil
 	}
 	return cp.machine.SetBindings(env), nil // don't need to push "true"
@@ -67,7 +67,7 @@ func (cp *headbodyCP) String() string {
 // a choice point that just pushes a term onto conjunctions
 type simpleCP struct {
 	machine Machine
-	goal    term.Term
+	goal    term.Callable
 }
 
 // Following a simple choice point makes the machine start proving
@@ -75,7 +75,7 @@ type simpleCP struct {
 // back to a previous version of a machine.  It can be useful for
 // building certain control constructs.
 func NewSimpleChoicePoint(m Machine, g term.Term) ChoicePoint {
-	return &simpleCP{machine: m, goal: g}
+	return &simpleCP{machine: m, goal: g.(term.Callable)}
 }
 func (cp *simpleCP) Follow() (Machine, error) {
 	return cp.machine.PushConj(cp.goal), nil

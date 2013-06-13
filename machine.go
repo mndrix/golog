@@ -116,12 +116,12 @@ type Machine interface {
 
 	// PushConj returns a machine like this one but with an extra term
 	// on front of the conjunction stack
-	PushConj(Term) Machine
+	PushConj(Callable) Machine
 
 	// PopConj returns a machine with one less item on the conjunction stack
 	// along with the term removed.  Returns err = EmptyConjunctions if there
 	// are no more conjunctions on that stack
-	PopConj() (Term, Machine, error)
+	PopConj() (Callable, Machine, error)
 
 	// ClearConj replaces the conjunction stack with an empty one
 	ClearConjs() Machine
@@ -320,7 +320,7 @@ func (self *machine) ProveAll(goal interface{}) []Bindings {
 // is the goal we should next try to prove.
 func (self *machine) Step() (Machine, Bindings, error) {
 	var m Machine = self
-	var goal Term
+	var goal Callable
 	var err error
 	var cp ChoicePoint
 
@@ -344,7 +344,7 @@ func (self *machine) Step() (Machine, Bindings, error) {
 		MaybePanic(err)
 		m = mTmp
 		arity = goal.Arity()
-		functor = goal.Functor()
+		functor = goal.Name()
 	}
 
 	// are we proving a foreign predicate?
@@ -376,7 +376,7 @@ func (self *machine) Step() (Machine, Bindings, error) {
 			}
 		}
 	} else { // user-defined predicate, push all its disjunctions
-		goal = goal.ReplaceVariables(m.Bindings())
+		goal = goal.ReplaceVariables(m.Bindings()).(Callable)
 		Debugf("  running user-defined predicate %s\n", goal)
 		clauses, err := m.(*machine).db.Candidates(goal)
 		MaybePanic(err)
@@ -417,13 +417,13 @@ func (self *machine) Step() (Machine, Bindings, error) {
 	panic("Stepped a machine past the end")
 }
 
-func (m *machine) lookupForeign(goal Term) (ForeignPredicate, bool) {
+func (m *machine) lookupForeign(goal Callable) (ForeignPredicate, bool) {
 	var f ps.Any
 	var ok bool
 
 	arity := goal.Arity()
 	if arity < smallThreshold {
-		f, ok = m.smallForeign[arity].Lookup(goal.Functor())
+		f, ok = m.smallForeign[arity].Lookup(goal.Name())
 	} else {
 		f, ok = m.largeForeign.Lookup(goal.Indicator())
 	}
@@ -434,18 +434,18 @@ func (m *machine) lookupForeign(goal Term) (ForeignPredicate, bool) {
 	return nil, ok
 }
 
-func (m *machine) toGoal(thing interface{}) Term {
+func (m *machine) toGoal(thing interface{}) Callable {
 	switch x := thing.(type) {
 	case Term:
-		return x
+		return x.(Callable)
 	case string:
-		return m.readTerm(x)
+		return m.readTerm(x).(Callable)
 	}
 	msg := fmt.Sprintf("Can't convert %#v to a term", thing)
 	panic(msg)
 }
 
-func (m *machine) resolveAllArguments(goal Term) []Term {
+func (m *machine) resolveAllArguments(goal Callable) []Term {
 	env := m.Bindings()
 	args := goal.Arguments()
 	resolved := make([]Term, len(args))
@@ -477,7 +477,7 @@ func (m *machine) SetBindings(env Bindings) Machine {
 	return m1
 }
 
-func (m *machine) PushConj(t Term) Machine {
+func (m *machine) PushConj(t Callable) Machine {
 	// change all !/0 goals into '$cut_to'(RecentBarrierId) goals
 	barrierID, err := m.MostRecentCutBarrier()
 	if err == nil {
@@ -489,12 +489,12 @@ func (m *machine) PushConj(t Term) Machine {
 	return m1
 }
 
-func (m *machine) PopConj() (Term, Machine, error) {
+func (m *machine) PopConj() (Callable, Machine, error) {
 	if m.conjs.IsNil() {
 		return nil, nil, EmptyConjunctions
 	}
 
-	t := m.conjs.Head().(Term)
+	t := m.conjs.Head().(Callable)
 	m1 := m.clone()
 	m1.conjs = m.conjs.Tail()
 	return t, m1, nil
@@ -575,30 +575,30 @@ func (m *machine) CutTo(want int64) Machine {
 	panic("inconceivable!")
 }
 
-func resolveCuts(id int64, t Term) Term {
+func resolveCuts(id int64, t Callable) Callable {
 	switch t.Arity() {
 	case 0:
-		if t.Functor() == "!" {
-			return NewTerm("$cut_to", NewInt64(id))
+		if t.Name() == "!" {
+			return NewCallable("$cut_to", NewInt64(id))
 		}
 	case 2:
-		switch t.Functor() {
+		switch t.Name() {
 		case ",", ";":
 			args := t.Arguments()
-			t0 := resolveCuts(id, args[0])
-			t1 := resolveCuts(id, args[1])
+			t0 := resolveCuts(id, args[0].(Callable))
+			t1 := resolveCuts(id, args[1].(Callable))
 			if t0 == args[0] && t1 == args[1] {
 				return t
 			}
-			return NewTerm(t.Functor(), t0, t1)
+			return NewCallable(t.Name(), t0, t1)
 		case "->":
 			args := t.Arguments()
 			t0 := args[0] // don't resolve cuts in Condition
-			t1 := resolveCuts(id, args[1])
+			t1 := resolveCuts(id, args[1].(Callable))
 			if t1 == args[1] { // no changes. don't create a new term
 				return t
 			}
-			return NewTerm(t.Functor(), t0, t1)
+			return NewCallable(t.Name(), t0, t1)
 		}
 	}
 
