@@ -82,6 +82,11 @@ func (self *Compound) String() string {
 	Fprintf(&buf, ")")
 	return buf.String()
 }
+
+func (self *Compound) Type() int {
+	return CompoundType
+}
+
 func (self *Compound) Indicator() string {
 	return Sprintf("%s/%d", self.Functor(), self.Arity())
 }

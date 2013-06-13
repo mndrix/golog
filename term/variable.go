@@ -69,6 +69,10 @@ func (self *Variable) String() string {
 	return self.Name
 }
 
+func (self *Variable) Type() int {
+	return VariableType
+}
+
 func (self *Variable) Indicator() string {
 	return Sprintf("_V%d", self.id)
 }

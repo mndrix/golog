@@ -208,6 +208,17 @@ func NotAMethod(x AnInterface) int {
     panic("impossible")
 }
 
+func NotAMethodManual(x AnInterface) int {
+    kind := x.AMethod()
+	switch kind {
+        case 1:
+            return 1
+        case 2:
+            return 2
+    }
+    panic("impossible")
+}
+
 // how expensive is it to call a method?
 func BenchmarkInterfaceMethod(b *testing.B) {
     var x AnInterface
@@ -220,13 +231,24 @@ func BenchmarkInterfaceMethod(b *testing.B) {
 }
 
 // how expensive is it to call a function that acts like a method?
-func BenchmarkInterfaceFunction(b *testing.B) {
+func BenchmarkInterfaceFunctionTypeSwitch(b *testing.B) {
     var x AnInterface
     num := 100
     x = (*ImplementationOne)(&num)
 
     for i := 0; i < b.N; i++ {
         _ = NotAMethod(x)
+    }
+}
+
+// how expensive is it to call a function that acts like a method?
+func BenchmarkInterfaceFunctionManualTypeSwitch(b *testing.B) {
+    var x AnInterface
+    num := 100
+    x = (*ImplementationOne)(&num)
+
+    for i := 0; i < b.N; i++ {
+        _ = NotAMethodManual(x)
     }
 }
 
@@ -248,7 +270,7 @@ func BenchmarkInterfaceInlineTypeSwitch(b *testing.B) {
     }
 }
 
-// how expensive is it a manually-implemented type switch?
+// how expensive is a manually-implemented type switch?
 func BenchmarkInterfaceManualTypeSwitch(b *testing.B) {
     var x AnInterface
     num := 100

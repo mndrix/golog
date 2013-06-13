@@ -132,6 +132,10 @@ func (self *Integer) String() string {
 	return self.Value().String()
 }
 
+func (self *Integer) Type() int {
+	return IntegerType
+}
+
 func (self *Integer) Functor() string {
 	panic("Integers have no Functor()")
 }

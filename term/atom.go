@@ -57,6 +57,9 @@ func (self *Atom) Arguments() []Term {
 func (self *Atom) String() string {
 	return QuoteFunctor(self.Functor())
 }
+func (self *Atom) Type() int {
+	return AtomType
+}
 func (self *Atom) Indicator() string {
 	return Sprintf("%s/0", self.Functor())
 }

@@ -33,6 +33,10 @@ func (self *Error) String() string {
 	return Sprintf("%s at %s", self.message, self.eme.Pos)
 }
 
+func (self *Error) Type() int {
+	return ErrorType
+}
+
 func (self *Error) Indicator() string {
 	panic("Errors have no Indicator()")
 }

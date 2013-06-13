@@ -27,6 +27,9 @@ func (self *Float) Arguments() []Term {
 func (self *Float) String() string {
 	return fmt.Sprintf("%g", self.Value())
 }
+func (self *Float) Type() int {
+	return FloatType
+}
 func (self *Float) Indicator() string {
 	return self.String()
 }

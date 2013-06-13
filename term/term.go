@@ -18,6 +18,18 @@ import "github.com/mndrix/ps"
 // Returned by Unify() if the unification fails
 var CantUnify error = Errorf("Can't unify the given terms")
 
+// Possible term types, in order according to ISO §7.2
+const (
+	VariableType = iota
+	FloatType
+	IntegerType
+	AtomType
+	CompoundType
+
+	// odd man out
+	ErrorType
+)
+
 // Term represents a single Prolog term which might be an atom, a
 // compound structure, an integer, etc.  Many methods on Term will
 // be replaced with functions in the future.  The Term interface is
@@ -40,6 +52,11 @@ type Term interface {
 	// String provides a string representation of a term
 	String() string
 
+	// Type indicates whether this term is an atom, number, compound, etc.
+	// ISO §7.2 uses the word "type" to descsribe this idea.  Constants are
+	// defined for each type.
+	Type() int
+
 	// Indicator() provides a "predicate indicator" representation of a term
 	Indicator() string
 
@@ -53,25 +70,19 @@ type Term interface {
 
 // Returns true if term t is an atom
 func IsAtom(t Term) bool {
-	switch t.(type) {
-	case *Atom:
-		return true
-	default:
-		return false
-	}
-	panic("Impossible")
+	return t.Type() == AtomType
 }
 
 // IsClause returns true if the term is like 'Head :- Body', otherwise false
 func IsClause(t Term) bool {
-	switch x := t.(type) {
-	case *Compound:
-		return x.Arity() == 2 && x.Functor() == ":-"
-	case *Atom,
-		*Variable,
-		*Integer,
-		*Float,
-		*Error:
+	switch t.Type() {
+	case CompoundType:
+		return t.Arity() == 2 && t.Functor() == ":-"
+	case AtomType,
+		VariableType,
+		IntegerType,
+		FloatType,
+		ErrorType:
 		return false
 	}
 	msg := Sprintf("Unexpected term type: %#v", t)
@@ -80,50 +91,17 @@ func IsClause(t Term) bool {
 
 // Returns true if term t is a compound term.
 func IsCompound(t Term) bool {
-	switch t.(type) {
-	case *Compound:
-		return true
-	case *Atom,
-		*Variable,
-		*Integer,
-		*Float,
-		*Error:
-		return false
-	}
-	msg := Sprintf("Unexpected term type: %#v", t)
-	panic(msg)
+	return t.Type() == CompoundType
 }
 
 // Returns true if term t is a variable.
 func IsVariable(t Term) bool {
-	switch t.(type) {
-	case *Variable:
-		return true
-	case *Atom,
-		*Compound,
-		*Integer,
-		*Float,
-		*Error:
-		return false
-	}
-	msg := Sprintf("Unexpected term type: %#v", t)
-	panic(msg)
+	return t.Type() == VariableType
 }
 
 // Returns true if term t is an error term.
 func IsError(t Term) bool {
-	switch t.(type) {
-	case *Error:
-		return true
-	case *Atom,
-		*Compound,
-		*Variable,
-		*Integer,
-		*Float:
-		return false
-	}
-	msg := Sprintf("Unexpected term type: %#v", t)
-	panic(msg)
+	return t.Type() == ErrorType
 }
 
 // Returns true if term t is a directive like `:- foo.`
@@ -133,42 +111,12 @@ func IsDirective(t Term) bool {
 
 // Returns true if term t is an integer
 func IsInteger(t Term) bool {
-	switch t.(type) {
-	case *Atom:
-		return false
-	case *Compound:
-		return false
-	case *Variable:
-		return false
-	case *Integer:
-		return true
-	case *Float:
-		return false
-	case *Error:
-		return false
-	}
-	msg := Sprintf("Unexpected term type: %#v", t)
-	panic(msg)
+	return t.Type() == IntegerType
 }
 
 // Returns true if term t is an floating point number
 func IsFloat(t Term) bool {
-	switch t.(type) {
-	case *Atom:
-		return false
-	case *Compound:
-		return false
-	case *Variable:
-		return false
-	case *Integer:
-		return false
-	case *Float:
-		return true
-	case *Error:
-		return false
-	}
-	msg := Sprintf("Unexpected term type: %#v", t)
-	panic(msg)
+	return t.Type() == FloatType
 }
 
 // Head returns a term's first argument. Panics if there isn't one
@@ -189,16 +137,14 @@ func RenameVariables(t Term) Term {
 }
 
 func renameVariables(t Term, renamed map[string]*Variable) Term {
-	switch x := t.(type) {
-	case *Float:
-		return x
-	case *Integer:
-		return x
-	case *Error:
-		return x
-	case *Atom:
-		return x
-	case *Compound:
+	switch t.Type() {
+	case FloatType,
+		IntegerType,
+		AtomType,
+		ErrorType:
+		return t
+	case CompoundType:
+		x := t.(*Compound)
 		newArgs := make([]Term, x.Arity())
 		for i, arg := range x.Arguments() {
 			newArgs[i] = renameVariables(arg, renamed)
@@ -206,7 +152,8 @@ func renameVariables(t Term, renamed map[string]*Variable) Term {
 		newTerm := NewTerm(x.Functor(), newArgs...)
 		newTerm.(*Compound).ucache = x.ucache
 		return newTerm
-	case *Variable:
+	case VariableType:
+		x := t.(*Variable)
 		name := x.Name
 		if name == "_" {
 			name = x.Indicator()
@@ -220,23 +167,21 @@ func renameVariables(t Term, renamed map[string]*Variable) Term {
 			return v
 		}
 	}
-	panic("Unexpected term implementation")
+	panic("Unexpected term type")
 }
 
 // Variables returns a ps.Map whose keys are human-readable variable names
 // and those values are *Variable used inside term t.
 func Variables(t Term) ps.Map {
 	names := ps.NewMap()
-	switch x := t.(type) {
-	case *Atom:
+	switch t.Type() {
+	case AtomType,
+		FloatType,
+		IntegerType,
+		ErrorType:
 		return names
-	case *Float:
-		return names
-	case *Integer:
-		return names
-	case *Error:
-		return names
-	case *Compound:
+	case CompoundType:
+		x := t.(*Compound)
 		if x.Arity() == 0 {
 			return names
 		} // no variables in an atom
@@ -247,7 +192,8 @@ func Variables(t Term) ps.Map {
 			})
 		}
 		return names
-	case *Variable:
+	case VariableType:
+		x := t.(*Variable)
 		return names.Set(x.Name, x)
 	}
 	panic("Unexpected term implementation")
@@ -320,11 +266,13 @@ func Precedes(a, b Term) bool {
 	}
 
 	// both terms have the same precedence by type, so delve deeper
-	switch x := a.(type) {
-	case *Variable:
+	switch a.Type() {
+	case VariableType:
+		x := a.(*Variable)
 		y := b.(*Variable)
 		return x.Id() < y.Id()
-	case *Float: // See Note_1
+	case FloatType: // See Note_1
+		x := a.(*Float)
 		if IsFloat(b) {
 			y := b.(*Float)
 			return x.Value() < y.Value()
@@ -332,7 +280,8 @@ func Precedes(a, b Term) bool {
 			y := float64(b.(*Integer).Value().Int64())
 			return x.Value() < y
 		}
-	case *Integer: // See Note_1
+	case IntegerType: // See Note_1
+		x := a.(*Integer)
 		if IsInteger(b) {
 			y := b.(*Integer)
 			return x.Value().Cmp(y.Value()) < 0
@@ -340,10 +289,12 @@ func Precedes(a, b Term) bool {
 			y := float64(x.Value().Int64())
 			return b.(*Float).Value() < y
 		}
-	case *Atom:
+	case AtomType:
+		x := a.(*Atom)
 		y := b.(*Atom)
 		return x.Functor() < y.Functor()
-	case *Compound:
+	case CompoundType:
+		x := a.(*Compound)
 		y := b.(*Compound)
 		if x.Arity() < y.Arity() {
 			return true
@@ -371,20 +322,11 @@ func Precedes(a, b Term) bool {
 	panic(msg)
 }
 func precedence(t Term) int {
-	switch t.(type) {
-	case *Variable:
-		return 0
-	case *Float:
-		return 2 // See Note_1
-	case *Integer:
-		return 2
-	case *Atom:
-		return 3
-	case *Compound:
-		return 4
+	value := t.Type()       // Type() promises values in precedence order
+	if value == FloatType { // See Note_1
+		return IntegerType
 	}
-	msg := Sprintf("Unexpected term type %s\n", t)
-	panic(msg)
+	return value
 }
 
 // Note_1:
