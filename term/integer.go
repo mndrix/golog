@@ -141,9 +141,6 @@ func (self *Integer) Arity() int {
 func (self *Integer) Arguments() []Term {
 	panic("Integers have no Arguments()")
 }
-func (self *Integer) IsClause() bool {
-	return false
-}
 func (self *Integer) Indicator() string {
 	return self.String()
 }

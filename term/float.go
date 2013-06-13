@@ -24,9 +24,6 @@ func (self *Float) Arity() int {
 func (self *Float) Arguments() []Term {
 	panic("Floats have no Arguments()")
 }
-func (self *Float) IsClause() bool {
-	return false
-}
 func (self *Float) String() string {
 	return fmt.Sprintf("%g", self.Value())
 }

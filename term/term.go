@@ -33,9 +33,6 @@ type Term interface {
 	// Arguments returns a slice of this term's arguments, if any
 	Arguments() []Term
 
-	// IsClause returns true if the term is like 'Head :- Body'
-	IsClause() bool
-
 	// ReplaceVariables replaces any internal variables with the values
 	// to which they're bound.  Unbound variables are left as they are
 	ReplaceVariables(Bindings) Term
@@ -63,6 +60,22 @@ func IsAtom(t Term) bool {
 		return false
 	}
 	panic("Impossible")
+}
+
+// IsClause returns true if the term is like 'Head :- Body', otherwise false
+func IsClause(t Term) bool {
+	switch x := t.(type) {
+	case *Compound:
+		return x.Arity() == 2 && x.Functor() == ":-"
+	case *Atom,
+		*Variable,
+		*Integer,
+		*Float,
+		*Error:
+		return false
+	}
+	msg := Sprintf("Unexpected term type: %#v", t)
+	panic(msg)
 }
 
 // Returns true if term t is a compound term.

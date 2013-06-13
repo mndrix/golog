@@ -54,9 +54,6 @@ func (self *Atom) Arity() int {
 func (self *Atom) Arguments() []Term {
 	return make([]Term, 0)
 }
-func (self *Atom) IsClause() bool {
-	return false
-}
 func (self *Atom) String() string {
 	return QuoteFunctor(self.Functor())
 }

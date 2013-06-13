@@ -29,10 +29,6 @@ func (self *Error) Arguments() []Term {
 	panic("Errors have no Arguments()")
 }
 
-func (self *Error) IsClause() bool {
-	return false
-}
-
 func (self *Error) String() string {
 	return Sprintf("%s at %s", self.message, self.eme.Pos)
 }

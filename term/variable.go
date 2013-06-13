@@ -62,10 +62,6 @@ func (self *Variable) Arguments() []Term {
 	panic("Variables have no Arguments()")
 }
 
-func (self *Variable) IsClause() bool {
-	return false
-}
-
 func (self *Variable) String() string {
 	if Debugging() && self.Name == "_" {
 		return self.Indicator()

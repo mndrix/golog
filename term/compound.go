@@ -67,9 +67,6 @@ func (self *Compound) Arity() int {
 func (self *Compound) Arguments() []Term {
 	return self.Args
 }
-func (self *Compound) IsClause() bool {
-	return self.Arity() == 2 && self.Functor() == ":-"
-}
 func (self *Compound) String() string {
 	quotedFunctor := QuoteFunctor(self.Functor())
 
