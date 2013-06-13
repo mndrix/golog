@@ -15,6 +15,6 @@ func Debugging() bool {
 
 func Debugf(format string, args ...interface{}) {
 	if Debugging() {
-		fmt.Printf(format, args...)
+		fmt.Fprintf(os.Stderr, format, args...)
 	}
 }
