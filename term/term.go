@@ -76,6 +76,16 @@ type Callable interface {
 	Arguments() []Term
 }
 
+// Number represents either an integer or a floating point number.  This
+// interface is convenient when working with arithmetic
+type Number interface {
+	Term
+
+	// Float64 gives a floating point representation of this number.  The
+	// representation inherits all weaknesses of the float64 data type.
+	Float64() float64
+}
+
 // Returns true if term t is an atom
 func IsAtom(t Term) bool {
 	return t.Type() == AtomType
@@ -126,6 +136,16 @@ func IsInteger(t Term) bool {
 // Returns true if term t is an floating point number
 func IsFloat(t Term) bool {
 	return t.Type() == FloatType
+}
+
+// Returns true if term t is a rational number
+func IsRational(t Term) bool {
+	switch t.(type) {
+	case *Rational:
+		return true
+	default:
+		return false
+	}
 }
 
 // Head returns a term's first argument. Panics if there isn't one
@@ -280,24 +300,14 @@ func Precedes(a, b Term) bool {
 		x := a.(*Variable)
 		y := b.(*Variable)
 		return x.Id() < y.Id()
-	case FloatType: // See Note_1
-		x := a.(*Float)
-		if IsFloat(b) {
-			y := b.(*Float)
-			return x.Value() < y.Value()
-		} else {
-			y := float64(b.(*Integer).Value().Int64())
-			return x.Value() < y
-		}
-	case IntegerType: // See Note_1
-		x := a.(*Integer)
-		if IsInteger(b) {
-			y := b.(*Integer)
-			return x.Value().Cmp(y.Value()) < 0
-		} else {
-			y := float64(x.Value().Int64())
-			return b.(*Float).Value() < y
-		}
+	case FloatType,
+		IntegerType: // See Note_1
+
+		// comparing via float64 breaks in many, many ways.
+		// improve as necessary.
+		x := a.(Number).Float64()
+		y := b.(Number).Float64()
+		return x < y
 	case AtomType:
 		x := a.(*Atom)
 		y := b.(*Atom)
@@ -400,6 +410,9 @@ func UnificationHash(terms []Term, n uint, preparation bool) uint64 {
 			} else {
 				hash = hash | (uint64(t.Value().Int64()) & mask)
 			}
+		case *Rational:
+			str := t.String()
+			hash = hash | (hashString(str) & mask)
 		case *Float:
 			str := strconv.FormatFloat(t.Value(), 'b', 0, 64)
 			hash = hash | (hashString(str) & mask)

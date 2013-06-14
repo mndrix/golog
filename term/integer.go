@@ -136,15 +136,6 @@ func (self *Integer) Type() int {
 	return IntegerType
 }
 
-func (self *Integer) Functor() string {
-	panic("Integers have no Functor()")
-}
-func (self *Integer) Arity() int {
-	panic("Integers have no Arity()")
-}
-func (self *Integer) Arguments() []Term {
-	panic("Integers have no Arguments()")
-}
 func (self *Integer) Indicator() string {
 	return self.String()
 }
@@ -164,4 +155,9 @@ func (a *Integer) Unify(e Bindings, b Term) (Bindings, error) {
 
 func (self *Integer) ReplaceVariables(env Bindings) Term {
 	return self
+}
+
+// implement Number interface
+func (self *Integer) Float64() float64 {
+	return float64(self.Value().Int64())
 }

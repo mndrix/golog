@@ -152,8 +152,8 @@ func TestFloat(t *testing.T) {
 
 	for text, expected := range tests {
 		x := NewFloat(text)
-		if x.Value() != expected {
-			t.Errorf("Float `%s` parsed as `%f` wanted `%f`", text, x.Value(), expected)
+		if x.Float64() != expected {
+			t.Errorf("Float `%s` parsed as `%f` wanted `%f`", text, x.Float64(), expected)
 		}
 	}
 }

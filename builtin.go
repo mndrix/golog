@@ -35,16 +35,17 @@ func BuiltinComma(m Machine, args []term.Term) ForeignReturn {
 
 // ground/1
 func BuiltinGround(m Machine, args []term.Term) ForeignReturn {
-	switch x := args[0].(type) {
-	case *term.Variable:
+	switch args[0].Type() {
+	case term.VariableType:
 		return ForeignFail()
-	case *term.Atom,
-		*term.Integer,
-		*term.Float,
-		*term.Error:
+	case term.AtomType,
+		term.IntegerType,
+		term.FloatType,
+		term.ErrorType:
 		return ForeignTrue()
-	case *term.Compound:
+	case term.CompoundType:
 		// recursively evaluate compound term's arguments
+		x := args[0].(*term.Compound)
 		for _, arg := range x.Arguments() {
 			f := BuiltinGround(m, []term.Term{arg})
 			switch f.(type) {

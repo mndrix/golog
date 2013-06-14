@@ -5,9 +5,17 @@ import "strconv"
 
 type Float float64
 
-func NewFloat(text string) *Float {
+func NewFloat(text string) Number {
+	r, ok := NewRational(text)
+	if ok {
+		return r
+	}
 	f, err := strconv.ParseFloat(text, 64)
 	maybePanic(err)
+	return (*Float)(&f)
+}
+
+func NewFloat64(f float64) *Float {
 	return (*Float)(&f)
 }
 
@@ -15,15 +23,6 @@ func (self *Float) Value() float64 {
 	return float64(*self)
 }
 
-func (self *Float) Functor() string {
-	panic("Floats have no Functor()")
-}
-func (self *Float) Arity() int {
-	panic("Floats have no Arity()")
-}
-func (self *Float) Arguments() []Term {
-	panic("Floats have no Arguments()")
-}
 func (self *Float) String() string {
 	return fmt.Sprintf("%g", self.Value())
 }
@@ -49,4 +48,9 @@ func (a *Float) Unify(e Bindings, b Term) (Bindings, error) {
 
 func (self *Float) ReplaceVariables(env Bindings) Term {
 	return self
+}
+
+// implement Number interface
+func (self *Float) Float64() float64 {
+	return self.Value()
 }
