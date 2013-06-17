@@ -76,16 +76,6 @@ type Callable interface {
 	Arguments() []Term
 }
 
-// Number represents either an integer or a floating point number.  This
-// interface is convenient when working with arithmetic
-type Number interface {
-	Term
-
-	// Float64 gives a floating point representation of this number.  The
-	// representation inherits all weaknesses of the float64 data type.
-	Float64() float64
-}
-
 // Returns true if term t is an atom
 func IsAtom(t Term) bool {
 	return t.Type() == AtomType
@@ -113,6 +103,12 @@ func IsCompound(t Term) bool {
 	return t.Type() == CompoundType
 }
 
+// Returns true if term t is an atom or compound term.
+func IsCallable(t Term) bool {
+	tp := t.Type()
+	return tp == AtomType || tp == CompoundType
+}
+
 // Returns true if term t is a variable.
 func IsVariable(t Term) bool {
 	return t.Type() == VariableType
@@ -126,26 +122,6 @@ func IsError(t Term) bool {
 // Returns true if term t is a directive like `:- foo.`
 func IsDirective(t Term) bool {
 	return t.Indicator() == ":-/1"
-}
-
-// Returns true if term t is an integer
-func IsInteger(t Term) bool {
-	return t.Type() == IntegerType
-}
-
-// Returns true if term t is an floating point number
-func IsFloat(t Term) bool {
-	return t.Type() == FloatType
-}
-
-// Returns true if term t is a rational number
-func IsRational(t Term) bool {
-	switch t.(type) {
-	case *Rational:
-		return true
-	default:
-		return false
-	}
 }
 
 // Head returns a term's first argument. Panics if there isn't one

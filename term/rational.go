@@ -9,11 +9,16 @@ import "math/big"
 // in many practical circumstances.
 type Rational big.Rat
 
-// NewInt parses an integer's string representation to create a new
-// integer value. Panics if the string's is not a valid integer
+// NewRational parses a rational's string representation to create a new
+// rational value. Panics if the string's is not a valid rational
 func NewRational(text string) (*Rational, bool) {
 	r, ok := new(big.Rat).SetString(text)
 	return (*Rational)(r), ok
+}
+
+// Constructs a new Rational value from a big.Rat value
+func NewBigRat(r *big.Rat) *Rational {
+	return (*Rational)(r)
 }
 
 func (self *Rational) Value() *big.Rat {
@@ -80,4 +85,15 @@ func (self *Rational) ReplaceVariables(env Bindings) Term {
 func (self *Rational) Float64() float64 {
 	f, _ := self.Value().Float64()
 	return f
+}
+
+func (self *Rational) LosslessInt() (*big.Int, bool) {
+	if self.Value().IsInt() {
+		return self.Value().Num(), true
+	}
+	return nil, false
+}
+
+func (self *Rational) LosslessRat() (*big.Rat, bool) {
+	return self.Value(), true
 }

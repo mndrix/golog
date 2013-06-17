@@ -2,6 +2,7 @@ package term
 
 import "fmt"
 import "strconv"
+import "math/big"
 
 type Float float64
 
@@ -53,4 +54,12 @@ func (self *Float) ReplaceVariables(env Bindings) Term {
 // implement Number interface
 func (self *Float) Float64() float64 {
 	return self.Value()
+}
+
+func (self *Float) LosslessInt() (*big.Int, bool) {
+	return nil, false
+}
+
+func (self *Float) LosslessRat() (*big.Rat, bool) {
+	return nil, false
 }

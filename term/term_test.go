@@ -2,7 +2,6 @@ package term
 
 import . "regexp"
 import "testing"
-import "math/big"
 
 func TestAtom(t *testing.T) {
 	atom := NewAtom("prolog")
@@ -119,21 +118,21 @@ func TestQuoting(t *testing.T) {
 }
 
 func TestInteger(t *testing.T) {
-	tests := make(map[string]*big.Int)
-	tests[`123`] = big.NewInt(123)
-	tests[`0xf`] = big.NewInt(15)
-	tests[`0o10`] = big.NewInt(8)
-	tests[`0b10`] = big.NewInt(2)
-	tests[`0' `] = big.NewInt(32)
-	tests[`0'\s`] = big.NewInt(32) // SWI-Prolog extension
-	tests[`0',`] = big.NewInt(44)
-	tests["0'\\x2218\\"] = big.NewInt(0x2218)
-	tests["0'\\21030\\"] = big.NewInt(0x2218)
+	tests := make(map[string]Number)
+	tests[`123`] = NewInt64(123)
+	tests[`0xf`] = NewInt64(15)
+	tests[`0o10`] = NewInt64(8)
+	tests[`0b10`] = NewInt64(2)
+	tests[`0' `] = NewInt64(32)
+	tests[`0'\s`] = NewInt64(32) // SWI-Prolog extension
+	tests[`0',`] = NewInt64(44)
+	tests["0'\\x2218\\"] = NewInt64(0x2218)
+	tests["0'\\21030\\"] = NewInt64(0x2218)
 
 	for text, expected := range tests {
 		x := NewInt(text)
-		if x.Value().Cmp(expected) != 0 {
-			t.Errorf("Integer `%s` parsed as `%d` wanted `%d`", text, x.Value(), expected)
+		if NumberCmp(x, expected) != 0 {
+			t.Errorf("Integer `%s` parsed as `%s` wanted `%s`", text, x, expected)
 		}
 	}
 

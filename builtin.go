@@ -103,6 +103,21 @@ func BuiltinUnify(m Machine, args []term.Term) ForeignReturn {
 	return ForeignUnify(args[0], args[1])
 }
 
+// =:=/2
+func BuiltinNumericEquals(m Machine, args []term.Term) ForeignReturn {
+	// evaluate each arithmetic argument
+	a, err := term.ArithmeticEval(args[0])
+	MaybePanic(err)
+	b, err := term.ArithmeticEval(args[1])
+	MaybePanic(err)
+
+	// perform the actual comparison
+	if term.NumberCmp(a, b) == 0 {
+		return ForeignTrue()
+	}
+	return ForeignFail()
+}
+
 // (\+)/1
 func BuiltinNot(m Machine, args []term.Term) ForeignReturn {
 	var answer term.Bindings

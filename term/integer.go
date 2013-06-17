@@ -8,7 +8,7 @@ type Integer big.Int
 
 // NewInt parses an integer's string representation to create a new
 // integer value. Panics if the string's is not a valid integer
-func NewInt(text string) *Integer {
+func NewInt(text string) Number {
 	if len(text) == 0 {
 		panic("Empty string is not a valid integer")
 	}
@@ -32,12 +32,12 @@ func NewInt(text string) *Integer {
 }
 
 // helper for when an int64 is already available
-func NewInt64(i int64) *Integer {
+func NewInt64(i int64) Number {
 	return (*Integer)(big.NewInt(i))
 }
 
 // helper for when a big.Int is already available
-func NewBigInt(val *big.Int) *Integer {
+func NewBigInt(val *big.Int) Number {
 	return (*Integer)(val)
 }
 
@@ -160,4 +160,13 @@ func (self *Integer) ReplaceVariables(env Bindings) Term {
 // implement Number interface
 func (self *Integer) Float64() float64 {
 	return float64(self.Value().Int64())
+}
+
+func (self *Integer) LosslessInt() (*big.Int, bool) {
+	return self.Value(), true
+}
+
+func (self *Integer) LosslessRat() (*big.Rat, bool) {
+	r := new(big.Rat).SetFrac(self.Value(), big.NewInt(1))
+	return r, true
 }

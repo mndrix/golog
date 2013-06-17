@@ -199,6 +199,7 @@ func NewMachine() Machine {
 		"->/2":            BuiltinIfThen,
 		";/2":             BuiltinSemicolon,
 		"=/2":             BuiltinUnify,
+		"=:=/2":           BuiltinNumericEquals,
 		`\+/1`:            BuiltinNot,
 		"atom_codes/2":    BuiltinAtomCodes2,
 		"atom_number/2":   BuiltinAtomNumber2,
@@ -446,6 +447,7 @@ func (m *machine) toGoal(thing interface{}) Callable {
 }
 
 func (m *machine) resolveAllArguments(goal Callable) []Term {
+	Debugf("resolving all arguments: %s\n", goal)
 	env := m.Bindings()
 	args := goal.Arguments()
 	resolved := make([]Term, len(args))
@@ -456,6 +458,9 @@ func (m *machine) resolveAllArguments(goal Callable) []Term {
 				resolved[i] = a
 				continue
 			}
+		} else if IsCompound(arg) {
+			resolved[i] = arg.ReplaceVariables(env)
+			continue
 		}
 		resolved[i] = arg
 	}
