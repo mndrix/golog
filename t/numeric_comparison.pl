@@ -30,3 +30,13 @@
 
 'zero is not one'(fail) :-
     0 =:= 1.
+
+is :-
+    X is 9 * 3,
+    X =:= 27.
+'fully bound is' :-
+    X = 10,
+    X is 6 + 4.
+'repeated is' :-
+    X is 9,
+    X is 3*3.

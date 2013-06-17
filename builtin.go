@@ -59,6 +59,15 @@ func BuiltinGround(m Machine, args []term.Term) ForeignReturn {
 	panic(msg)
 }
 
+// is/2
+func BuiltinIs(m Machine, args []term.Term) ForeignReturn {
+	value := args[0]
+	expression := args[1]
+	num, err := term.ArithmeticEval(expression)
+	MaybePanic(err)
+	return ForeignUnify(value, num)
+}
+
 // ->/2
 func BuiltinIfThen(m Machine, args []term.Term) ForeignReturn {
 	cond := args[0]
