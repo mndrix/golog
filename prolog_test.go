@@ -17,11 +17,15 @@ func TestPureProlog(t *testing.T) {
 	MaybePanic(err)
 	names, err := file.Readdirnames(-1)
 
+	useModule := read.Term_(`:- use_module(library(tap)).`)
+	env := term.NewBindings()
+
 	// run tests found in each file
 	for _, name := range names {
 		if name[0] == '.' {
 			continue // skip hidden files
 		}
+		//t.Logf("-------------- %s", name)
 		openTest := func() *os.File {
 			f, err := os.Open("t/" + name)
 			MaybePanic(err)
@@ -29,12 +33,24 @@ func TestPureProlog(t *testing.T) {
 		}
 
 		// which tests does the file have?
+		pastUseModule := false
 		tests := make([]term.Term, 0)
 		terms := read.TermAll_(openTest())
-		for _, t := range terms {
-			x := t.(term.Callable)
-			if x.Indicator() == ":-/2" {
-				tests = append(tests, x.Arguments()[0])
+		for _, s := range terms {
+			x := s.(term.Callable)
+			if pastUseModule {
+				if x.Arity() == 2 && x.Name() == ":-" {
+					tests = append(tests, x.Arguments()[0])
+				} else {
+					tests = append(tests, x)
+				}
+			} else {
+				// look for use_module(library(tap)) declaration
+				_, err := s.Unify(env, useModule)
+				if err == nil {
+					pastUseModule = true
+					//t.Logf("found use_module directive")
+				}
 			}
 		}
 
@@ -42,6 +58,7 @@ func TestPureProlog(t *testing.T) {
 		m := NewMachine().Consult(openTest())
 		for _, test := range tests {
 			x := test.(term.Callable)
+			//t.Logf("proving: %s", test)
 			canProve := m.CanProve(test)
 			if x.Arity() > 0 && x.Arguments()[0].String() == "fail" {
 				if canProve {
