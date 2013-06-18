@@ -283,6 +283,9 @@ func Precedes(a, b Term) bool {
 		// improve as necessary.
 		x := a.(Number).Float64()
 		y := b.(Number).Float64()
+		if x == y && IsFloat(a) && !IsFloat(b) {
+			return true
+		}
 		return x < y
 	case AtomType:
 		x := a.(*Atom)

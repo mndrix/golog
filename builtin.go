@@ -127,6 +127,66 @@ func BuiltinNumericEquals(m Machine, args []term.Term) ForeignReturn {
 	return ForeignFail()
 }
 
+// ==/2
+func BuiltinTermEquals(m Machine, args []term.Term) ForeignReturn {
+	a := args[0]
+	b := args[1]
+	if !term.Precedes(a, b) && !term.Precedes(b, a) {
+		return ForeignTrue()
+	}
+	return ForeignFail()
+}
+
+// \==/2
+func BuiltinTermNotEquals(m Machine, args []term.Term) ForeignReturn {
+	a := args[0]
+	b := args[1]
+	if !term.Precedes(a, b) && !term.Precedes(b, a) {
+		return ForeignFail()
+	}
+	return ForeignTrue()
+}
+
+// @</2
+func BuiltinTermLess(m Machine, args []term.Term) ForeignReturn {
+	a := args[0]
+	b := args[1]
+	if term.Precedes(a, b) {
+		return ForeignTrue()
+	}
+	return ForeignFail()
+}
+
+// @=</2
+func BuiltinTermLessEquals(m Machine, args []term.Term) ForeignReturn {
+	a := args[0]
+	b := args[1]
+	if term.Precedes(a, b) {
+		return ForeignTrue()
+	}
+	return BuiltinTermEquals(m, args)
+}
+
+// @>/2
+func BuiltinTermGreater(m Machine, args []term.Term) ForeignReturn {
+	a := args[0]
+	b := args[1]
+	if term.Precedes(b, a) {
+		return ForeignTrue()
+	}
+	return ForeignFail()
+}
+
+// @>=/2
+func BuiltinTermGreaterEquals(m Machine, args []term.Term) ForeignReturn {
+	a := args[0]
+	b := args[1]
+	if term.Precedes(b, a) {
+		return ForeignTrue()
+	}
+	return BuiltinTermEquals(m, args)
+}
+
 // (\+)/1
 func BuiltinNot(m Machine, args []term.Term) ForeignReturn {
 	var answer term.Bindings

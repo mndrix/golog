@@ -35,10 +35,6 @@ func (self *Rational) String() string {
 }
 
 func (self *Rational) Type() int {
-	val := self.Value()
-	if val.IsInt() {
-		return IntegerType
-	}
 	return FloatType
 }
 
