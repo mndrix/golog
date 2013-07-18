@@ -123,8 +123,11 @@ type Machine interface {
 	// are no more conjunctions on that stack
 	PopConj() (Callable, Machine, error)
 
-	// ClearConj replaces the conjunction stack with an empty one
+	// ClearConjs replaces the conjunction stack with an empty one
 	ClearConjs() Machine
+
+	// ClearDisjs replaces the disjunction stack with an empty one
+	ClearDisjs() Machine
 
 	// DemandCutBarrier makes sure the disjunction stack has a cut barrier
 	// on top.  If not, one is pushed.
@@ -515,6 +518,12 @@ func (m *machine) PopConj() (Callable, Machine, error) {
 func (m *machine) ClearConjs() Machine {
 	m1 := m.clone()
 	m1.conjs = ps.NewList()
+	return m1
+}
+
+func (m *machine) ClearDisjs() Machine {
+	m1 := m.clone()
+	m1.disjs = ps.NewList()
 	return m1
 }
 

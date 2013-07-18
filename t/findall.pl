@@ -37,3 +37,10 @@ order(fail) :-
 variables_in_goal :-
     findall(X, (X=Y; X=Y), S),
     S = [_,_].
+
+% choice points before findall/3 don't change the results
+'choicepoints before findall/3' :-
+	( findall(x,fail,Result), !
+	; true
+	),
+	Result = [].
