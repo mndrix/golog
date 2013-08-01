@@ -191,7 +191,7 @@ func BuiltinTermGreaterEquals(m Machine, args []term.Term) ForeignReturn {
 func BuiltinNot(m Machine, args []term.Term) ForeignReturn {
 	var answer term.Bindings
 	var err error
-	m = m.ClearConjs().PushConj(args[0].(term.Callable))
+	m = m.ClearConjs().ClearDisjs().PushConj(args[0].(term.Callable))
 
 	for {
 		m, answer, err = m.Step()
