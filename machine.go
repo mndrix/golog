@@ -424,8 +424,6 @@ func (self *machine) Step() (Machine, Bindings, error) {
 		}
 		MaybePanic(err)
 	}
-
-	panic("Stepped a machine past the end")
 }
 
 func (m *machine) lookupForeign(goal Callable) (ForeignPredicate, bool) {
@@ -573,7 +571,6 @@ func (m *machine) MostRecentCutBarrier() (int64, error) {
 
 		ds = ds.Tail()
 	}
-	panic("inconceivable!")
 }
 
 func (m *machine) CutTo(want int64) Machine {
@@ -593,7 +590,6 @@ func (m *machine) CutTo(want int64) Machine {
 
 		ds = ds.Tail()
 	}
-	panic("inconceivable!")
 }
 
 func resolveCuts(id int64, t Callable) Callable {

@@ -95,7 +95,6 @@ func (self *envMap) Resolve(v *Variable) (Term, error) {
 			return t.ReplaceVariables(self), nil
 		}
 	}
-	panic("Shouldn't reach here")
 }
 func (self *envMap) Size() int {
 	return self.bindings.Size()

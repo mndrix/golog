@@ -80,5 +80,4 @@ func (a *Atom) Unify(e Bindings, b Term) (Bindings, error) {
 	default:
 		return e, CantUnify
 	}
-	panic("Impossible")
 }

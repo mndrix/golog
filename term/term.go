@@ -471,7 +471,6 @@ func ProperListToTermSlice(x Term) []Term {
 			panic("Improper list")
 		}
 	}
-	return l
 }
 
 // Implement sort.Interface for []Term

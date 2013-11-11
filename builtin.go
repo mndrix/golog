@@ -203,7 +203,6 @@ func BuiltinNot(m Machine, args []term.Term) ForeignReturn {
 			return ForeignFail()
 		}
 	}
-	panic("impossible")
 }
 
 // atom_codes/2 see ISO §8.16.5
