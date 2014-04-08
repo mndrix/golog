@@ -13,6 +13,7 @@ var Prelude string
 
 func init() {
 	Prelude = strings.Join([]string{
+		Ignore1,
 		Length2,
 		Memberchk2,
 		Phrase2,
@@ -20,6 +21,13 @@ func init() {
 		Sort2,
 	}, "\n\n")
 }
+
+var Ignore1 = `
+ignore(A) :-
+	call(A),
+	!.
+ignore(_).
+`
 
 var Length2 = `
 length(Xs, N) :-
