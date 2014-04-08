@@ -229,6 +229,7 @@ func NewMachine() Machine {
 		"printf/2":        BuiltinPrintf,
 		"printf/3":        BuiltinPrintf,
 		"succ/2":          BuiltinSucc2,
+		"var/1":           BuiltinVar1,
 	})
 }
 

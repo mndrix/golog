@@ -389,3 +389,15 @@ func BuiltinSucc2(m Machine, args []term.Term) ForeignReturn {
 
 	panic("succ/2: one argument must be an integer")
 }
+
+// var(?X) is semidet.
+//
+// True if X is a variable.
+func BuiltinVar1(m Machine, args []term.Term) ForeignReturn {
+	x := args[0]
+
+	if term.IsVariable(x) {
+		return ForeignTrue()
+	}
+	return ForeignFail()
+}
