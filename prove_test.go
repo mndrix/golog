@@ -1,6 +1,10 @@
 package golog
 
-import "testing"
+import (
+	"testing"
+
+	"github.com/mndrix/golog/term"
+)
 
 func TestFacts(t *testing.T) {
 	m := NewMachine().Consult(`
@@ -279,5 +283,28 @@ func TestNotWithCut(t *testing.T) {
 	}
 	if x := proofs[0].ByName_("X").String(); x != "ok" {
 		t.Errorf("Wrong solution: %s vs ok", x)
+	}
+}
+
+// make sure that CanProve only finds the first solution
+func TestCanProveOnce(t *testing.T) {
+	counter := 0
+	f := func(m Machine, args []term.Term) ForeignReturn {
+		counter++
+		return ForeignTrue()
+	}
+	m := NewMachine().RegisterForeign(map[string]ForeignPredicate{
+		"increment_counter/0": f,
+	})
+	m = m.Consult(`
+		go :- increment_counter.
+		go :- increment_counter.  % increment again on backtrack
+	`)
+
+	if !m.CanProve(`go.`) {
+		t.Errorf("Couldn't prove go/0")
+	}
+	if counter != 1 {
+		t.Errorf("CanProve found multiple solutions")
 	}
 }
