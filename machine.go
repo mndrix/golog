@@ -299,7 +299,8 @@ func (m *machine) String() string {
 }
 
 // CanProve returns true if goal can be proven from facts and clauses
-// in the database
+// in the database.  Once a solution is found, it abandons other
+// solutions (like once/1).
 func (self *machine) CanProve(goal interface{}) bool {
 	var answer Bindings
 	var err error
