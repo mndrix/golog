@@ -300,9 +300,23 @@ func (m *machine) String() string {
 
 // CanProve returns true if goal can be proven from facts and clauses
 // in the database
-func (m *machine) CanProve(goal interface{}) bool {
-	solutions := m.ProveAll(goal)
-	return len(solutions) > 0
+func (self *machine) CanProve(goal interface{}) bool {
+	var answer Bindings
+	var err error
+
+	goalTerm := self.toGoal(goal)
+	m := self.PushConj(goalTerm)
+	for {
+		m, answer, err = m.Step()
+		if err == MachineDone {
+			return answer != nil
+		}
+		MaybePanic(err)
+		if answer != nil {
+			return true
+		}
+	}
+	return false
 }
 
 func (self *machine) ProveAll(goal interface{}) []Bindings {
