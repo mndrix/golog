@@ -137,156 +137,159 @@ func init() { // avoid import errors when low level benchmarks comment out
 
 /*
 func BenchmarkLowLevelCompareUint64(b *testing.B) {
-    var nintendo uint64 = 282429536481
-    var other uint64 = 387429489
-    for i := 0; i < b.N; i++ {
-        if nintendo == other {
-            // do nothing
-        }
-    }
+	var nintendo uint64 = 282429536481
+	var other uint64 = 387429489
+	for i := 0; i < b.N; i++ {
+		if nintendo == other {
+			// do nothing
+		}
+	}
 }
+
 func BenchmarkLowLevelCompareString(b *testing.B) {
-    nintendo := "nintendo"
-    other := "other"
-    for i := 0; i < b.N; i++ {
-        if nintendo == other {
-            // do nothing
-        }
-    }
+	nintendo := "nintendo"
+	other := "other"
+	for i := 0; i < b.N; i++ {
+		if nintendo == other {
+			// do nothing
+		}
+	}
 }
 func BenchmarkLowLevelBitwise(b *testing.B) {
-    var nintendo uint64 = 282429536481
-    var other uint64 = 387429489
-    for i := 0; i < b.N; i++ {
-        if nintendo & other == nintendo {
-            // do nothing
-        }
-    }
+	var nintendo uint64 = 282429536481
+	var other uint64 = 387429489
+	for i := 0; i < b.N; i++ {
+		if nintendo&other == nintendo {
+			// do nothing
+		}
+	}
 }
 func BenchmarkLowLevelFloatBinaryExponent(b *testing.B) {
 	f := 3.1415
-    for i := 0; i < b.N; i++ {
-        _ = strconv.FormatFloat(f, 'b', 0, 64)
-    }
+	for i := 0; i < b.N; i++ {
+		_ = strconv.FormatFloat(f, 'b', 0, 64)
+	}
 }
 func BenchmarkLowLevelFloatDecimalExponent(b *testing.B) {
 	f := 3.1415
-    for i := 0; i < b.N; i++ {
-        _ = strconv.FormatFloat(f, 'e', 64, 64)
-    }
+	for i := 0; i < b.N; i++ {
+		_ = strconv.FormatFloat(f, 'e', 64, 64)
+	}
 }
 func BenchmarkLowLevelIntDecimal(b *testing.B) {
 	var x uint64 = 1967
-    for i := 0; i < b.N; i++ {
-        _ = fmt.Sprintf("%d", x)
-    }
+	for i := 0; i < b.N; i++ {
+		_ = fmt.Sprintf("%d", x)
+	}
 }
 func BenchmarkLowLevelIntHex(b *testing.B) {
 	var x uint64 = 1967
-    for i := 0; i < b.N; i++ {
-        _ = fmt.Sprintf("%x", x)
-    }
+	for i := 0; i < b.N; i++ {
+		_ = fmt.Sprintf("%x", x)
+	}
 }
-
 
 // benchmarks to compare performance on interface-related code
 type AnInterface interface {
-    AMethod() int
+	AMethod() int
 }
 type ImplementationOne int
+
 func (*ImplementationOne) AMethod() int { return 1 }
+
 type ImplementationTwo int
+
 func (*ImplementationTwo) AMethod() int { return 2 }
 
 func NotAMethod(x AnInterface) int {
-    switch x.(type) {
-        case *ImplementationOne:
-            return 1
-        case *ImplementationTwo:
-            return 2
-    }
-    panic("impossible")
+	switch x.(type) {
+	case *ImplementationOne:
+		return 1
+	case *ImplementationTwo:
+		return 2
+	}
+	panic("impossible")
 }
 
 func NotAMethodManual(x AnInterface) int {
-    kind := x.AMethod()
+	kind := x.AMethod()
 	switch kind {
-        case 1:
-            return 1
-        case 2:
-            return 2
-    }
-    panic("impossible")
+	case 1:
+		return 1
+	case 2:
+		return 2
+	}
+	panic("impossible")
 }
 
 // how expensive is it to call a method?
 func BenchmarkInterfaceMethod(b *testing.B) {
-    var x AnInterface
-    num := 100
-    x = (*ImplementationOne)(&num)
+	var x AnInterface
+	num := 100
+	x = (*ImplementationOne)(&num)
 
-    for i := 0; i < b.N; i++ {
-        _ = x.AMethod()
-    }
+	for i := 0; i < b.N; i++ {
+		_ = x.AMethod()
+	}
 }
 
 // how expensive is it to call a function that acts like a method?
 func BenchmarkInterfaceFunctionTypeSwitch(b *testing.B) {
-    var x AnInterface
-    num := 100
-    x = (*ImplementationOne)(&num)
+	var x AnInterface
+	num := 100
+	x = (*ImplementationOne)(&num)
 
-    for i := 0; i < b.N; i++ {
-        _ = NotAMethod(x)
-    }
+	for i := 0; i < b.N; i++ {
+		_ = NotAMethod(x)
+	}
 }
 
 // how expensive is it to call a function that acts like a method?
 func BenchmarkInterfaceFunctionManualTypeSwitch(b *testing.B) {
-    var x AnInterface
-    num := 100
-    x = (*ImplementationOne)(&num)
+	var x AnInterface
+	num := 100
+	x = (*ImplementationOne)(&num)
 
-    for i := 0; i < b.N; i++ {
-        _ = NotAMethodManual(x)
-    }
+	for i := 0; i < b.N; i++ {
+		_ = NotAMethodManual(x)
+	}
 }
 
 // how expensive is it to inline a type switch that acts like a method?
 func BenchmarkInterfaceInlineTypeSwitch(b *testing.B) {
-    var x AnInterface
-    num := 100
-    x = (*ImplementationOne)(&num)
+	var x AnInterface
+	num := 100
+	x = (*ImplementationOne)(&num)
 
-    for i := 0; i < b.N; i++ {
-        var y int
-        switch x.(type) {
-            case *ImplementationOne:
-                y = 1
-            case *ImplementationTwo:
-                y = 2
-        }
-        _ = y
-    }
+	for i := 0; i < b.N; i++ {
+		var y int
+		switch x.(type) {
+		case *ImplementationOne:
+			y = 1
+		case *ImplementationTwo:
+			y = 2
+		}
+		_ = y
+	}
 }
 
 // how expensive is a manually-implemented type switch?
 func BenchmarkInterfaceManualTypeSwitch(b *testing.B) {
-    var x AnInterface
-    num := 100
-    x = (*ImplementationOne)(&num)
+	var x AnInterface
+	num := 100
+	x = (*ImplementationOne)(&num)
 
-    for i := 0; i < b.N; i++ {
-        var y int
-        kind := x.AMethod()
-        switch kind {
-            case 1:
-                y = 1
-            case 2:
-                y = 2
-        }
-        _ = y
-    }
+	for i := 0; i < b.N; i++ {
+		var y int
+		kind := x.AMethod()
+		switch kind {
+		case 1:
+			y = 1
+		case 2:
+			y = 2
+		}
+		_ = y
+	}
 }
 
 */
