@@ -8,6 +8,7 @@ import (
 	"io"
 	"os"
 	"strings"
+
 	"github.com/mndrix/golog"
 	"github.com/mndrix/golog/read"
 	"github.com/mndrix/golog/term"

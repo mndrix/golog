@@ -55,16 +55,18 @@ package golog
 import . "github.com/mndrix/golog/term"
 import . "github.com/mndrix/golog/util"
 
-import "github.com/mndrix/golog/read"
-import "github.com/mndrix/golog/prelude"
-import "github.com/mndrix/ps"
+import (
+	"bufio"
+	"bytes"
+	"fmt"
+	"os"
+	"strconv"
+	"strings"
 
-import "bufio"
-import "bytes"
-import "fmt"
-import "os"
-import "strconv"
-import "strings"
+	"github.com/mndrix/golog/prelude"
+	"github.com/mndrix/golog/read"
+	"github.com/mndrix/ps"
+)
 
 // NoBarriers error is returned when trying to access a cut barrier that
 // doesn't exist.  See MostRecentCutBarrier

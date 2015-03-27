@@ -1,8 +1,11 @@
 package golog
 
-import "strconv"
-import "github.com/mndrix/ps"
-import "github.com/mndrix/golog/term"
+import (
+	"strconv"
+
+	"github.com/mndrix/golog/term"
+	"github.com/mndrix/ps"
+)
 
 // clauses represents an ordered list of terms with
 // cheap insertion at the front

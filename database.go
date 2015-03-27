@@ -4,8 +4,11 @@ import . "fmt"
 import . "github.com/mndrix/golog/term"
 import . "github.com/mndrix/golog/util"
 
-import "bytes"
-import "github.com/mndrix/ps"
+import (
+	"bytes"
+
+	"github.com/mndrix/ps"
+)
 
 // Database is an immutable Prolog database.  All write operations on the
 // database produce a new database without affecting the previous one.

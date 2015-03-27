@@ -3,11 +3,14 @@ package golog
 // All of Golog's builtin, foreign-implemented predicates
 // are defined here.
 
-import "fmt"
-import "math/big"
-import "sort"
-import "strings"
-import "github.com/mndrix/golog/term"
+import (
+	"fmt"
+	"math/big"
+	"sort"
+	"strings"
+
+	"github.com/mndrix/golog/term"
+)
 import . "github.com/mndrix/golog/util"
 
 // !/0

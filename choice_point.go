@@ -1,7 +1,10 @@
 package golog
 
-import "fmt"
-import "github.com/mndrix/golog/term"
+import (
+	"fmt"
+
+	"github.com/mndrix/golog/term"
+)
 import . "github.com/mndrix/golog/util"
 
 // ChoicePoint represents a place in the execution where we had a
