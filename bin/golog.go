@@ -2,15 +2,17 @@
 // for recommended usage.
 package main
 
-import "bufio"
-import "fmt"
-import "io"
-import "os"
-import "strings"
-import "github.com/mndrix/golog"
-import "github.com/mndrix/golog/read"
-import "github.com/mndrix/golog/term"
-import "github.com/mndrix/ps"
+import (
+  "bufio"
+  "fmt"
+  "io"
+  "os"
+  "strings"
+  "github.com/mndrix/golog"
+  "github.com/mndrix/golog/read"
+  "github.com/mndrix/golog/term"
+  "github.com/mndrix/ps"
+)
 
 func main() {
 	// create a Golog machine
