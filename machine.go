@@ -289,11 +289,11 @@ func (m *machine) RegisterForeign(fs map[string]ForeignPredicate) Machine {
 func (m *machine) String() string {
 	var buf bytes.Buffer
 	fmt.Fprintf(&buf, "disjs:\n")
-	m.disjs.ForEach(func(v ps.Any) {
+	m.disjs.ForEach(func(v interface{}) {
 		fmt.Fprintf(&buf, "  %s\n", v)
 	})
 	fmt.Fprintf(&buf, "conjs:\n")
-	m.conjs.ForEach(func(v ps.Any) {
+	m.conjs.ForEach(func(v interface{}) {
 		fmt.Fprintf(&buf, "  %s\n", v)
 	})
 	fmt.Fprintf(&buf, "bindings: %s", m.env)
@@ -445,7 +445,7 @@ func (self *machine) Step() (Machine, Bindings, error) {
 }
 
 func (m *machine) lookupForeign(goal Callable) (ForeignPredicate, bool) {
-	var f ps.Any
+	var f interface{}
 	var ok bool
 
 	arity := goal.Arity()

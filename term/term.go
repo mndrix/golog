@@ -192,7 +192,7 @@ func Variables(t Term) ps.Map {
 		} // no variables in an atom
 		for _, arg := range x.Arguments() {
 			innerNames := Variables(arg)
-			innerNames.ForEach(func(key string, val ps.Any) {
+			innerNames.ForEach(func(key string, val interface{}) {
 				names = names.Set(key, val)
 			})
 		}
