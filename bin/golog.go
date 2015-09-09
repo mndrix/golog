@@ -57,7 +57,7 @@ func main() {
 		}
 		for i, answer := range answers {
 			lines := make([]string, 0)
-			variables.ForEach(func(name string, variable ps.Any) {
+			variables.ForEach(func(name string, variable interface{}) {
 				v := variable.(*term.Variable)
 				val := answer.Resolve_(v)
 				line := fmt.Sprintf("%s = %s", name, val)
