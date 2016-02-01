@@ -12,7 +12,6 @@ import (
 	"github.com/mndrix/golog"
 	"github.com/mndrix/golog/read"
 	"github.com/mndrix/golog/term"
-	"github.com/mndrix/ps"
 )
 
 func main() {
