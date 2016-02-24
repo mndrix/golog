@@ -10,7 +10,7 @@ import "github.com/mndrix/golog/term"
 import "fmt"
 import "github.com/mndrix/golog/lex"
 import "io"
-import "reflect"
+
 import "strings"
 
 // NoMoreTerms is returned by Next() when it can read no more terms
@@ -73,18 +73,14 @@ func TermAll_(src interface{}) []term.Term {
 	return ts
 }
 
-// toReader tries to convert a source into something that implements io.Reader
-var _ReaderT reflect.Type = reflect.TypeOf((*io.Reader)(nil)).Elem()
-
 func toReader(src interface{}) (io.Reader, error) {
-	if reflect.TypeOf(src).Implements(_ReaderT) {
-		return src.(io.Reader), nil
+	if r, ok := src.(io.Reader); ok {
+		return r, nil
 	}
 	switch x := src.(type) {
 	case string:
 		return strings.NewReader(x), nil
 	}
-
 	return nil, fmt.Errorf("Can't convert %#v into io.Reader\n", src)
 }
 
