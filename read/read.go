@@ -5,12 +5,14 @@
 // Functions with a trailing underscore panic on error.
 package read
 
-import "github.com/mndrix/golog/term"
+import (
+	"fmt"
+	"io"
+	"strings"
 
-import "fmt"
-import "github.com/mndrix/golog/lex"
-import "io"
-import "strings"
+	"github.com/mndrix/golog/lex"
+	"github.com/mndrix/golog/term"
+)
 
 // NoMoreTerms is returned by Next() when it can read no more terms
 // from its source.
