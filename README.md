@@ -14,4 +14,4 @@ The long term goal is to make Golog fully compliant with ISO Prolog.  It current
 
 Golog is used in production systems, but should be considered experimental software.  It has bugs and sharp edges.
 
-Development is sponsored by [PriceCharting](http://videogames.pricecharting.com).
+Development is sponsored by [PriceCharting](https://www.pricecharting.com).
