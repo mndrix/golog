@@ -319,7 +319,6 @@ func (self *machine) CanProve(goal interface{}) bool {
 			return true
 		}
 	}
-	return false
 }
 
 func (self *machine) ProveAll(goal interface{}) []Bindings {
