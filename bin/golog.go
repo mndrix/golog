@@ -81,7 +81,7 @@ func warnf(format string, args ...interface{}) {
 
 // initMachine creates a new Golog machine based on command line arguments
 func initMachine() golog.Machine {
-	m := golog.NewMachine()
+	m := golog.NewInteractiveMachine()
 
 	// are we supposed to load some code into the machine?
 	if len(os.Args) > 1 {
