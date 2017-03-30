@@ -187,6 +187,8 @@ type machine struct {
 
 	smallForeign [smallThreshold]ps.Map // arity => functor => ForeignPredicate
 	largeForeign ps.Map                 // predicate indicator => ForeignPredicate
+
+	help map[string]string
 }
 
 func (*machine) IsaForeignReturn() {}
