@@ -1,3 +1,3 @@
 #!/bin/sh
-go build bin/golog.go &&
+go build ./cmd/golog &&
 rlwrap ./golog $@
