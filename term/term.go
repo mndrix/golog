@@ -430,6 +430,8 @@ func UnificationHash(terms []Term, n uint, preparation bool) uint64 {
 			if preparation {
 				hash = hash | mask
 			}
+		case Stringer:
+			hash = hash | (hashString(t.String()) & mask)
 		default:
 			msg := Sprintf("Unexpected term type %s\n", t)
 			panic(msg)
