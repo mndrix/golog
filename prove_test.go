@@ -174,6 +174,15 @@ func TestAppend(t *testing.T) {
 	if x := proofs[0].ByName_("List").String(); x != "[a,b,c,d,e]" {
 		t.Errorf("Wrong solution: %s", x)
 	}
+
+	proofs = m.ProveAll(`append([65], [66,67], List).`)
+	if len(proofs) != 1 {
+		t.Errorf("Wrong number of answers: %d vs 1", len(proofs))
+	}
+	if x := proofs[0].ByName_("List").String(); x != "[65,66,67]" {
+		t.Errorf("Wrong solution: %s", x)
+	}
+
 }
 
 func TestCall(t *testing.T) {

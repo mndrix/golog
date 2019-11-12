@@ -69,11 +69,11 @@ func (self *Compound) Arguments() []Term {
 	return self.Args
 }
 func (self *Compound) String() string {
-	if IsString(self) {
-		return PrettyString(self)
-	}
 	if IsList(self) {
 		return PrettyList(self)
+	}
+	if IsString(self) {
+		return PrettyString(self)
 	}
 	quotedFunctor := QuoteFunctor(self.Name())
 
